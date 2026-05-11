@@ -102,86 +102,20 @@ router.get('/', (req, res) => {
   res.render('index.ejs');
 });
 
-// Login GET
 router.get('/login', (req, res) => {
   res.render('login.ejs');
 });
+
 
 // Login POST
 router.post('/login', (req, res) => {
   res.redirect('/dashboard');
 });
 
-router.get('/register',  (req, res) => res.render('register.ejs'));
-router.get('/registro',  (req, res) => res.render('register.ejs'));
-
-router.post('/register', (req, res) => res.redirect('/login'));
-router.post('/registro', (req, res) => res.redirect('/login'));
-
 // Dashboard
 router.get('/dashboard', (req, res) => {
   res.render('dashboard.ejs');
 });
-
-// ── Proyectos ──
-router.get('/proyectos', (req, res) => {
-  const rolKey = ['directora','jefe','miembro'].includes(req.query.rol) ? req.query.rol : 'directora';
-  const usuario = USUARIOS[rolKey];
-  const hoy = new Date();
-
-  let lista = PROYECTOS_DATA.map(p => ({
-    ...p,
-    overdue:   new Date(p.deliveryDate) < hoy && p.status !== 'completado',
-    canEdit:   usuario.rol === 'directora' || p.team.includes(usuario.id),
-    canDelete: usuario.rol === 'directora',
-  }));
-
-  if (usuario.rol === 'jefe') {
-    lista = lista.filter(p => p.team.includes(usuario.id) || p.area === usuario.area);
-  } else if (usuario.rol === 'miembro') {
-    lista = lista.filter(p => p.team.includes(usuario.id));
-  }
-
-  const stats = {
-    total:       lista.length,
-    activos:     lista.filter(p => p.status === 'activo').length,
-    revision:    lista.filter(p => p.status === 'revision').length,
-    completados: usuario.rol === 'directora' ? 3 : usuario.rol === 'jefe' ? 1 : 2,
-    avance:      lista.length > 0
-      ? Math.round(lista.reduce((s, p) => s + p.progress, 0) / lista.length)
-      : 0,
-  };
-
-  res.render('proyectos.ejs', { proyectos: lista, usuario, stats, MIEMBROS });
-});
-
-// ── Eventos ──
-router.get('/eventos', (req, res) => {
-  const rolKey = ['directora','jefe','miembro'].includes(req.query.rol) ? req.query.rol : 'directora';
-  const usuario = USUARIOS[rolKey];
-
-  let lista = EVENTOS_DATA.map(e => ({
-    ...e,
-    canEdit:   usuario.rol === 'directora' || e.team.includes(usuario.id),
-    canDelete: usuario.rol === 'directora',
-  }));
-
-  if (usuario.rol !== 'directora') {
-    lista = lista.filter(e => e.team.includes(usuario.id));
-  }
-
-  const resumen = {
-    total:        lista.length,
-    confirmados:  lista.filter(e => e.status === 'confirmado').length,
-    pendientes:   lista.filter(e => e.status === 'pendiente').length,
-    porConfirmar: lista.filter(e => e.status === 'por_confirmar').length,
-  };
-
-  res.render('eventos.ejs', { eventos: lista, usuario, resumen, PROXIMOS_MAYO, MIEMBROS });
-});
-
-// ── Recuperar contraseña ──
-router.use('/', authRoutes);
 
 // Calendario
 router.get('/calendario', (req, res) => {
