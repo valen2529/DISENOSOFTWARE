@@ -7,7 +7,7 @@
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
     html,body{width:100%;height:100%;overflow:hidden;}
-    body{background:#ffffff;}
+    body{background:#f5f0e8;}
     .page{
       position:relative;
       width:100vw;
@@ -16,14 +16,16 @@
       display:flex;
       align-items:center;
       justify-content:center;
+      background:linear-gradient(135deg,#f5f0e8 0%,#ede8de 50%,#e8e2d8 100%);
     }
     .bg-svg{
       position:absolute;
       top:0;left:0;
       width:100%;
       height:100%;
-      object-fit:fill;
+      object-fit:cover;
       z-index:1;
+      opacity:0.85;
     }
     .card-overlay{
       position:relative;

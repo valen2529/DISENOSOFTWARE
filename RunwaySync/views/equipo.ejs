@@ -1,118 +1,318 @@
-<style>
-    /* Estilos rápidos para que la pantalla se vea profesional */
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .stat-card { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    .stat-num { font-size: 1.8rem; font-weight: bold; margin: 0.5rem 0; }
-    .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
-    .member-card { background: white; padding: 1.5rem; border-radius: 16px; text-align: center; cursor: pointer; transition: 0.3s; border: 1px solid #eee; }
-    .member-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-    .member-av { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-weight: bold; font-size: 1.2rem; }
-    .skill-tag { background: #f0f0f0; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; margin: 2px; display: inline-block; }
-    .btn-primary { background: #000; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-    
-    /* Panel de detalle oculto por defecto */
-    .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: flex-end; z-index: 1000; }
-    .detail-panel { width: 400px; background: white; height: 100%; padding: 2rem; animation: slideIn 0.3s ease; }
-    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-</style>
-
-<div class="page-header">
-  <div>
-    <h2>Equipo</h2>
-    <p>Equipo Creativo &middot; <%= miembros.length %> miembros activos</p>
-  </div>
-  <button class="btn-primary" onclick="alert('Función invitar próximamente')">
-    Invitar Miembro
-  </button>
-</div>
-
-<div class="stats-row">
-  <div class="stat-card">
-    <div class="stat-lbl">Miembros Activos</div>
-    <div class="stat-num"><%= stats.miembros %></div>
-    <div class="stat-sub" style="color: green"><%= stats.disponibles %> disponibles</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-lbl">Proyectos Activos</div>
-    <div class="stat-num"><%= stats.proyectos %></div>
-    <div class="stat-sub" style="color: #cd1b80"><%= stats.nuevosProyectos %> este mes</div>
-  </div>
-</div>
-
-<div class="team-grid">
-  <% miembros.forEach(m => { %>
-  <div class="member-card" onclick="abrirDetalle('<%= m.nombre %>', '<%= m.rol %>')">
-    <div class="member-av" style="background:<%= m.bg %>;color:<%= m.color %>"><%= m.ini %></div>
-    <div class="member-name" style="font-weight: bold;"><%= m.nombre %></div>
-    <div class="member-role" style="color: #666; font-size: 0.9rem;"><%= m.rol %></div>
-    <div class="member-skills" style="margin-top: 10px;">
-      <% m.skills.forEach(s => { %><span class="skill-tag"><%= s %></span><% }) %>
-    </div>
-  </div>
-  <% }) %>
-</div>
-
-<div class="detail-overlay" id="detailOverlay" onclick="this.style.display='none'">
-    <div class="detail-panel" onclick="event.stopPropagation()">
-        <h3 id="dName">Nombre</h3>
-        <p id="dRole">Rol</p>
-        <hr>
-        <p>Próximamente más detalles del perfil.</p>
-        <button class="btn-primary" onclick="document.getElementById('detailOverlay').style.display='none'">Cerrar</button>
-    </div>
-</div>
-
-<script>
-    function abrirDetalle(nombre, rol) {
-        document.getElementById('dName').innerText = nombre;
-        document.getElementById('dRole').innerText = rol;
-        document.getElementById('detailOverlay').style.display = 'flex';
-    }
-</script>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Equipo</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RunwaySync – Equipo</title>
   <style>
-    .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
-    .member-card { background: white; padding: 1.5rem; border-radius: 16px; text-align: center; cursor: pointer; border: 1px solid #eee; }
-    .member-av { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: auto; }
-    .skill-tag { background: #f0f0f0; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;}
+    body{background:#ebebeb;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#231f20;}
+    .app{display:flex;flex-direction:column;height:100vh;}
+
+    /* ── TOPBAR ── */
+    .topbar{background:#fff;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 16px;border-bottom:1px solid #e0e0e0;flex-shrink:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:10px;}
+    .hamburger{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:4px;}
+    .hamburger span{display:block;width:20px;height:2px;background:#231f20;border-radius:2px;}
+    .topbar-brand{font-family:'Georgia',serif;font-size:0.98rem;font-weight:400;letter-spacing:0.2em;color:#141516;}
+    .topbar-right{display:flex;align-items:center;gap:16px;}
+    .topbar-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+    .topbar-icon:hover{background:#f3f4f6;}
+    .topbar-icon svg{width:20px;height:20px;stroke:#231f20;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    .notif-wrap{position:relative;}
+    .notif-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:280px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .notif-popover.open{display:block;}
+    .notif-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+    .notif-title{font-size:0.85rem;font-weight:700;color:#141516;}
+    .notif-badge{background:#cd1b80;color:#fff;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:20px;}
+    .notif-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5;}
+    .notif-item:last-child{border-bottom:none;}
+    .notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+    .notif-name{font-size:0.8rem;font-weight:600;color:#141516;}
+    .notif-meta{font-size:0.72rem;color:#888;margin-top:2px;}
+    .profile-wrap{position:relative;}
+    .profile-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .profile-popover.open{display:block;}
+    .pp-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;margin:0 auto 10px;}
+    .pp-name{font-weight:700;font-size:0.92rem;color:#141516;text-align:center;}
+    .pp-role{font-size:0.78rem;color:#888;text-align:center;margin-top:2px;margin-bottom:14px;}
+    .pp-divider{height:1px;background:#f0f0f0;margin-bottom:12px;}
+    .pp-logout{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:8px 14px;border-radius:10px;background:#fff3f8;color:#cd1b80;font-size:0.84rem;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .pp-logout:hover{background:#fce4f1;}
+
+    /* ── BODY ── */
+    .body-row{display:flex;flex:1;overflow:hidden;}
+
+    /* ── SIDEBAR ── */
+    .sidebar{flex:0 0 210px;background:#fff;display:flex;flex-direction:column;padding:12px 10px;border-right:1px solid #e0e0e0;gap:3px;overflow-y:auto;}
+    .nav-item{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:14px;text-decoration:none;color:#6f6f6f;font-size:0.88rem;font-weight:500;transition:background 0.15s,color 0.15s;}
+    .nav-item:hover{background:#f3f4f6;color:#231f20;}
+    .nav-item.active{background:#f0f0f0;color:#141516;font-weight:700;}
+    .nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .nav-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+    .nav-item.active .nav-icon svg{stroke:#141516;}
+
+    /* ── CONTENT ── */
+    .content{flex:1;overflow-y:auto;padding:22px 24px;}
+
+    /* ── PAGE HEADER ── */
+    .page-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;}
+    .page-header h1{font-family:'Georgia',serif;font-size:1.55rem;font-weight:800;color:#141516;}
+    .page-header p{font-size:0.75rem;color:#95a2a5;margin-top:2px;}
+    .btn-new{display:flex;align-items:center;gap:6px;padding:9px 20px;background:#141516;color:#fff;border:none;border-radius:50px;cursor:pointer;font-family:'Georgia',serif;font-size:0.85rem;font-weight:600;letter-spacing:0.03em;transition:background 0.15s,transform 0.12s;}
+    .btn-new:hover{background:#333;transform:translateY(-1px);}
+
+    /* ── STATS ── */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+    .stat-card{background:#fff;border-radius:16px;padding:15px 18px 13px;box-shadow:0 1px 4px rgba(0,0,0,0.05);}
+    .stat-lbl{font-size:0.73rem;color:#8a9295;font-weight:600;margin-bottom:5px;}
+    .stat-num{font-size:2rem;font-weight:800;color:#141516;line-height:1.1;}
+    .stat-sub{font-size:0.7rem;margin-top:4px;font-weight:600;}
+
+    /* ── TEAM GRID ── */
+    .team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+    .member-card{
+      background:#fff;border-radius:16px;padding:22px 18px;
+      text-align:center;cursor:pointer;
+      border:1px solid #f0f0f0;
+      box-shadow:0 1px 4px rgba(0,0,0,0.05);
+      transition:transform 0.2s,box-shadow 0.2s;
+    }
+    .member-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+    .member-av{
+      width:58px;height:58px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 12px;font-weight:800;font-size:1.1rem;
+      position:relative;
+    }
+    .online-dot{
+      position:absolute;bottom:2px;right:2px;
+      width:11px;height:11px;border-radius:50%;
+      border:2px solid #fff;
+    }
+    .member-name{font-size:0.9rem;font-weight:700;color:#141516;margin-bottom:3px;}
+    .member-role{font-size:0.75rem;color:#8a9295;margin-bottom:12px;}
+    .skills-wrap{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:12px;}
+    .skill-tag{background:#f3f4f6;color:#6f6f6f;padding:3px 9px;border-radius:20px;font-size:0.63rem;font-weight:600;}
+    .member-footer{font-size:0.68rem;color:#b0b0b0;border-top:1px solid #f3f4f6;padding-top:10px;}
+
+    /* ── DETAIL PANEL ── */
+    .detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;justify-content:flex-end;z-index:1000;}
+    .detail-overlay.open{display:flex;}
+    .detail-panel{
+      width:360px;background:#fff;height:100%;
+      padding:28px 24px;overflow-y:auto;
+      animation:slideIn 0.25s ease;
+    }
+    @keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+    .dp-close{background:none;border:none;cursor:pointer;font-size:1.2rem;color:#8a9295;float:right;}
+    .dp-av{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;margin:16px auto 10px;}
+    .dp-name{font-family:'Georgia',serif;font-size:1.2rem;font-weight:700;color:#141516;text-align:center;}
+    .dp-role{font-size:0.8rem;color:#8a9295;text-align:center;margin-bottom:18px;}
+    .dp-section{font-size:0.62rem;font-weight:800;letter-spacing:0.1em;color:#8a9295;text-transform:uppercase;margin:14px 0 6px;}
+    .dp-skills{display:flex;flex-wrap:wrap;gap:5px;}
+    .dp-proyectos{font-size:0.82rem;color:#141516;font-weight:600;}
+    .dp-status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;margin-bottom:4px;}
+    .dp-status.online{background:#d1fae5;color:#065f46;}
+    .dp-status.offline{background:#f3f4f6;color:#6b7280;}
+    .btn-dp{width:100%;padding:10px;background:#141516;color:#fff;border:none;border-radius:50px;cursor:pointer;font-family:'Georgia',serif;font-size:0.85rem;font-weight:700;margin-top:18px;transition:background 0.15s;}
+    .btn-dp:hover{background:#333;}
   </style>
 </head>
 <body>
+<div class="app">
 
-<h2>Equipo</h2>
-<p><%= miembros.length %> miembros activos</p>
+  <!-- ══ TOPBAR ══ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <span class="topbar-brand">RUNWAY SYNC</span>
+    <div class="topbar-right">
+      <div class="notif-wrap">
+        <div class="topbar-icon" id="notifBtn" title="Notificaciones" onclick="toggleNotif(event)" style="position:relative;">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#cd1b80;border-radius:50%;border:2px solid #fff;"></span>
+        </div>
+        <div class="notif-popover" id="notifPopover">
+          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge">4 próximos</span></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#cd1b80;"></div><div><div class="notif-name">Casting Modelos SS26</div><div class="notif-meta">23 ABR · 10:00 AM · Estudio Norte</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#b88917;"></div><div><div class="notif-name">Fitting Final Colección FW26</div><div class="notif-meta">24 ABR · 2:00 PM · Atelier Principal</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#08b864;"></div><div><div class="notif-name">Sesión Editorial Vogue CDMX</div><div class="notif-meta">28 ABR · Todo el día · Locación TBD</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#004aad;"></div><div><div class="notif-name">Reunión FW2026 — Dir. Creativa</div><div class="notif-meta">2 MAY · 9:00 AM · Sala de juntas</div></div></div>
+          <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
+        </div>
+      </div>
+      <div class="profile-wrap">
+        <div class="topbar-icon" id="profileBtn" title="Perfil" onclick="toggleProfile(event)" style="cursor:pointer;">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="profile-popover" id="profilePopover">
+          <div class="pp-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80"><%= usuario.id %></div>
+          <div class="pp-name"><%= usuario.nombre %></div>
+          <div class="pp-role"><%= usuario.rolLabel %></div>
+          <div class="pp-divider"></div>
+          <a href="/" class="pp-logout">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
 
-<div class="team-grid">
-  <% miembros.forEach(m => { %>
-    <div class="member-card" onclick="abrirDetalle('<%= m.nombre %>', '<%= m.rol %>')">
-      
-      <div class="member-av" style="background:<%= m.bg %>;color:<%= m.color %>">
-        <%= m.ini %>
+  <!-- ══ BODY ══ -->
+  <div class="body-row">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+      <a href="/dashboard" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></span>
+        Dashboard
+      </a>
+      <a href="/calendario" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+        Calendario
+      </a>
+      <a href="/colecciones" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg></span>
+        Colecciones
+      </a>
+      <a href="/eventos" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><rect x="7" y="14" width="3" height="3" rx="0.5"/></svg></span>
+        Eventos
+      </a>
+      <a href="/proyectos" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+        Proyectos
+      </a>
+      <a href="/equipo" class="nav-item active">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Equipo
+      </a>
+    </aside>
+
+    <!-- ── CONTENT ── -->
+    <div class="content">
+
+      <!-- HEADER -->
+      <div class="page-header">
+        <div>
+          <h1>Equipo</h1>
+          <p>Equipo Creativo &middot; <%= miembros.length %> miembros activos</p>
+        </div>
+        <button class="btn-new" onclick="alert('Función invitar próximamente')">
+          + Invitar Miembro
+        </button>
       </div>
 
-      <strong><%= m.nombre %></strong><br>
-      <small><%= m.rol %></small>
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-lbl">Miembros Activos</div>
+          <div class="stat-num"><%= stats.miembros %></div>
+          <div class="stat-sub" style="color:#08b864"><%= stats.disponibles %> disponibles</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Proyectos Activos</div>
+          <div class="stat-num"><%= stats.proyectos %></div>
+          <div class="stat-sub" style="color:#cd1b80"><%= stats.nuevosProyectos %> nuevos este mes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Disponibles Ahora</div>
+          <div class="stat-num"><%= stats.disponibles %></div>
+          <div class="stat-sub" style="color:#8a9295">en línea</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Áreas Cubiertas</div>
+          <div class="stat-num">4</div>
+          <div class="stat-sub" style="color:#004aad">Creativa · Foto · Styling · Prod.</div>
+        </div>
+      </div>
 
-      <div>
-        <% m.skills.forEach(s => { %>
-          <span class="skill-tag"><%= s %></span>
+      <!-- TEAM GRID -->
+      <div class="team-grid">
+        <% miembros.forEach(m => { %>
+        <div class="member-card" onclick="abrirDetalle(<%= JSON.stringify(m) %>)">
+          <div class="member-av" style="background:<%= m.bg %>;color:<%= m.color %>">
+            <%= m.ini %>
+            <span class="online-dot" style="background:<%= m.online ? '#08b864' : '#d1d5db' %>"></span>
+          </div>
+          <div class="member-name"><%= m.nombre %></div>
+          <div class="member-role"><%= m.rol %></div>
+          <div class="skills-wrap">
+            <% m.skills.forEach(s => { %>
+            <span class="skill-tag"><%= s %></span>
+            <% }) %>
+          </div>
+          <div class="member-footer"><%= m.proyectos %> proyecto<%= m.proyectos !== 1 ? 's' : '' %> activo<%= m.proyectos !== 1 ? 's' : '' %></div>
+        </div>
         <% }) %>
       </div>
 
-    </div>
-  <% }) %>
+    </div><!-- /content -->
+  </div><!-- /body-row -->
+
+</div><!-- /app -->
+
+<!-- ── DETAIL PANEL ── -->
+<div class="detail-overlay" id="detailOverlay" onclick="cerrarDetalle(event)">
+  <div class="detail-panel" onclick="event.stopPropagation()">
+    <button class="dp-close" onclick="document.getElementById('detailOverlay').classList.remove('open')">&#x2715;</button>
+    <div class="dp-av" id="dpAv"></div>
+    <div class="dp-name" id="dpName"></div>
+    <div class="dp-role" id="dpRole"></div>
+    <div id="dpStatus"></div>
+    <div class="dp-section">Skills</div>
+    <div class="dp-skills" id="dpSkills"></div>
+    <div class="dp-section">Proyectos activos</div>
+    <div class="dp-proyectos" id="dpProyectos"></div>
+    <button class="btn-dp" onclick="document.getElementById('detailOverlay').classList.remove('open')">Cerrar</button>
+  </div>
 </div>
 
 <script>
-function abrirDetalle(nombre, rol){
-  alert(nombre + " - " + rol);
-}
-</script>
+  function abrirDetalle(m) {
+    document.getElementById('dpAv').style.background = m.bg;
+    document.getElementById('dpAv').style.color      = m.color;
+    document.getElementById('dpAv').textContent      = m.ini;
+    document.getElementById('dpName').textContent    = m.nombre;
+    document.getElementById('dpRole').textContent    = m.rol;
+    document.getElementById('dpStatus').innerHTML    = `<span class="dp-status ${m.online ? 'online' : 'offline'}">${m.online ? '● En línea' : '○ Desconectado'}</span>`;
+    document.getElementById('dpSkills').innerHTML    = m.skills.map(s => `<span class="skill-tag">${s}</span>`).join('');
+    document.getElementById('dpProyectos').textContent = `${m.proyectos} proyecto${m.proyectos !== 1 ? 's' : ''} asignado${m.proyectos !== 1 ? 's' : ''}`;
+    document.getElementById('detailOverlay').classList.add('open');
+  }
 
+  function cerrarDetalle(e) {
+    if (e.target === document.getElementById('detailOverlay')) {
+      document.getElementById('detailOverlay').classList.remove('open');
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.getElementById('detailOverlay').classList.remove('open');
+  });
+
+  function toggleNotif(e) {
+    e.stopPropagation();
+    document.getElementById('notifPopover').classList.toggle('open');
+    document.getElementById('profilePopover').classList.remove('open');
+  }
+  function toggleProfile(e) {
+    e.stopPropagation();
+    document.getElementById('profilePopover').classList.toggle('open');
+    document.getElementById('notifPopover').classList.remove('open');
+  }
+  document.addEventListener('click', function(e) {
+    const np = document.getElementById('notifPopover');
+    const pp = document.getElementById('profilePopover');
+    if (np && !document.getElementById('notifBtn').contains(e.target))   np.classList.remove('open');
+    if (pp && !document.getElementById('profileBtn').contains(e.target)) pp.classList.remove('open');
+  });
+</script>
 </body>
 </html>

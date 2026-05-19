@@ -23,6 +23,28 @@
     .topbar-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
     .topbar-icon:hover{background:#f3f4f6;}
     .topbar-icon svg{width:20px;height:20px;stroke:#231f20;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    /* ── NOTIF POPOVER ── */
+    .notif-wrap{position:relative;}
+    .notif-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:280px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .notif-popover.open{display:block;}
+    .notif-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+    .notif-title{font-size:0.85rem;font-weight:700;color:#141516;}
+    .notif-badge{background:#cd1b80;color:#fff;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:20px;}
+    .notif-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5;}
+    .notif-item:last-child{border-bottom:none;}
+    .notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+    .notif-name{font-size:0.8rem;font-weight:600;color:#141516;}
+    .notif-meta{font-size:0.72rem;color:#888;margin-top:2px;}
+    /* ── PROFILE POPOVER ── */
+    .profile-wrap{position:relative;}
+    .profile-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .profile-popover.open{display:block;}
+    .pp-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;margin:0 auto 10px;}
+    .pp-name{font-weight:700;font-size:0.92rem;color:#141516;text-align:center;}
+    .pp-role{font-size:0.78rem;color:#888;text-align:center;margin-top:2px;margin-bottom:14px;}
+    .pp-divider{height:1px;background:#f0f0f0;margin-bottom:12px;}
+    .pp-logout{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:8px 14px;border-radius:10px;background:#fff3f8;color:#cd1b80;font-size:0.84rem;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .pp-logout:hover{background:#fce4f1;}
 
     /* ── BODY ROW ── */
     .body-row{display:flex;flex:1;overflow:hidden;}
@@ -199,11 +221,34 @@
     </div>
     <span class="topbar-brand">RUNWAY SYNC</span>
     <div class="topbar-right">
-      <div class="topbar-icon" title="Notificaciones">
-        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <div class="notif-wrap">
+        <div class="topbar-icon" id="notifBtn" title="Notificaciones" onclick="toggleNotif(event)" style="position:relative;">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#cd1b80;border-radius:50%;border:2px solid #fff;"></span>
+        </div>
+        <div class="notif-popover" id="notifPopover">
+          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge">4 próximos</span></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#cd1b80;"></div><div><div class="notif-name">Casting Modelos SS26</div><div class="notif-meta">23 ABR · 10:00 AM · Estudio Norte</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#b88917;"></div><div><div class="notif-name">Fitting Final Colección FW26</div><div class="notif-meta">24 ABR · 2:00 PM · Atelier Principal</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#08b864;"></div><div><div class="notif-name">Sesión Editorial Vogue CDMX</div><div class="notif-meta">28 ABR · Todo el día · Locación TBD</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#004aad;"></div><div><div class="notif-name">Reunión FW2026 — Dir. Creativa</div><div class="notif-meta">2 MAY · 9:00 AM · Sala de juntas</div></div></div>
+          <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
+        </div>
       </div>
-      <div class="topbar-icon" title="Perfil">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#231f20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <div class="profile-wrap">
+        <div class="topbar-icon" id="profileBtn" title="Perfil" onclick="toggleProfile(event)" style="cursor:pointer;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#231f20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="profile-popover" id="profilePopover">
+          <div class="pp-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80"><%= usuario.id %></div>
+          <div class="pp-name"><%= usuario.nombre %></div>
+          <div class="pp-role"><%= usuario.rolLabel %></div>
+          <div class="pp-divider"></div>
+          <a href="/" class="pp-logout">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+          </a>
+        </div>
       </div>
     </div>
   </header>
@@ -221,19 +266,19 @@
         <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
         Calendario
       </a>
-      <a href="#" class="nav-item" onclick="mostrarMuyPronto(event)">
+      <a href="/colecciones" class="nav-item">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg></span>
         Colecciones
       </a>
-      <a href="#" class="nav-item" onclick="mostrarMuyPronto(event)">
+      <a href="/eventos" class="nav-item">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><rect x="7" y="14" width="3" height="3" rx="0.5"/></svg></span>
         Eventos
       </a>
-      <a href="#" class="nav-item" onclick="mostrarMuyPronto(event)">
+      <a href="/proyectos" class="nav-item">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
         Proyectos
       </a>
-      <a href="#" class="nav-item" onclick="mostrarMuyPronto(event)">
+      <a href="/equipo" class="nav-item">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
         Equipo
       </a>
@@ -855,6 +900,25 @@ document.addEventListener('keydown', e => {
    INIT
 ══════════════════════════════════════════ */
 render();
+
+// ── NOTIF POPOVER ──
+function toggleNotif(e) {
+  e.stopPropagation();
+  document.getElementById('notifPopover').classList.toggle('open');
+  document.getElementById('profilePopover').classList.remove('open');
+}
+// ── PROFILE POPOVER ──
+function toggleProfile(e) {
+  e.stopPropagation();
+  document.getElementById('profilePopover').classList.toggle('open');
+  document.getElementById('notifPopover').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  const np = document.getElementById('notifPopover');
+  const pp = document.getElementById('profilePopover');
+  if (np && !document.getElementById('notifBtn').contains(e.target))   np.classList.remove('open');
+  if (pp && !document.getElementById('profileBtn').contains(e.target)) pp.classList.remove('open');
+});
 </script>
 </body>
 </html>

@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Colecciones · RunwaySync</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter','Segoe UI',sans-serif;background:#ebebeb;color:#141516;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+    /* ── TOPBAR ── */
+    .topbar{background:#fff;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 16px;border-bottom:1px solid #e0e0e0;flex-shrink:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:10px;}
+    .hamburger{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:4px;}
+    .hamburger span{display:block;width:20px;height:2px;background:#141516;border-radius:2px;}
+    .topbar-brand{font-family:'Georgia',serif;font-size:0.98rem;font-weight:400;letter-spacing:0.2em;color:#141516;}
+    .topbar-right{display:flex;align-items:center;gap:16px;}
+    .topbar-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#231f20;}
+    .topbar-icon:hover{background:#f3f4f6;}
+    .topbar-icon svg{width:20px;height:20px;stroke:#231f20;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    /* ── NOTIF POPOVER ── */
+    .notif-wrap{position:relative;}
+    .notif-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:280px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .notif-popover.open{display:block;}
+    .notif-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+    .notif-title{font-size:0.85rem;font-weight:700;color:#141516;}
+    .notif-badge{background:#cd1b80;color:#fff;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:20px;}
+    .notif-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5;}
+    .notif-item:last-child{border-bottom:none;}
+    .notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+    .notif-name{font-size:0.8rem;font-weight:600;color:#141516;}
+    .notif-meta{font-size:0.72rem;color:#888;margin-top:2px;}
+    /* ── PROFILE POPOVER ── */
+    .profile-wrap{position:relative;}
+    .profile-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .profile-popover.open{display:block;}
+    .pp-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;margin:0 auto 10px;}
+    .pp-name{font-weight:700;font-size:0.92rem;color:#141516;text-align:center;}
+    .pp-role{font-size:0.78rem;color:#888;text-align:center;margin-top:2px;margin-bottom:14px;}
+    .pp-divider{height:1px;background:#f0f0f0;margin-bottom:12px;}
+    .pp-logout{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:8px 14px;border-radius:10px;background:#fff3f8;color:#cd1b80;font-size:0.84rem;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .pp-logout:hover{background:#fce4f1;}
+
+    /* ── BODY ── */
+    .body-row{display:flex;flex:1;overflow:hidden;}
+
+    /* ── SIDEBAR ── */
+    .sidebar{flex:0 0 210px;background:#fff;display:flex;flex-direction:column;padding:12px 10px;border-right:1px solid #e0e0e0;gap:3px;overflow-y:auto;}
+    .nav-brand{display:flex;align-items:center;gap:8px;padding:8px 14px 14px;border-bottom:1px solid #f0f0f0;margin-bottom:4px;}
+    .nav-brand-dot{width:8px;height:8px;border-radius:50%;background:#cd1b80;}
+    .nav-brand-label{font-size:0.72rem;font-weight:600;letter-spacing:0.12em;color:#888;text-transform:uppercase;}
+    .nav-item{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:14px;text-decoration:none;color:#6f6f6f;font-size:0.88rem;font-weight:500;transition:background .15s,color .15s;}
+    .nav-item:hover{background:#f3f4f6;color:#231f20;}
+    .nav-item.active{background:#f0f0f0;color:#141516;font-weight:700;}
+    .nav-icon{width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .nav-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+    /* ── MAIN CONTENT ── */
+    .content{flex:1;overflow-y:auto;padding:24px;}
+
+    /* ── PAGE HEADER ── */
+    .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+    .page-title{font-size:1.3rem;font-weight:700;color:#141516;}
+    .page-subtitle{font-size:0.82rem;color:#888;margin-top:2px;}
+    .btn-new{display:flex;align-items:center;gap:7px;background:#141516;color:#fff;border:none;border-radius:12px;padding:9px 18px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:background .15s;}
+    .btn-new:hover{background:#2a2a2a;}
+    .btn-new svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+
+    /* ── STATS ROW ── */
+    .stats-row{display:flex;gap:14px;margin-bottom:22px;}
+    .stat-card{background:#fff;border-radius:14px;padding:16px 20px;flex:1;display:flex;align-items:center;gap:14px;}
+    .stat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    .stat-val{font-size:1.5rem;font-weight:800;color:#141516;line-height:1;}
+    .stat-lbl{font-size:0.75rem;color:#888;margin-top:3px;}
+
+    /* ── COLECCIONES GRID ── */
+    .col-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;}
+    .col-card{background:#fff;border-radius:16px;overflow:hidden;cursor:pointer;transition:box-shadow .2s,transform .15s;border:2px solid transparent;}
+    .col-card:hover{box-shadow:0 6px 24px rgba(0,0,0,0.10);transform:translateY(-2px);}
+    .col-card.selected{border-color:#141516;}
+    .col-img{width:100%;height:240px;object-fit:cover;display:block;background:#f3f4f6;}
+    .col-img-placeholder{width:100%;height:240px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:800;letter-spacing:0.05em;}
+    .col-body{padding:16px;}
+    .col-tag{display:inline-flex;align-items:center;gap:5px;font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:10px;}
+    .col-name{font-size:1rem;font-weight:700;color:#141516;margin-bottom:3px;}
+    .col-sub{font-size:0.78rem;color:#888;margin-bottom:12px;}
+    .col-progress-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+    .col-progress-lbl{font-size:0.74rem;color:#888;}
+    .col-progress-pct{font-size:0.82rem;font-weight:700;color:#141516;}
+    .progress-bar{height:6px;background:#f0f0f0;border-radius:10px;overflow:hidden;margin-bottom:12px;}
+    .progress-fill{height:100%;border-radius:10px;transition:width .5s;}
+    .col-footer{display:flex;align-items:center;justify-content:space-between;}
+    .col-swatches{display:flex;gap:5px;}
+    .swatch{width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.1);}
+    .col-prendas{font-size:0.74rem;color:#888;}
+    .col-status{display:inline-flex;align-items:center;gap:5px;font-size:0.72rem;font-weight:600;padding:4px 10px;border-radius:20px;margin-top:10px;}
+    .col-status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+    /* ── DETAIL VIEW ── */
+    .detail-view{display:none;flex:1;overflow:hidden;}
+    .detail-view.open{display:flex;}
+
+    .detail-main{flex:1;overflow-y:auto;padding:24px;}
+    .detail-back{display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;font-size:0.85rem;font-weight:600;color:#888;margin-bottom:18px;padding:0;}
+    .detail-back:hover{color:#141516;}
+    .detail-back svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .detail-header{display:flex;align-items:flex-start;gap:20px;margin-bottom:24px;}
+    .detail-cover{width:120px;height:120px;border-radius:14px;object-fit:cover;flex-shrink:0;background:#f3f4f6;}
+    .detail-cover-placeholder{width:120px;height:120px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;flex-shrink:0;}
+    .detail-meta{flex:1;}
+    .detail-season{font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:6px;}
+    .detail-name{font-size:1.4rem;font-weight:800;color:#141516;margin-bottom:6px;}
+    .detail-desc{font-size:0.83rem;color:#666;line-height:1.6;margin-bottom:10px;}
+    .detail-tags{display:flex;gap:6px;flex-wrap:wrap;}
+    .detail-tag{font-size:0.72rem;padding:3px 10px;border-radius:20px;background:#f0f0f0;color:#555;font-weight:500;}
+
+    .detail-progress-section{background:#fff;border-radius:14px;padding:16px 20px;margin-bottom:18px;}
+    .detail-progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+    .detail-progress-title{font-size:0.85rem;font-weight:700;color:#141516;}
+    .detail-progress-pct{font-size:1.1rem;font-weight:800;}
+    .detail-progress-bar{height:8px;background:#f0f0f0;border-radius:10px;overflow:hidden;}
+    .detail-progress-fill{height:100%;border-radius:10px;}
+
+    .detail-section-title{font-size:0.82rem;font-weight:700;color:#141516;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;}
+    .prendas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:20px;}
+    .prenda-card{background:#fff;border-radius:14px;overflow:hidden;cursor:pointer;transition:box-shadow .2s,transform .15s;border:2px solid transparent;}
+    .prenda-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.10);transform:translateY(-1px);}
+    .prenda-card.selected{border-color:#141516;}
+    .prenda-img{width:100%;height:120px;object-fit:cover;display:block;background:#f3f4f6;}
+    .prenda-img-placeholder{width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;}
+    .prenda-body{padding:10px 12px;}
+    .prenda-name{font-size:0.8rem;font-weight:700;color:#141516;margin-bottom:2px;}
+    .prenda-cat{font-size:0.72rem;color:#888;}
+
+    /* ── GARMENT PANEL ── */
+    .garment-panel{width:0;overflow:hidden;background:#fff;border-left:1px solid #e0e0e0;transition:width .3s ease;flex-shrink:0;}
+    .garment-panel.open{width:300px;}
+    .panel-inner{width:300px;padding:20px;overflow-y:auto;height:100%;}
+    .panel-close{display:flex;align-items:center;justify-content:flex-end;margin-bottom:14px;}
+    .panel-close-btn{background:none;border:none;cursor:pointer;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+    .panel-close-btn:hover{background:#f3f4f6;}
+    .panel-close-btn svg{width:16px;height:16px;stroke:#888;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .panel-img{width:100%;height:200px;object-fit:cover;border-radius:12px;background:#f3f4f6;margin-bottom:14px;}
+    .panel-img-placeholder{width:100%;height:200px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:3rem;margin-bottom:14px;}
+    .panel-name{font-size:1rem;font-weight:700;color:#141516;margin-bottom:4px;}
+    .panel-cat{font-size:0.78rem;color:#888;margin-bottom:14px;}
+    .panel-section{margin-bottom:14px;}
+    .panel-section-lbl{font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin-bottom:6px;}
+    .panel-desc{font-size:0.82rem;color:#555;line-height:1.6;}
+    .panel-detail-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f5f5f5;}
+    .panel-detail-row:last-child{border-bottom:none;}
+    .panel-detail-key{font-size:0.78rem;color:#888;}
+    .panel-detail-val{font-size:0.82rem;font-weight:600;color:#141516;}
+    .panel-swatches{display:flex;gap:6px;flex-wrap:wrap;}
+    .panel-swatch{width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.12);cursor:pointer;}
+    .panel-status{display:inline-flex;align-items:center;gap:5px;font-size:0.76rem;font-weight:600;padding:5px 12px;border-radius:20px;margin-top:4px;}
+    .panel-status-dot{width:7px;height:7px;border-radius:50%;}
+  </style>
+</head>
+<body>
+
+  <!-- ══ TOPBAR ══ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" aria-label="Menú"><span></span><span></span><span></span></button>
+    </div>
+    <span class="topbar-brand">RUNWAY SYNC</span>
+    <div class="topbar-right">
+      <div class="notif-wrap">
+        <div class="topbar-icon" id="notifBtn" title="Notificaciones" onclick="toggleNotif(event)" style="position:relative;">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#cd1b80;border-radius:50%;border:2px solid #fff;"></span>
+        </div>
+        <div class="notif-popover" id="notifPopover">
+          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge">4 próximos</span></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#cd1b80;"></div><div><div class="notif-name">Casting Modelos SS26</div><div class="notif-meta">23 ABR · 10:00 AM · Estudio Norte</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#b88917;"></div><div><div class="notif-name">Fitting Final Colección FW26</div><div class="notif-meta">24 ABR · 2:00 PM · Atelier Principal</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#08b864;"></div><div><div class="notif-name">Sesión Editorial Vogue CDMX</div><div class="notif-meta">28 ABR · Todo el día · Locación TBD</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#004aad;"></div><div><div class="notif-name">Reunión FW2026 — Dir. Creativa</div><div class="notif-meta">2 MAY · 9:00 AM · Sala de juntas</div></div></div>
+          <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
+        </div>
+      </div>
+      <div class="profile-wrap">
+        <div class="topbar-icon" id="profileBtn" title="Perfil" onclick="toggleProfile(event)">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="profile-popover" id="profilePopover">
+          <div class="pp-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80"><%= usuario.id %></div>
+          <div class="pp-name"><%= usuario.nombre %></div>
+          <div class="pp-role"><%= usuario.rolLabel %></div>
+          <div class="pp-divider"></div>
+          <a href="/" class="pp-logout">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ BODY ══ -->
+  <div class="body-row">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+      <a href="/dashboard" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></span>
+        Dashboard
+      </a>
+      <a href="/calendario" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+        Calendario
+      </a>
+      <a href="/colecciones" class="nav-item active">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg></span>
+        Colecciones
+      </a>
+      <a href="/eventos" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><rect x="7" y="14" width="3" height="3" rx="0.5"/></svg></span>
+        Eventos
+      </a>
+      <a href="/proyectos" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+        Proyectos
+      </a>
+      <a href="/equipo" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Equipo
+      </a>
+    </aside>
+
+    <!-- ── VISTA LISTA (pantalla 1) ── -->
+    <div class="content" id="vistaLista">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Colecciones</div>
+          <div class="page-subtitle">Temporadas activas e históricas de diseño</div>
+        </div>
+        <button class="btn-new" onclick="mostrarToast('Nueva colección próximamente')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nueva Colección
+        </button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-dot" style="background:#cd1b80"></div>
+          <div>
+            <div class="stat-val">3</div>
+            <div class="stat-lbl">Colecciones Activas</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-dot" style="background:#08b864"></div>
+          <div>
+            <div class="stat-val">45%</div>
+            <div class="stat-lbl">Avance General</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-dot" style="background:#004aad"></div>
+          <div>
+            <div class="stat-val">14</div>
+            <div class="stat-lbl">Prendas en Proceso</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-dot" style="background:#b88917"></div>
+          <div>
+            <div class="stat-val">2</div>
+            <div class="stat-lbl">En Revisión</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid de colecciones -->
+      <div class="col-grid">
+
+        <!-- SS26 · Tierra Roja -->
+        <!-- Imagen: /img/coleccion/brown.png -->
+        <div class="col-card" onclick="abrirColeccion('ss26')">
+          <img class="col-img" src="/img/coleccion/brown.png" alt="Tierra Roja SS26"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+          <div class="col-img-placeholder" style="display:none;background:rgba(205,27,128,0.10);color:#cd1b80">SS26</div>
+          <div class="col-body">
+            <div class="col-tag" style="background:rgba(205,27,128,0.12);color:#cd1b80">SS26 · Spring / Summer</div>
+            <div class="col-name">Tierra Roja</div>
+            <div class="col-sub">Colección principal · Fotografía · Producción</div>
+            <div class="col-progress-row">
+              <span class="col-progress-lbl">Avance general</span>
+              <span class="col-progress-pct">75%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:75%;background:#cd1b80;"></div></div>
+            <div class="col-footer">
+              <div class="col-swatches">
+                <div class="swatch" style="background:#8B2E00;" title="Tierra"></div>
+                <div class="swatch" style="background:#C4642B;" title="Cobre"></div>
+                <div class="swatch" style="background:#E8A87C;" title="Arena"></div>
+                <div class="swatch" style="background:#231f20;" title="Negro"></div>
+              </div>
+              <span class="col-prendas">6 prendas</span>
+            </div>
+            <div class="col-status" style="background:rgba(8,184,100,0.10);color:#08b864;">
+              <div class="col-status-dot" style="background:#08b864;"></div>En producción
+            </div>
+          </div>
+        </div>
+
+        <!-- FW26 · Neorromanticismo -->
+        <!-- Imagen: /img/coleccion/lavender.png -->
+        <div class="col-card" onclick="abrirColeccion('fw26')">
+          <img class="col-img" src="/img/coleccion/lavender.png" alt="Neorromanticismo FW26"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+          <div class="col-img-placeholder" style="display:none;background:rgba(0,74,173,0.10);color:#004aad">FW26</div>
+          <div class="col-body">
+            <div class="col-tag" style="background:rgba(0,74,173,0.12);color:#004aad">FW26 · Fall / Winter</div>
+            <div class="col-name">Neorromanticismo</div>
+            <div class="col-sub">Campaña digital · Fotografía · Diseño</div>
+            <div class="col-progress-row">
+              <span class="col-progress-lbl">Avance general</span>
+              <span class="col-progress-pct">40%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:40%;background:#004aad;"></div></div>
+            <div class="col-footer">
+              <div class="col-swatches">
+                <div class="swatch" style="background:#6B4E8A;" title="Lavanda"></div>
+                <div class="swatch" style="background:#C9B8E2;" title="Lila"></div>
+                <div class="swatch" style="background:#2C1A3A;" title="Ciruela"></div>
+                <div class="swatch" style="background:#F5F0FF;" title="Blanco"></div>
+              </div>
+              <span class="col-prendas">5 prendas</span>
+            </div>
+            <div class="col-status" style="background:rgba(184,137,23,0.10);color:#b88917;">
+              <div class="col-status-dot" style="background:#b88917;"></div>En diseño
+            </div>
+          </div>
+        </div>
+
+        <!-- Resort27 · Brisa -->
+        <!-- Imagen: /img/coleccion/green.png -->
+        <div class="col-card" onclick="abrirColeccion('resort27')">
+          <img class="col-img" src="/img/coleccion/green.png" alt="Brisa Resort 2027"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+          <div class="col-img-placeholder" style="display:none;background:rgba(8,184,100,0.10);color:#08b864">R27</div>
+          <div class="col-body">
+            <div class="col-tag" style="background:rgba(8,184,100,0.12);color:#08b864">Resort 27 · Crucero</div>
+            <div class="col-name">Brisa</div>
+            <div class="col-sub">Dirección de arte · Moodboard</div>
+            <div class="col-progress-row">
+              <span class="col-progress-lbl">Avance general</span>
+              <span class="col-progress-pct">20%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:20%;background:#08b864;"></div></div>
+            <div class="col-footer">
+              <div class="col-swatches">
+                <div class="swatch" style="background:#4CAF6E;" title="Verde"></div>
+                <div class="swatch" style="background:#A8D8B9;" title="Menta"></div>
+                <div class="swatch" style="background:#F5F2E8;" title="Crema"></div>
+                <div class="swatch" style="background:#1B4D3E;" title="Bosque"></div>
+              </div>
+              <span class="col-prendas">3 prendas</span>
+            </div>
+            <div class="col-status" style="background:rgba(118,17,189,0.10);color:#7611bd;">
+              <div class="col-status-dot" style="background:#7611bd;"></div>Ideación
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /vistaLista -->
+
+    <!-- ── VISTA DETALLE (pantalla 2) ── -->
+    <div class="detail-view" id="vistaDetalle">
+
+      <div class="detail-main" id="detailMain">
+        <!-- Se rellena con JS -->
+      </div>
+
+      <!-- Panel de prenda seleccionada -->
+      <div class="garment-panel" id="garmentPanel">
+        <div class="panel-inner" id="panelInner">
+          <!-- Se rellena con JS -->
+        </div>
+      </div>
+
+    </div><!-- /vistaDetalle -->
+
+  </div><!-- /body-row -->
+
+  <!-- Toast -->
+  <div id="toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#141516;color:#fff;padding:10px 22px;border-radius:30px;font-size:0.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);">
+  </div>
+
+<script>
+// ══ DATA ══
+const COLECCIONES = {
+  ss26: {
+    id: 'ss26',
+    season: 'SS26 · Spring / Summer',
+    name: 'Tierra Roja',
+    desc: 'Inspirada en los paisajes áridos y la riqueza cromática de los territorios mexicanos del norte. Texturas naturales, siluetas estructuradas y una paleta cálida que evoca la tierra arcillosa y el atardecer.',
+    img: '/img/coleccion/brown.png',
+    progress: 75,
+    color: '#cd1b80',
+    colorBg: 'rgba(205,27,128,0.12)',
+    status: 'En producción',
+    statusColor: '#08b864',
+    statusBg: 'rgba(8,184,100,0.10)',
+    tags: ['SS26', 'Editorial', 'Vogue', 'Fotografía'],
+    swatches: ['#8B2E00','#C4642B','#E8A87C','#231f20'],
+    prendas: [
+      { id:'p1', nombre:'Vestido Oaxaca',  categoria:'Vestidos',  img:'/img/coleccion/dress.png',    desc:'Vestido midi de línea A en tela de lino con bordado artesanal en el escote. Confeccionado con artesanos de Oaxaca. Disponible en 3 tallas.', material:'Lino 100%', color:'Tierra / Cobre', talla:'XS–L',  estado:'Producción', swatches:['#C4642B','#8B2E00','#231f20'] },
+      { id:'p2', nombre:'Blazer Tierra',   categoria:'Sacos',     img:'/img/coleccion/blazer.png',   desc:'Blazer oversize con estructura de hombros marcados. Forro en seda natural y botonería en carey. Pieza ancla de la colección.', material:'Lana / Seda', color:'Cobre oscuro', talla:'XS–XL', estado:'Aprobado', swatches:['#8B2E00','#5A1E00'] },
+      { id:'p3', nombre:'Pantalón Cobre',  categoria:'Pantalones', img:'/img/coleccion/pantalon.png', desc:'Pantalón de corte recto con pinzas frontales. Tiro alto y largo a tobillo. Tejido en gabardina stretch premium.', material:'Gabardina', color:'Cobre / Arena', talla:'24–32', estado:'Ajuste', swatches:['#C4642B','#E8A87C'] },
+      { id:'p4', nombre:'Vestido Tabaco',  categoria:'Vestidos',  img:'/img/coleccion/arena.png',    desc:'Vestido largo de escote cruzado en crepe de seda. Falda con vuelo en corte sesgado. Cierre invisible en costado.', material:'Crepe de seda', color:'Arena / Tabaco', talla:'XS–L', estado:'Producción', swatches:['#E8A87C','#D4A574','#A67C52'] },
+    ],
+  },
+  fw26: {
+    id: 'fw26',
+    season: 'FW26 · Fall / Winter',
+    name: 'Neorromanticismo',
+    desc: 'Una exploración del romanticismo contemporáneo a través de volúmenes dramáticos, encajes delicados y una paleta de lavandas profundas y ciruelas. La colección dialoga entre la fragilidad y la fuerza femenina.',
+    img: '/img/coleccion/lavender.png',
+    progress: 40,
+    color: '#004aad',
+    colorBg: 'rgba(0,74,173,0.12)',
+    status: 'En diseño',
+    statusColor: '#b88917',
+    statusBg: 'rgba(184,137,23,0.10)',
+    tags: ['FW26', 'Campaña Digital', 'Lookbook'],
+    swatches: ['#6B4E8A','#C9B8E2','#2C1A3A','#F5F0FF'],
+    prendas: [],
+  },
+  resort27: {
+    id: 'resort27',
+    season: 'Resort 27 · Crucero',
+    name: 'Brisa',
+    desc: 'Una colección ligera y luminosa que captura la esencia del verano mediterráneo. Tejidos naturales transpirables, estampados botánicos y siluetas fluidas que se mueven con el viento.',
+    img: '/img/coleccion/green.png',
+    progress: 20,
+    color: '#08b864',
+    colorBg: 'rgba(8,184,100,0.12)',
+    status: 'Ideación',
+    statusColor: '#7611bd',
+    statusBg: 'rgba(118,17,189,0.10)',
+    tags: ['Resort 27', 'Dirección de Arte', 'Moodboard'],
+    swatches: ['#4CAF6E','#A8D8B9','#F5F2E8','#1B4D3E'],
+    prendas: [],
+  },
+};
+
+let coleccionActual = null;
+let prendaActual    = null;
+
+// ══ NAVEGACIÓN ══
+function abrirColeccion(id) {
+  coleccionActual = COLECCIONES[id];
+  prendaActual    = null;
+  document.getElementById('vistaLista').style.display   = 'none';
+  document.getElementById('vistaDetalle').classList.add('open');
+  renderDetalle();
+  cerrarPanel();
+}
+
+function volverLista() {
+  document.getElementById('vistaDetalle').classList.remove('open');
+  document.getElementById('vistaLista').style.display = '';
+  coleccionActual = null;
+  prendaActual    = null;
+}
+
+// ══ RENDER DETALLE ══
+function renderDetalle() {
+  const c = coleccionActual;
+  const swatchHtml = c.swatches.map(s => `<div class="detail-tag" style="background:${s};width:20px;height:20px;border-radius:50%;padding:0;"></div>`).join('');
+  const tagsHtml   = c.tags.map(t => `<span class="detail-tag">${t}</span>`).join('');
+
+  const prendasHtml = c.prendas.length === 0
+    ? `<div style="grid-column:1/-1;padding:28px 0;text-align:center;color:#aaa;font-size:0.85rem;">
+        <div style="font-size:2rem;margin-bottom:8px;">🪡</div>
+        Las prendas de esta colección aún están en desarrollo
+       </div>`
+    : c.prendas.map(p => `
+    <div class="prenda-card ${prendaActual?.id === p.id ? 'selected' : ''}" onclick="abrirPrenda('${p.id}')">
+      <img class="prenda-img" src="${p.img}" alt="${p.nombre}"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="prenda-img-placeholder" style="display:none;background:#f3f4f6;">👗</div>
+      <div class="prenda-body">
+        <div class="prenda-name">${p.nombre}</div>
+        <div class="prenda-cat">${p.categoria}</div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('detailMain').innerHTML = `
+    <button class="detail-back" onclick="volverLista()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Volver a Colecciones
+    </button>
+    <div class="detail-header">
+      <img class="detail-cover" src="${c.img}" alt="${c.name}"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="detail-cover-placeholder" style="display:none;background:${c.colorBg};color:${c.color}">${c.id.toUpperCase()}</div>
+      <div class="detail-meta">
+        <div class="detail-season" style="color:${c.color}">${c.season}</div>
+        <div class="detail-name">${c.name}</div>
+        <div class="detail-desc">${c.desc}</div>
+        <div class="detail-tags">${tagsHtml}</div>
+      </div>
+    </div>
+
+    <div class="detail-progress-section">
+      <div class="detail-progress-header">
+        <span class="detail-progress-title">Progreso de la colección</span>
+        <span class="detail-progress-pct" style="color:${c.color}">${c.progress}%</span>
+      </div>
+      <div class="detail-progress-bar">
+        <div class="detail-progress-fill" style="width:${c.progress}%;background:${c.color};"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;">
+        <span style="font-size:0.74rem;color:#888;">${c.prendas.length} prendas · ${c.prendas.filter(p=>p.estado==='Aprobado').length} aprobadas</span>
+        <span class="col-status" style="background:${c.statusBg};color:${c.statusColor};font-size:0.72rem;padding:3px 10px;">
+          <span class="col-status-dot" style="background:${c.statusColor};width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;"></span>
+          ${c.status}
+        </span>
+      </div>
+    </div>
+
+    <div class="detail-section-title">Prendas de la Colección</div>
+    <div class="prendas-grid">${prendasHtml}</div>
+  `;
+}
+
+// ══ PANEL PRENDA ══
+function abrirPrenda(id) {
+  const c = coleccionActual;
+  prendaActual = c.prendas.find(p => p.id === id);
+  if (!prendaActual) return;
+
+  // Actualizar selección visual
+  document.querySelectorAll('.prenda-card').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.prenda-card').forEach(el => {
+    if (el.getAttribute('onclick') === `abrirPrenda('${id}')`) el.classList.add('selected');
+  });
+
+  const p = prendaActual;
+  const swatchesHtml = p.swatches.map(s => `<div class="panel-swatch" style="background:${s};" title="${s}"></div>`).join('');
+
+  const estadoMap = {
+    'Aprobado':  { bg:'rgba(8,184,100,0.10)',   color:'#08b864'  },
+    'Producción':{ bg:'rgba(205,27,128,0.10)', color:'#cd1b80'  },
+    'Ajuste':    { bg:'rgba(184,137,23,0.10)',  color:'#b88917'  },
+    'Diseño':    { bg:'rgba(0,74,173,0.10)',    color:'#004aad'  },
+    'Muestra':   { bg:'rgba(118,17,189,0.10)',  color:'#7611bd'  },
+    'Moodboard': { bg:'rgba(8,184,100,0.10)',   color:'#08b864'  },
+    'Boceto':    { bg:'rgba(184,137,23,0.10)',  color:'#b88917'  },
+  };
+  const est = estadoMap[p.estado] || { bg:'#f0f0f0', color:'#888' };
+
+  document.getElementById('panelInner').innerHTML = `
+    <div class="panel-close">
+      <button class="panel-close-btn" onclick="cerrarPanel()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <img class="panel-img" src="${p.img}" alt="${p.nombre}"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+    <div class="panel-img-placeholder" style="display:none;background:#f3f4f6;">👗</div>
+    <div class="panel-name">${p.nombre}</div>
+    <div class="panel-cat">${p.categoria}</div>
+
+    <div class="panel-section">
+      <div class="panel-section-lbl">Descripción</div>
+      <div class="panel-desc">${p.desc}</div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-lbl">Detalles</div>
+      <div class="panel-detail-row">
+        <span class="panel-detail-key">Material</span>
+        <span class="panel-detail-val">${p.material}</span>
+      </div>
+      <div class="panel-detail-row">
+        <span class="panel-detail-key">Color</span>
+        <span class="panel-detail-val">${p.color}</span>
+      </div>
+      <div class="panel-detail-row">
+        <span class="panel-detail-key">Tallas</span>
+        <span class="panel-detail-val">${p.talla}</span>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-lbl">Paleta de color</div>
+      <div class="panel-swatches">${swatchesHtml}</div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-lbl">Estado</div>
+      <div class="panel-status" style="background:${est.bg};color:${est.color};">
+        <div class="panel-status-dot" style="background:${est.color};"></div>
+        ${p.estado}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('garmentPanel').classList.add('open');
+}
+
+function cerrarPanel() {
+  document.getElementById('garmentPanel').classList.remove('open');
+  document.querySelectorAll('.prenda-card').forEach(el => el.classList.remove('selected'));
+  prendaActual = null;
+}
+
+// ══ NOTIF + PROFILE POPOVERS ══
+function toggleNotif(e) {
+  e.stopPropagation();
+  document.getElementById('notifPopover').classList.toggle('open');
+  document.getElementById('profilePopover').classList.remove('open');
+}
+function toggleProfile(e) {
+  e.stopPropagation();
+  document.getElementById('profilePopover').classList.toggle('open');
+  document.getElementById('notifPopover').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  const np = document.getElementById('notifPopover');
+  const pp = document.getElementById('profilePopover');
+  if (np && !document.getElementById('notifBtn').contains(e.target))   np.classList.remove('open');
+  if (pp && !document.getElementById('profileBtn').contains(e.target)) pp.classList.remove('open');
+});
+
+// ══ TOAST ══
+function mostrarToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+
+// Escape key cierra panel
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('garmentPanel').classList.contains('open')) {
+      cerrarPanel();
+    } else if (document.getElementById('vistaDetalle').classList.contains('open')) {
+      volverLista();
+    }
+  }
+});
+</script>
+</body>
+</html>
