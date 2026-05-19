@@ -44,6 +44,32 @@
     .topbar-icon svg{width:20px;height:20px;stroke:#231f20;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
     .topbar-icon.profile svg{fill:#231f20;stroke:none;}
 
+    /* ── PROFILE POPOVER ── */
+    .profile-wrap{position:relative;}
+    .profile-popover{
+      display:none;position:absolute;top:calc(100% + 10px);right:0;
+      background:#fff;border:1px solid #e0e0e0;border-radius:14px;
+      padding:16px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.10);
+      z-index:500;
+    }
+    .profile-popover.open{display:block;}
+    .pp-avatar{
+      width:44px;height:44px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;font-size:1rem;margin:0 auto 10px;
+    }
+    .pp-name{font-weight:700;font-size:0.92rem;color:#141516;text-align:center;}
+    .pp-role{font-size:0.78rem;color:#888;text-align:center;margin-top:2px;margin-bottom:14px;}
+    .pp-divider{height:1px;background:#f0f0f0;margin-bottom:12px;}
+    .pp-logout{
+      display:flex;align-items:center;justify-content:center;gap:7px;
+      width:100%;padding:8px 14px;border-radius:10px;
+      background:#fff3f8;color:#cd1b80;font-size:0.84rem;font-weight:600;
+      border:none;cursor:pointer;text-decoration:none;
+      transition:background .15s;
+    }
+    .pp-logout:hover{background:#fce4f1;}
+
     /* ── BODY ROW ── */
     .body-row{display:flex;flex:1;overflow:hidden;}
 
@@ -251,12 +277,24 @@
           <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
       </div>
-      <!-- Ícono usuario -->
-      <div class="topbar-icon profile" title="Perfil">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#231f20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="8" r="4"/>
-          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-        </svg>
+      <!-- Ícono usuario + popover -->
+      <div class="profile-wrap">
+        <div class="topbar-icon profile" id="profileBtn" title="Perfil" onclick="toggleProfile(event)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#231f20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+        </div>
+        <div class="profile-popover" id="profilePopover">
+          <div class="pp-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80"><%= usuario.id %></div>
+          <div class="pp-name"><%= usuario.nombre %></div>
+          <div class="pp-role"><%= usuario.rolLabel %></div>
+          <div class="pp-divider"></div>
+          <a href="/" class="pp-logout">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+          </a>
+        </div>
       </div>
     </div>
   </header>
@@ -289,7 +327,7 @@
         Calendario
       </a>
       <!-- Colecciones -->
-      <a href="#" class="nav-item">
+      <a href="/colecciones" class="nav-item">
         <span class="nav-icon">
           <svg viewBox="0 0 24 24">
             <path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/>
@@ -298,7 +336,7 @@
         Colecciones
       </a>
       <!-- Eventos -->
-      <a href="#" class="nav-item">
+      <a href="/eventos" class="nav-item">
         <span class="nav-icon">
           <svg viewBox="0 0 24 24">
             <rect x="3" y="4" width="18" height="18" rx="2"/>
@@ -311,7 +349,7 @@
         Eventos
       </a>
       <!-- Proyectos -->
-      <a href="#" class="nav-item">
+      <a href="/proyectos" class="nav-item">
         <span class="nav-icon">
           <svg viewBox="0 0 24 24">
             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
@@ -321,7 +359,7 @@
         Proyectos
       </a>
       <!-- Equipo -->
-      <a href="#" class="nav-item">
+      <a href="/equipo" class="nav-item">
         <span class="nav-icon">
           <svg viewBox="0 0 24 24">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -720,6 +758,18 @@ function loadDashEvents() {
       <div class="events-side">${eventsHTML}</div>`;
   }
 })();
+
+// ── PROFILE POPOVER ──
+function toggleProfile(e) {
+  e.stopPropagation();
+  document.getElementById('profilePopover').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  const pop = document.getElementById('profilePopover');
+  if (pop && !document.getElementById('profileBtn').contains(e.target)) {
+    pop.classList.remove('open');
+  }
+});
 </script>
 </body>
 </html>

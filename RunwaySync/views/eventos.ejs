@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RunwaySync – Eventos</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;}
+    body{background:#ebebeb;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#231f20;}
+
+    .app{display:flex;flex-direction:column;height:100vh;}
+
+    /* ── TOPBAR ── */
+    .topbar{background:#fff;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 16px;border-bottom:1px solid #e0e0e0;flex-shrink:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:10px;}
+    .hamburger{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:4px;}
+    .hamburger span{display:block;width:20px;height:2px;background:#231f20;border-radius:2px;}
+    .topbar-brand{font-family:'Georgia',serif;font-size:.98rem;font-weight:400;letter-spacing:.2em;color:#141516;}
+    .topbar-right{display:flex;align-items:center;gap:10px;position:relative;}
+    .topbar-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+    .topbar-icon:hover{background:#f3f4f6;}
+    .topbar-icon svg{width:20px;height:20px;stroke:#231f20;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    .profile-wrap{position:relative;}
+    .profile-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .profile-popover.open{display:block;}
+    .pp-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;margin:0 auto 10px;}
+    .pp-name{font-weight:700;font-size:0.92rem;color:#141516;text-align:center;}
+    .pp-role{font-size:0.78rem;color:#888;text-align:center;margin-top:2px;margin-bottom:14px;}
+    .pp-divider{height:1px;background:#f0f0f0;margin-bottom:12px;}
+    .pp-logout{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:8px 14px;border-radius:10px;background:#fff3f8;color:#cd1b80;font-size:0.84rem;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .pp-logout:hover{background:#fce4f1;}
+
+    /* Role badge */
+    .role-badge{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:.68rem;font-weight:700;cursor:pointer;border:none;transition:filter .15s;}
+    .role-badge.directora{background:rgba(205,27,128,.12);color:#cd1b80;}
+    .role-badge.jefe{background:rgba(184,137,23,.15);color:#a07312;}
+    .role-badge.miembro{background:rgba(8,184,100,.13);color:#057a42;}
+    .role-badge:hover{filter:brightness(.9);}
+    .role-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+    /* Role dropdown */
+    .role-drop{position:absolute;top:46px;right:0;background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.15);padding:8px 0;min-width:230px;z-index:300;display:none;}
+    .role-drop.open{display:block;}
+    .role-drop-title{font-size:.62rem;font-weight:800;color:#b0b0b0;letter-spacing:.1em;text-transform:uppercase;padding:5px 16px 6px;}
+    .role-drop-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;text-decoration:none;}
+    .role-drop-item:hover{background:#f8f8f8;}
+    .role-drop-item.active-role{background:#f3f4f6;}
+    .role-drop-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;flex-shrink:0;}
+    .role-drop-info{flex:1;}
+    .role-drop-name{font-size:.78rem;font-weight:700;color:#141516;}
+    .role-drop-lbl{font-size:.63rem;color:#95a2a5;margin-top:1px;}
+    .checkmark{font-size:.75rem;color:#08b864;}
+    .role-drop-note{font-size:.62rem;color:#b0b0b0;padding:5px 16px 4px;font-style:italic;border-top:1px solid #f3f4f6;margin-top:4px;}
+
+    /* ── SIDEBAR ── */
+    .body-row{display:flex;flex:1;overflow:hidden;}
+    .sidebar{flex:0 0 210px;background:#fff;display:flex;flex-direction:column;padding:12px 10px;border-right:1px solid #e0e0e0;gap:3px;overflow-y:auto;}
+    .nav-item{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:14px;text-decoration:none;color:#6f6f6f;font-size:.88rem;font-weight:500;transition:background .15s,color .15s;}
+    .nav-item:hover{background:#f3f4f6;color:#231f20;}
+    .nav-item.active{background:#f0f0f0;color:#141516;font-weight:700;}
+    .nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .nav-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+
+    /* ── CONTENT ── */
+    .content{flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:14px;}
+
+    /* ── PERMS BANNER ── */
+    .perms-banner{display:flex;align-items:center;gap:9px;padding:9px 16px;border-radius:12px;font-size:.73rem;font-weight:600;}
+    .perms-banner.jefe{background:rgba(0,74,173,.07);color:#004aad;}
+    .perms-banner.miembro{background:rgba(184,137,23,.1);color:#a07312;}
+    .perms-banner svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
+
+    /* ── PAGE HEADER ── */
+    .page-hdr{display:flex;align-items:flex-end;justify-content:space-between;}
+    .page-hdr h2{font-family:'Georgia',serif;font-size:1.55rem;font-weight:800;color:#141516;}
+    .page-hdr-sub{font-size:.73rem;color:#95a2a5;margin-top:2px;}
+    .page-actions{display:flex;gap:9px;}
+    .btn-exportar{padding:8px 20px;border-radius:50px;background:#fff;color:#231f20;border:1.5px solid #d0d0d0;font-size:.8rem;font-weight:600;cursor:pointer;transition:background .15s;}
+    .btn-exportar:hover{background:#f5f5f5;}
+    .btn-nuevo{padding:8px 20px;border-radius:50px;background:#141516;color:#fff;border:none;font-size:.8rem;font-weight:700;cursor:pointer;transition:background .15s;}
+    .btn-nuevo:hover{background:#333;}
+
+    /* ── FILTER TABS ── */
+    .filtros{display:flex;gap:8px;}
+    .filtro{padding:7px 18px;border-radius:50px;background:#fff;color:#6f6f6f;border:1.5px solid #e0e0e0;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .15s;}
+    .filtro:hover{border-color:#b0b0b0;color:#231f20;}
+    .filtro.active{background:#141516;color:#fff;border-color:#141516;}
+
+    /* ── MAIN LAYOUT ── */
+    .ev-layout{display:flex;gap:16px;align-items:flex-start;}
+    .ev-list{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;}
+    .ev-panel{flex-shrink:0;width:260px;display:flex;flex-direction:column;gap:12px;position:sticky;top:0;}
+
+    /* ── EVENT CARD ── */
+    .ev-card{
+      background:#fff;border-radius:14px;
+      box-shadow:0 1px 4px rgba(0,0,0,.05);
+      display:flex;overflow:hidden;
+      cursor:pointer;transition:box-shadow .15s;
+      border-left:3px solid transparent;
+    }
+    .ev-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.1);}
+    .ev-card:hover .ev-actions{opacity:1;}
+    .ev-card.hidden-card{display:none;}
+
+    /* Date block */
+    .ev-date{
+      flex-shrink:0;width:64px;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:flex-start;
+      padding:20px 0 20px;
+      gap:2px;
+    }
+    .ev-day{font-size:1.85rem;font-weight:800;color:#141516;line-height:1;}
+    .ev-mon{font-size:.62rem;font-weight:700;color:#95a2a5;letter-spacing:.08em;text-transform:uppercase;}
+
+    /* Card content */
+    .ev-content{flex:1;padding:16px 18px;border-left:1px solid #f3f4f6;display:flex;flex-direction:column;gap:10px;}
+
+    .ev-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
+    .ev-nombre{font-size:.9rem;font-weight:700;color:#141516;line-height:1.3;}
+    .ev-header-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0;}
+
+    /* Status badges */
+    .ev-badge{padding:4px 12px;border-radius:20px;font-size:.63rem;font-weight:700;white-space:nowrap;}
+    .ev-badge.confirmado{background:#d1fae5;color:#065f46;}
+    .ev-badge.pendiente{background:#fef3c7;color:#92400e;}
+    .ev-badge.por_confirmar{background:#dbeafe;color:#1d4ed8;}
+
+    /* Team stack */
+    .eq-stack{display:flex;align-items:center;}
+    .eq-av{width:24px;height:24px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:800;margin-left:-6px;flex-shrink:0;}
+    .eq-stack .eq-av:first-child{margin-left:0;}
+
+    /* Meta row */
+    .ev-meta{display:flex;gap:18px;flex-wrap:wrap;}
+    .ev-meta-item{display:flex;align-items:center;gap:5px;font-size:.72rem;color:#8a9295;}
+    .ev-meta-item svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+
+    /* Description */
+    .ev-desc{font-size:.76rem;color:#6f6f6f;line-height:1.55;}
+
+    /* Bottom row: tags + actions */
+    .ev-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+    .ev-tags{display:flex;flex-wrap:wrap;gap:6px;}
+    .ev-tag{padding:3px 10px;border-radius:20px;font-size:.63rem;font-weight:700;}
+    .ev-actions{display:flex;gap:5px;opacity:0;transition:opacity .15s;flex-shrink:0;}
+    .btn-ic{width:28px;height:28px;border-radius:8px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s;}
+    .btn-ic.edit{background:rgba(0,74,173,.1);color:#004aad;}
+    .btn-ic.edit:hover{background:rgba(0,74,173,.22);}
+    .btn-ic.del{background:rgba(224,32,32,.1);color:#e02020;}
+    .btn-ic.del:hover{background:rgba(224,32,32,.22);}
+    .btn-ic svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+    /* Empty state */
+    .ev-empty{background:#fff;border-radius:14px;padding:32px;text-align:center;color:#95a2a5;font-size:.82rem;font-weight:600;display:none;}
+    .ev-empty.show{display:block;}
+
+    /* ── RIGHT PANEL ── */
+    .panel-card{background:#fff;border-radius:16px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+    .panel-title{font-size:.63rem;font-weight:800;letter-spacing:.1em;color:#8a9295;text-transform:uppercase;margin-bottom:14px;}
+
+    /* Resumen */
+    .res-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;}
+    .res-row:last-child{border-bottom:none;}
+    .res-lbl{font-size:.78rem;color:#6f6f6f;font-weight:500;}
+    .res-val{font-size:.88rem;font-weight:800;}
+    .res-val.plain{color:#141516;}
+    .res-val.green{color:#08b864;}
+    .res-val.amber{color:#b88917;}
+    .res-val.blue{color:#004aad;}
+
+    /* Próximos */
+    .prox-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5;}
+    .prox-item:last-child{border-bottom:none;}
+    .prox-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+    .prox-nombre{font-size:.76rem;font-weight:700;color:#141516;line-height:1.3;}
+    .prox-sub{font-size:.63rem;color:#95a2a5;margin-top:2px;}
+
+    /* ── MODAL BASE ── */
+    .modal-ov{position:fixed;inset:0;background:rgba(20,21,22,.45);display:flex;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:opacity .2s;}
+    .modal-ov.visible{opacity:1;pointer-events:all;}
+    .modal-box{background:#fff;border-radius:20px;padding:28px 32px;box-shadow:0 12px 48px rgba(0,0,0,.18);transform:translateY(10px) scale(.97);transition:transform .22s,opacity .22s;opacity:0;width:500px;max-width:96vw;max-height:90vh;overflow-y:auto;}
+    .modal-ov.visible .modal-box{transform:translateY(0) scale(1);opacity:1;}
+    .modal-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;}
+    .modal-ttl{font-family:'Georgia',serif;font-size:1.28rem;font-weight:700;color:#141516;}
+    .modal-sub{font-size:.7rem;color:#95a2a5;margin-top:3px;}
+    .modal-cls{background:none;border:none;cursor:pointer;font-size:1.3rem;color:#b0b0b0;padding:2px;transition:color .12s;}
+    .modal-cls:hover{color:#231f20;}
+
+    /* Form */
+    .fg{margin-bottom:13px;}
+    .fl{display:block;font-size:.72rem;font-weight:700;color:#6f6f6f;margin-bottom:5px;}
+    .fi{width:100%;padding:9px 13px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:.82rem;color:#231f20;background:#fff;outline:none;transition:border-color .15s;font-family:inherit;}
+    .fi:focus{border-color:#141516;}
+    .fi-locked{width:100%;padding:9px 13px;border:1.5px solid #f0f0f0;border-radius:10px;font-size:.82rem;color:#8a9295;background:#f8f8f8;font-family:inherit;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+    /* Team checkboxes */
+    .team-cbs{display:flex;flex-direction:column;gap:6px;margin-top:4px;}
+    .tcb-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;cursor:pointer;transition:background .1s;}
+    .tcb-item:hover:not(.locked){background:#f8f8f8;}
+    .tcb-item.locked{opacity:.55;cursor:not-allowed;}
+    .tcb-item input[type=checkbox]{accent-color:#141516;width:15px;height:15px;cursor:pointer;flex-shrink:0;}
+    .tcb-item.locked input{cursor:not-allowed;}
+    .tcb-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800;flex-shrink:0;}
+    .tcb-name{font-size:.78rem;font-weight:600;color:#141516;flex:1;}
+    .tcb-role{font-size:.62rem;color:#95a2a5;}
+
+    /* Modal footer */
+    .modal-footer{display:flex;gap:9px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid #f3f4f6;}
+    .btn-cancel{padding:9px 20px;border-radius:50px;background:#f3f4f6;color:#6f6f6f;border:none;font-size:.8rem;font-weight:600;cursor:pointer;}
+    .btn-cancel:hover{background:#e8e9eb;}
+    .btn-submit{padding:9px 22px;border-radius:50px;background:#141516;color:#fff;border:none;font-size:.8rem;font-weight:700;cursor:pointer;}
+    .btn-submit:hover{background:#333;}
+    .btn-danger{padding:9px 20px;border-radius:50px;background:#e02020;color:#fff;border:none;font-size:.8rem;font-weight:700;cursor:pointer;}
+    .btn-danger:hover{background:#c01515;}
+
+    /* Detail modal */
+    .detail-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+    .dm-lbl{font-size:.63rem;font-weight:800;color:#8a9295;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+    .dm-val{font-size:.82rem;font-weight:600;color:#141516;}
+    .detail-desc{font-size:.78rem;color:#6f6f6f;line-height:1.55;margin-bottom:16px;}
+    .detail-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+    .detail-team{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+    .dt-member{display:flex;align-items:center;gap:7px;}
+    .dt-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.57rem;font-weight:800;}
+    .dt-name{font-size:.73rem;font-weight:600;color:#141516;}
+    .dt-role{font-size:.62rem;color:#95a2a5;}
+    .readonly-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;background:#fef3c7;color:#92400e;font-size:.65rem;font-weight:700;margin-bottom:14px;}
+    .section-lbl{font-size:.65rem;font-weight:800;color:#8a9295;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+
+    /* Confirm delete */
+    .confirm-box{text-align:center;padding:10px 0 4px;}
+    .confirm-msg{font-size:.85rem;color:#6f6f6f;line-height:1.5;}
+    .confirm-name{font-weight:700;color:#141516;}
+
+    /* Toast */
+    .toast{position:fixed;bottom:24px;right:24px;background:#141516;color:#fff;padding:12px 20px;border-radius:12px;font-size:.8rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.25);transform:translateY(16px);opacity:0;transition:transform .25s,opacity .25s;pointer-events:none;z-index:2000;display:flex;align-items:center;gap:8px;}
+    .toast.show{transform:translateY(0);opacity:1;}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══ TOPBAR ══ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger"><span></span><span></span><span></span></button>
+    </div>
+    <span class="topbar-brand">RUNWAY SYNC</span>
+    <div class="topbar-right">
+      <div class="topbar-icon" title="Notificaciones">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      <button class="role-badge <%= usuario.rol %>" onclick="toggleRoleDrop(event)">
+        <span class="role-dot"></span><%= usuario.rolLabel %>
+      </button>
+      <div class="role-drop" id="roleDrop">
+        <div class="role-drop-title">Demo · Cambiar rol</div>
+        <a class="role-drop-item <%= usuario.rol==='directora'?'active-role':'' %>" href="/eventos?rol=directora">
+          <div class="role-drop-av" style="background:rgba(205,27,128,.18);color:#cd1b80">MR</div>
+          <div class="role-drop-info"><div class="role-drop-name">Marietta</div><div class="role-drop-lbl">Directora Creativa · Acceso total</div></div>
+          <% if(usuario.rol==='directora'){%><span class="checkmark">✓</span><%}%>
+        </a>
+        <a class="role-drop-item <%= usuario.rol==='jefe'?'active-role':'' %>" href="/eventos?rol=jefe">
+          <div class="role-drop-av" style="background:rgba(184,137,23,.18);color:#b88917">BP</div>
+          <div class="role-drop-info"><div class="role-drop-name">Bruno</div><div class="role-drop-lbl">Jefe de Área · Producción</div></div>
+          <% if(usuario.rol==='jefe'){%><span class="checkmark">✓</span><%}%>
+        </a>
+        <a class="role-drop-item <%= usuario.rol==='miembro'?'active-role':'' %>" href="/eventos?rol=miembro">
+          <div class="role-drop-av" style="background:rgba(8,184,100,.18);color:#08b864">CL</div>
+          <div class="role-drop-info"><div class="role-drop-name">Camila</div><div class="role-drop-lbl">Miembro de Equipo · Styling</div></div>
+          <% if(usuario.rol==='miembro'){%><span class="checkmark">✓</span><%}%>
+        </a>
+        <div class="role-drop-note">Simula los permisos de cada rol en tiempo real</div>
+      </div>
+      <!-- Perfil -->
+      <div class="profile-wrap">
+        <div class="topbar-icon" id="profileBtn" title="Perfil" onclick="toggleProfile(event)" style="cursor:pointer;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#231f20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="profile-popover" id="profilePopover">
+          <div class="pp-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80"><%= usuario.id %></div>
+          <div class="pp-name"><%= usuario.nombre %></div>
+          <div class="pp-role"><%= usuario.rolLabel %></div>
+          <div class="pp-divider"></div>
+          <a href="/" class="pp-logout">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="body-row">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+      <a href="/dashboard" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></span>
+        Dashboard
+      </a>
+      <a href="/calendario" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+        Calendario
+      </a>
+      <a href="/colecciones" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg></span>
+        Colecciones
+      </a>
+      <a href="/eventos?rol=<%= usuario.rol %>" class="nav-item active">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><rect x="7" y="14" width="3" height="3" rx="0.5"/></svg></span>
+        Eventos
+      </a>
+      <a href="/proyectos?rol=<%= usuario.rol %>" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+        Proyectos
+      </a>
+      <a href="/equipo" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Equipo
+      </a>
+    </aside>
+
+    <!-- ── CONTENT ── -->
+    <div class="content">
+
+      <!-- Banner permisos -->
+      <% if (usuario.rol === 'jefe') { %>
+      <div class="perms-banner jefe">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Viendo eventos en los que participas &middot; Puedes crear y editar eventos de tu área &middot; No puedes eliminar
+      </div>
+      <% } else if (usuario.rol === 'miembro') { %>
+      <div class="perms-banner miembro">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Modo solo lectura &middot; Mostrando únicamente los eventos asignados a ti
+      </div>
+      <% } %>
+
+      <!-- PAGE HEADER -->
+      <div class="page-hdr">
+        <div>
+          <h2>Eventos</h2>
+          <p class="page-hdr-sub">Abril &ndash; Mayo 2026 &middot; <%= eventos.length %> eventos pr&oacute;ximos</p>
+        </div>
+        <div class="page-actions">
+          <% if (usuario.rol === 'directora') { %>
+          <button class="btn-exportar" onclick="exportar()">Exportar</button>
+          <% } %>
+          <% if (usuario.rol !== 'miembro') { %>
+          <button class="btn-nuevo" onclick="abrirNuevo()">+ Nuevo evento</button>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- FILTER TABS -->
+      <div class="filtros">
+        <button class="filtro active" onclick="filtrar(this,'todos')">Todos</button>
+        <button class="filtro" onclick="filtrar(this,'casting')">Castings</button>
+        <button class="filtro" onclick="filtrar(this,'editorial')">Editoriales</button>
+        <button class="filtro" onclick="filtrar(this,'fitting')">Fittings</button>
+        <button class="filtro" onclick="filtrar(this,'reunion')">Reuniones</button>
+      </div>
+
+      <!-- TWO COLUMN LAYOUT -->
+      <div class="ev-layout">
+
+        <!-- LEFT: Event cards -->
+        <div class="ev-list" id="evList">
+
+          <% const TAG_STYLES = {
+            'Casting':   { bg:'#fce4f0', color:'#9b174e' },
+            'SS26':      { bg:'#dbeafe', color:'#1d4ed8' },
+            'Fitting':   { bg:'#ede9fe', color:'#5b21b6' },
+            'FW26':      { bg:'#d1fae5', color:'#065f46' },
+            'Resort':    { bg:'#fef3c7', color:'#92400e' },
+            'Editorial': { bg:'#ffedd5', color:'#9a3412' },
+            'Prensa':    { bg:'#f3e8ff', color:'#7e22ce' },
+            'Reunión':   { bg:'#f1f5f9', color:'#475569' },
+          }; %>
+
+          <% const BADGE_LABELS = {
+            confirmado:   'Confirmado',
+            pendiente:    'Locación pendiente',
+            por_confirmar:'Por confirmar',
+          }; %>
+
+          <% eventos.forEach(e => { %>
+          <div class="ev-card" data-tipo="<%= e.tipo %>" data-id="<%= e.id %>"
+               style="border-left-color:<%= e.color %>;"
+               onclick="verDetalle(<%= e.id %>)">
+
+            <!-- Date -->
+            <div class="ev-date">
+              <div class="ev-day" style="color:<%= e.color %>"><%= e.dia %></div>
+              <div class="ev-mon"><%= e.mes %></div>
+            </div>
+
+            <!-- Content -->
+            <div class="ev-content">
+              <div class="ev-header">
+                <h3 class="ev-nombre"><%= e.nombre %></h3>
+                <div class="ev-header-right">
+                  <span class="ev-badge <%= e.status %>"><%= BADGE_LABELS[e.status] || e.status %></span>
+                  <div class="eq-stack">
+                    <% e.team.forEach(mid => { const m = MIEMBROS[mid]; if(m){ %>
+                    <div class="eq-av" style="background:<%= m.colorBg %>;color:<%= m.color %>" title="<%= m.nombre %>"><%= mid %></div>
+                    <% }}) %>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ev-meta">
+                <span class="ev-meta-item">
+                  <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <%= e.lugar %>
+                </span>
+                <span class="ev-meta-item">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <%= e.hora %>
+                </span>
+              </div>
+
+              <p class="ev-desc"><%= e.descripcion %></p>
+
+              <div class="ev-bottom">
+                <div class="ev-tags">
+                  <% e.tags.forEach(tag => {
+                    const ts = TAG_STYLES[tag] || { bg:'#f3f4f6', color:'#374151' };
+                  %>
+                  <span class="ev-tag" style="background:<%= ts.bg %>;color:<%= ts.color %>"><%= tag %></span>
+                  <% }) %>
+                </div>
+                <% if (e.canEdit || e.canDelete) { %>
+                <div class="ev-actions">
+                  <% if (e.canEdit) { %>
+                  <button class="btn-ic edit" title="Editar" onclick="event.stopPropagation();abrirEditar(<%= e.id %>)">
+                    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <% } %>
+                  <% if (e.canDelete) { %>
+                  <button class="btn-ic del" title="Eliminar" onclick="event.stopPropagation();abrirEliminar(<%= e.id %>)">
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  </button>
+                  <% } %>
+                </div>
+                <% } %>
+              </div>
+            </div>
+
+          </div>
+          <% }) %>
+
+          <div class="ev-empty" id="evEmpty">No hay eventos en esta categoría</div>
+        </div>
+
+        <!-- RIGHT: Panel -->
+        <div class="ev-panel">
+
+          <!-- Resumen del mes -->
+          <div class="panel-card">
+            <div class="panel-title">Resumen del mes</div>
+            <div class="res-row">
+              <span class="res-lbl">Total eventos</span>
+              <span class="res-val plain"><%= resumen.total %></span>
+            </div>
+            <div class="res-row">
+              <span class="res-lbl">Confirmados</span>
+              <span class="res-val green"><%= resumen.confirmados %></span>
+            </div>
+            <div class="res-row">
+              <span class="res-lbl">Pendientes</span>
+              <span class="res-val amber"><%= resumen.pendientes %></span>
+            </div>
+            <div class="res-row">
+              <span class="res-lbl">Por confirmar</span>
+              <span class="res-val blue"><%= resumen.porConfirmar %></span>
+            </div>
+          </div>
+
+          <!-- Próximos — Mayo -->
+          <div class="panel-card">
+            <div class="panel-title">Pr&oacute;ximos &mdash; Mayo</div>
+            <% PROXIMOS_MAYO.forEach(p => { %>
+            <div class="prox-item">
+              <span class="prox-dot" style="background:<%= p.color %>"></span>
+              <div>
+                <div class="prox-nombre"><%= p.nombre %></div>
+                <div class="prox-sub"><%= p.fecha %> &middot; <%= p.lugar %></div>
+              </div>
+            </div>
+            <% }) %>
+          </div>
+
+        </div>
+
+      </div><!-- /ev-layout -->
+    </div><!-- /content -->
+  </div><!-- /body-row -->
+</div><!-- /app -->
+
+<!-- ══ MODAL MUY PRONTO ══ -->
+<div class="modal-ov" id="muyProntoModal" onclick="closeModal('muyProntoModal',event)">
+  <div class="modal-box" style="text-align:center;padding:36px 48px;">
+    <div style="font-size:2rem;margin-bottom:10px;">🚀</div>
+    <div class="modal-ttl">Muy Pronto</div>
+    <div style="font-size:.82rem;color:#95a2a5;margin-top:6px;">Esta sección estará disponible próximamente.</div>
+    <div class="modal-footer" style="justify-content:center;border:none;padding-top:20px;margin-top:0;">
+      <button class="btn-submit" onclick="closeModal('muyProntoModal')">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL NUEVO EVENTO ══ -->
+<div class="modal-ov" id="nuevoModal" onclick="closeModal('nuevoModal',event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div><div class="modal-ttl">Nuevo Evento</div><div class="modal-sub">Completa los datos del evento</div></div>
+      <button class="modal-cls" onclick="closeModal('nuevoModal')">&#x2715;</button>
+    </div>
+    <form onsubmit="crearEvento(event)">
+      <div class="fg">
+        <label class="fl">Nombre del evento</label>
+        <input class="fi" type="text" id="nNombre" placeholder="Ej. Casting Resort 2026" required>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label class="fl">Tipo de evento</label>
+          <% if (usuario.rol === 'jefe') { %>
+          <input class="fi-locked" type="text" value="Producción / Fitting" readonly>
+          <% } else { %>
+          <select class="fi" id="nTipo">
+            <option value="casting">Casting</option>
+            <option value="editorial">Editorial</option>
+            <option value="fitting">Fitting</option>
+            <option value="reunion">Reunión</option>
+          </select>
+          <% } %>
+        </div>
+        <div class="fg">
+          <label class="fl">Fecha</label>
+          <input class="fi" type="date" id="nFecha" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label class="fl">Lugar</label>
+          <input class="fi" type="text" id="nLugar" placeholder="Ej. Estudio Norte">
+        </div>
+        <div class="fg">
+          <label class="fl">Horario</label>
+          <input class="fi" type="text" id="nHora" placeholder="10:00 AM – 2:00 PM">
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Estado</label>
+        <select class="fi" id="nEstado">
+          <option value="confirmado">Confirmado</option>
+          <option value="pendiente">Locación pendiente</option>
+          <option value="por_confirmar">Por confirmar</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Descripción</label>
+        <textarea class="fi" id="nDesc" rows="2" style="resize:vertical;" placeholder="Describe el objetivo del evento..."></textarea>
+      </div>
+      <div class="fg">
+        <label class="fl">Equipo asignado</label>
+        <div class="team-cbs">
+          <% Object.entries(MIEMBROS).forEach(([id, m]) => {
+            const isCurrentUser = id === usuario.id;
+            const show = usuario.rol === 'directora' || isCurrentUser || ['BP','CL'].includes(id);
+          %>
+          <% if (show) { %>
+          <label class="tcb-item <%= isCurrentUser ? 'locked' : '' %>">
+            <input type="checkbox" name="equipo" value="<%= id %>" <%= isCurrentUser ? 'checked disabled' : '' %>>
+            <div class="tcb-av" style="background:<%= m.colorBg %>;color:<%= m.color %>"><%= id %></div>
+            <span class="tcb-name"><%= m.nombre %></span>
+            <span class="tcb-role"><%= m.rol %></span>
+          </label>
+          <% } %>
+          <% if (usuario.rol === 'directora' && id === 'JP') { %>
+          <label class="tcb-item">
+            <input type="checkbox" name="equipo" value="JP">
+            <div class="tcb-av" style="background:rgba(0,74,173,.18);color:#004aad">JP</div>
+            <span class="tcb-name">Juan Pablo</span>
+            <span class="tcb-role">Fotógrafo</span>
+          </label>
+          <% } %>
+          <% }) %>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeModal('nuevoModal')">Cancelar</button>
+        <button type="submit" class="btn-submit">Crear Evento</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ MODAL DETALLE ══ -->
+<div class="modal-ov" id="detalleModal" onclick="closeModal('detalleModal',event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div><div class="modal-ttl" id="dm-nombre">—</div><div class="modal-sub" id="dm-tipo">—</div></div>
+      <button class="modal-cls" onclick="closeModal('detalleModal')">&#x2715;</button>
+    </div>
+    <% if (usuario.rol === 'miembro') { %>
+    <div class="readonly-tag">
+      <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      Solo lectura
+    </div>
+    <% } %>
+    <div class="detail-meta">
+      <div><div class="dm-lbl">Lugar</div><div class="dm-val" id="dm-lugar">—</div></div>
+      <div><div class="dm-lbl">Estado</div><div id="dm-estado">—</div></div>
+      <div><div class="dm-lbl">Fecha</div><div class="dm-val" id="dm-fecha">—</div></div>
+      <div><div class="dm-lbl">Horario</div><div class="dm-val" id="dm-hora">—</div></div>
+    </div>
+    <div class="section-lbl">Descripción</div>
+    <p class="detail-desc" id="dm-desc">—</p>
+    <div class="section-lbl">Tags</div>
+    <div class="detail-tags" id="dm-tags"></div>
+    <div class="section-lbl">Equipo</div>
+    <div class="detail-team" id="dm-team"></div>
+    <div class="modal-footer" id="dm-footer"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL EDITAR ══ -->
+<div class="modal-ov" id="editarModal" onclick="closeModal('editarModal',event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div><div class="modal-ttl">Editar Evento</div><div class="modal-sub" id="edit-sub">—</div></div>
+      <button class="modal-cls" onclick="closeModal('editarModal')">&#x2715;</button>
+    </div>
+    <form onsubmit="guardarEdicion(event)">
+      <div class="fg"><label class="fl">Nombre</label><input class="fi" type="text" id="eNombre" required></div>
+      <div class="form-row">
+        <div class="fg"><label class="fl">Lugar</label><input class="fi" type="text" id="eLugar"></div>
+        <div class="fg"><label class="fl">Horario</label><input class="fi" type="text" id="eHora"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label class="fl">Fecha</label><input class="fi" type="date" id="eFecha"></div>
+        <div class="fg">
+          <label class="fl">Estado</label>
+          <select class="fi" id="eEstado">
+            <option value="confirmado">Confirmado</option>
+            <option value="pendiente">Locación pendiente</option>
+            <option value="por_confirmar">Por confirmar</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Descripción</label><textarea class="fi" id="eDesc" rows="2" style="resize:vertical;"></textarea></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeModal('editarModal')">Cancelar</button>
+        <button type="submit" class="btn-submit">Guardar Cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ MODAL ELIMINAR ══ -->
+<div class="modal-ov" id="eliminarModal" onclick="closeModal('eliminarModal',event)">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:380px;">
+    <div class="confirm-box">
+      <div style="font-size:2rem;margin-bottom:10px;">🗑️</div>
+      <div class="modal-ttl" style="margin-bottom:10px;">Eliminar Evento</div>
+      <p class="confirm-msg">¿Estás segura de eliminar <span class="confirm-name" id="elim-nombre">—</span>? Esta acción no se puede deshacer.</p>
+    </div>
+    <div class="modal-footer" style="justify-content:center;">
+      <button class="btn-cancel" onclick="closeModal('eliminarModal')">Cancelar</button>
+      <button class="btn-danger" onclick="confirmarEliminar()">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast">
+  <span id="toastIcon">✓</span>
+  <span id="toastMsg">Acción completada</span>
+</div>
+
+<!-- ══ SCRIPT ══ -->
+<script>
+  const eventosData  = <%- JSON.stringify(eventos) %>;
+  const miembrosData = <%- JSON.stringify(MIEMBROS) %>;
+  const usuarioData  = <%- JSON.stringify(usuario) %>;
+  const tagStyles    = {
+    'Casting':   { bg:'#fce4f0', color:'#9b174e' },
+    'SS26':      { bg:'#dbeafe', color:'#1d4ed8' },
+    'Fitting':   { bg:'#ede9fe', color:'#5b21b6' },
+    'FW26':      { bg:'#d1fae5', color:'#065f46' },
+    'Resort':    { bg:'#fef3c7', color:'#92400e' },
+    'Editorial': { bg:'#ffedd5', color:'#9a3412' },
+    'Prensa':    { bg:'#f3e8ff', color:'#7e22ce' },
+    'Reunión':   { bg:'#f1f5f9', color:'#475569' },
+  };
+  const badgeLabels  = { confirmado:'Confirmado', pendiente:'Locación pendiente', por_confirmar:'Por confirmar' };
+  const badgeClasses = { confirmado:'confirmado', pendiente:'pendiente', por_confirmar:'por_confirmar' };
+  let   eliminarId   = null;
+
+  // ── Filtro ──
+  function filtrar(btn, tipo) {
+    document.querySelectorAll('.filtro').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const cards = document.querySelectorAll('.ev-card[data-tipo]');
+    let visible = 0;
+    cards.forEach(c => {
+      const show = tipo === 'todos' || c.dataset.tipo === tipo;
+      c.classList.toggle('hidden-card', !show);
+      if (show) visible++;
+    });
+    document.getElementById('evEmpty').classList.toggle('show', visible === 0);
+  }
+
+  // ── Role dropdown ──
+  function toggleRoleDrop(e) {
+    e.stopPropagation();
+    document.getElementById('roleDrop').classList.toggle('open');
+  }
+  document.addEventListener('click', () => document.getElementById('roleDrop').classList.remove('open'));
+
+  // ── Modal helpers ──
+  function openModal(id) { document.getElementById(id).classList.add('visible'); }
+  function closeModal(id, e) {
+    if (!e || e.target === document.getElementById(id)) {
+      document.getElementById(id).classList.remove('visible');
+    }
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.modal-ov.visible').forEach(m => m.classList.remove('visible'));
+  });
+
+  function showMuyPronto(e) { e.preventDefault(); openModal('muyProntoModal'); }
+
+  // ── Toast ──
+  function showToast(msg, icon = '✓') {
+    document.getElementById('toastMsg').textContent = msg;
+    document.getElementById('toastIcon').textContent = icon;
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── Exportar ──
+  function exportar() { showToast('Exportando eventos... (CSV)', '📥'); }
+
+  // ── Nuevo ──
+  function abrirNuevo() {
+    if (document.getElementById('nNombre')) document.getElementById('nNombre').value = '';
+    openModal('nuevoModal');
+  }
+  function crearEvento(e) { e.preventDefault(); closeModal('nuevoModal'); showToast('Evento creado correctamente', '✓'); }
+
+  // ── Detalle ──
+  function verDetalle(id) {
+    const ev = eventosData.find(x => x.id === id);
+    if (!ev) return;
+    document.getElementById('dm-nombre').textContent = ev.nombre;
+    document.getElementById('dm-tipo').textContent   = ev.tipo.charAt(0).toUpperCase() + ev.tipo.slice(1);
+    document.getElementById('dm-lugar').textContent  = ev.lugar;
+    document.getElementById('dm-fecha').textContent  = ev.dia + ' ' + ev.mes;
+    document.getElementById('dm-hora').textContent   = ev.hora;
+    document.getElementById('dm-desc').textContent   = ev.descripcion;
+    document.getElementById('dm-estado').innerHTML   =
+      `<span class="ev-badge ${badgeClasses[ev.status] || ''}">${badgeLabels[ev.status] || ev.status}</span>`;
+
+    document.getElementById('dm-tags').innerHTML = ev.tags.map(tag => {
+      const ts = tagStyles[tag] || { bg:'#f3f4f6', color:'#374151' };
+      return `<span class="ev-tag" style="background:${ts.bg};color:${ts.color}">${tag}</span>`;
+    }).join('');
+
+    document.getElementById('dm-team').innerHTML = ev.team.map(mid => {
+      const m = miembrosData[mid];
+      return m ? `<div class="dt-member"><div class="dt-av" style="background:${m.colorBg};color:${m.color}">${mid}</div><div><div class="dt-name">${m.nombre}</div><div class="dt-role">${m.rol}</div></div></div>` : '';
+    }).join('');
+
+    const footer = document.getElementById('dm-footer');
+    let html = `<button class="btn-cancel" onclick="closeModal('detalleModal')">Cerrar</button>`;
+    if (ev.canEdit)   html += `<button class="btn-submit" onclick="closeModal('detalleModal');abrirEditar(${ev.id})">Editar</button>`;
+    if (ev.canDelete) html += `<button class="btn-danger" onclick="closeModal('detalleModal');abrirEliminar(${ev.id})">Eliminar</button>`;
+    footer.innerHTML = html;
+
+    openModal('detalleModal');
+  }
+
+  // ── Editar ──
+  function abrirEditar(id) {
+    const ev = eventosData.find(x => x.id === id);
+    if (!ev) return;
+    document.getElementById('edit-sub').textContent = ev.nombre;
+    document.getElementById('eNombre').value = ev.nombre;
+    document.getElementById('eLugar').value  = ev.lugar;
+    document.getElementById('eHora').value   = ev.hora;
+    document.getElementById('eFecha').value  = ev.dateStr;
+    document.getElementById('eEstado').value = ev.status;
+    document.getElementById('eDesc').value   = ev.descripcion;
+    openModal('editarModal');
+  }
+  function guardarEdicion(e) { e.preventDefault(); closeModal('editarModal'); showToast('Cambios guardados', '✓'); }
+
+  // ── Eliminar ──
+  function abrirEliminar(id) {
+    const ev = eventosData.find(x => x.id === id);
+    if (!ev) return;
+    eliminarId = id;
+    document.getElementById('elim-nombre').textContent = '"' + ev.nombre + '"';
+    openModal('eliminarModal');
+  }
+  function confirmarEliminar() {
+    if (eliminarId) {
+      const card = document.querySelector(`.ev-card[data-id="${eliminarId}"]`);
+      if (card) card.style.display = 'none';
+      showToast('Evento eliminado', '🗑');
+    }
+    eliminarId = null;
+    closeModal('eliminarModal');
+  }
+
+  // ── PROFILE POPOVER ──
+  function toggleProfile(e) {
+    e.stopPropagation();
+    document.getElementById('profilePopover').classList.toggle('open');
+  }
+  document.addEventListener('click', function(e) {
+    const pop = document.getElementById('profilePopover');
+    if (pop && !document.getElementById('profileBtn').contains(e.target)) {
+      pop.classList.remove('open');
+    }
+  });
+</script>
+</body>
+</html>

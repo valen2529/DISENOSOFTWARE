@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RunwaySync – Proyectos</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;}
+    body{background:#ebebeb;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#231f20;}
+
+    /* ── LAYOUT ── */
+    .app{display:flex;flex-direction:column;height:100vh;}
+
+    /* ── TOPBAR ── */
+    .topbar{background:#fff;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 16px;border-bottom:1px solid #e0e0e0;flex-shrink:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:10px;}
+    .hamburger{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:4px;}
+    .hamburger span{display:block;width:20px;height:2px;background:#231f20;border-radius:2px;}
+    .topbar-brand{font-family:'Georgia',serif;font-size:.98rem;font-weight:400;letter-spacing:.2em;color:#141516;}
+    .topbar-right{display:flex;align-items:center;gap:10px;position:relative;}
+    .topbar-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+    .topbar-icon:hover{background:#f3f4f6;}
+    .topbar-icon svg{width:20px;height:20px;stroke:#231f20;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    .profile-wrap{position:relative;}
+    .profile-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .profile-popover.open{display:block;}
+    .pp-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;margin:0 auto 10px;}
+    .pp-name{font-weight:700;font-size:0.92rem;color:#141516;text-align:center;}
+    .pp-role{font-size:0.78rem;color:#888;text-align:center;margin-top:2px;margin-bottom:14px;}
+    .pp-divider{height:1px;background:#f0f0f0;margin-bottom:12px;}
+    .pp-logout{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:8px 14px;border-radius:10px;background:#fff3f8;color:#cd1b80;font-size:0.84rem;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .pp-logout:hover{background:#fce4f1;}
+
+    /* Role badge */
+    .role-badge{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:.68rem;font-weight:700;cursor:pointer;border:none;transition:filter .15s;}
+    .role-badge.directora{background:rgba(205,27,128,.12);color:#cd1b80;}
+    .role-badge.jefe{background:rgba(184,137,23,.15);color:#a07312;}
+    .role-badge.miembro{background:rgba(8,184,100,.13);color:#057a42;}
+    .role-badge:hover{filter:brightness(.9);}
+    .role-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+    /* Role dropdown */
+    .role-drop{position:absolute;top:46px;right:0;background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.15);padding:8px 0;min-width:230px;z-index:300;display:none;}
+    .role-drop.open{display:block;}
+    .role-drop-title{font-size:.62rem;font-weight:800;color:#b0b0b0;letter-spacing:.1em;text-transform:uppercase;padding:5px 16px 6px;}
+    .role-drop-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;text-decoration:none;}
+    .role-drop-item:hover{background:#f8f8f8;}
+    .role-drop-item.active-role{background:#f3f4f6;}
+    .role-drop-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;flex-shrink:0;}
+    .role-drop-info{flex:1;}
+    .role-drop-name{font-size:.78rem;font-weight:700;color:#141516;}
+    .role-drop-lbl{font-size:.63rem;color:#95a2a5;margin-top:1px;}
+    .checkmark{font-size:.75rem;color:#08b864;}
+    .role-drop-note{font-size:.62rem;color:#b0b0b0;padding:5px 16px 4px;font-style:italic;border-top:1px solid #f3f4f6;margin-top:4px;}
+
+    /* ── BODY ROW ── */
+    .body-row{display:flex;flex:1;overflow:hidden;}
+
+    /* ── SIDEBAR ── */
+    .sidebar{flex:0 0 210px;background:#fff;display:flex;flex-direction:column;padding:12px 10px;border-right:1px solid #e0e0e0;gap:3px;overflow-y:auto;}
+    .nav-item{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:14px;text-decoration:none;color:#6f6f6f;font-size:.88rem;font-weight:500;transition:background .15s,color .15s;}
+    .nav-item:hover{background:#f3f4f6;color:#231f20;}
+    .nav-item.active{background:#f0f0f0;color:#141516;font-weight:700;}
+    .nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .nav-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+
+    /* ── CONTENT ── */
+    .content{flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:14px;}
+
+    /* ── PERMS BANNER ── */
+    .perms-banner{display:flex;align-items:center;gap:9px;padding:9px 16px;border-radius:12px;font-size:.73rem;font-weight:600;}
+    .perms-banner.jefe{background:rgba(0,74,173,.07);color:#004aad;}
+    .perms-banner.miembro{background:rgba(184,137,23,.1);color:#a07312;}
+    .perms-banner svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
+
+    /* ── PAGE HEADER ── */
+    .page-hdr{display:flex;align-items:flex-end;justify-content:space-between;}
+    .page-hdr h2{font-family:'Georgia',serif;font-size:1.55rem;font-weight:800;color:#141516;}
+    .page-hdr-sub{font-size:.73rem;color:#95a2a5;margin-top:2px;}
+    .page-actions{display:flex;gap:9px;}
+    .btn-exportar{padding:8px 20px;border-radius:50px;background:#fff;color:#231f20;border:1.5px solid #d0d0d0;font-size:.8rem;font-weight:600;cursor:pointer;transition:background .15s;}
+    .btn-exportar:hover{background:#f5f5f5;}
+    .btn-nuevo{padding:8px 20px;border-radius:50px;background:#141516;color:#fff;border:none;font-size:.8rem;font-weight:700;cursor:pointer;transition:background .15s;}
+    .btn-nuevo:hover{background:#333;}
+
+    /* ── STATS ── */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+    .stat-card{background:#fff;border-radius:16px;padding:15px 18px 13px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+    .stat-lbl{font-size:.73rem;color:#8a9295;font-weight:600;margin-bottom:5px;letter-spacing:.01em;}
+    .stat-num{font-size:2.1rem;font-weight:800;color:#141516;line-height:1.1;}
+    .stat-sub{font-size:.7rem;margin-top:4px;font-weight:600;}
+    .stat-sub.green{color:#08b864;}
+    .stat-sub.amber{color:#b88917;}
+    .stat-sub.blue{color:#004aad;}
+    .stat-sub.pink{color:#cd1b80;}
+
+    /* ── FILTER TABS ── */
+    .filtros{display:flex;gap:8px;}
+    .filtro{padding:7px 18px;border-radius:50px;background:#fff;color:#6f6f6f;border:1.5px solid #e0e0e0;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .15s;}
+    .filtro:hover{border-color:#b0b0b0;color:#231f20;}
+    .filtro.active{background:#141516;color:#fff;border-color:#141516;}
+
+    /* ── TABLE CARD ── */
+    .proyectos-wrap{background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.05);overflow:hidden;flex-shrink:0;}
+    .pt{width:100%;border-collapse:collapse;}
+    .pt thead tr{border-bottom:1px solid #f3f4f6;}
+    .pt th{padding:11px 16px;font-size:.64rem;font-weight:800;color:#8a9295;letter-spacing:.08em;text-transform:uppercase;text-align:left;white-space:nowrap;}
+    .pt td{padding:11px 16px;border-bottom:1px solid #f8f8f8;vertical-align:middle;}
+    .pt tbody tr:last-child td{border-bottom:none;}
+    .pt tbody tr{cursor:pointer;transition:background .1s;}
+    .pt tbody tr:hover{background:#fafafa;}
+    .pt tbody tr:hover .acc{opacity:1;}
+    .pt tbody tr.hidden-row{display:none;}
+
+    /* Project cell */
+    .proy-cell{display:flex;align-items:center;gap:10px;}
+    .p-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;flex-shrink:0;}
+    .p-name{font-size:.8rem;font-weight:600;color:#141516;}
+    .p-sub{font-size:.64rem;color:#b0b0b0;margin-top:1px;}
+
+    /* Progress cell */
+    .prog-cell{display:flex;align-items:center;gap:8px;}
+    .p-bar-wrap{width:100px;height:5px;background:#ebebeb;border-radius:3px;overflow:hidden;flex-shrink:0;}
+    .p-bar{height:100%;border-radius:3px;}
+    .p-pct{font-size:.67rem;color:#8a9295;font-weight:600;min-width:28px;}
+
+    /* Delivery */
+    .del{font-size:.76rem;font-weight:600;color:#231f20;}
+    .del.overdue{color:#e02020;}
+
+    /* Status badges */
+    .badge{padding:4px 12px;border-radius:20px;font-size:.64rem;font-weight:700;white-space:nowrap;}
+    .badge-activo{background:#d1fae5;color:#065f46;}
+    .badge-revision{background:#fef3c7;color:#92400e;}
+    .badge-planeacion{background:#ede9fe;color:#5b21b6;}
+    .badge-completado{background:#f3f4f6;color:#374151;}
+
+    /* Team stack */
+    .eq-stack{display:flex;align-items:center;}
+    .eq-av{width:26px;height:26px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:800;margin-left:-7px;flex-shrink:0;}
+    .eq-stack .eq-av:first-child{margin-left:0;}
+
+    /* Actions column */
+    .acc{display:flex;gap:4px;opacity:0;transition:opacity .15s;}
+    .btn-ic{width:28px;height:28px;border-radius:8px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s;}
+    .btn-ic.edit{background:rgba(0,74,173,.1);color:#004aad;}
+    .btn-ic.edit:hover{background:rgba(0,74,173,.22);}
+    .btn-ic.del{background:rgba(224,32,32,.1);color:#e02020;}
+    .btn-ic.del:hover{background:rgba(224,32,32,.22);}
+    .btn-ic svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+    /* ── MODAL BASE ── */
+    .modal-ov{position:fixed;inset:0;background:rgba(20,21,22,.45);display:flex;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:opacity .2s;}
+    .modal-ov.visible{opacity:1;pointer-events:all;}
+    .modal-box{background:#fff;border-radius:20px;padding:28px 32px;box-shadow:0 12px 48px rgba(0,0,0,.18);transform:translateY(10px) scale(.97);transition:transform .22s,opacity .22s;opacity:0;width:480px;max-width:96vw;max-height:90vh;overflow-y:auto;}
+    .modal-ov.visible .modal-box{transform:translateY(0) scale(1);opacity:1;}
+    .modal-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;}
+    .modal-ttl{font-family:'Georgia',serif;font-size:1.28rem;font-weight:700;color:#141516;}
+    .modal-sub{font-size:.7rem;color:#95a2a5;margin-top:3px;}
+    .modal-cls{background:none;border:none;cursor:pointer;font-size:1.3rem;color:#b0b0b0;line-height:1;padding:2px;transition:color .12s;}
+    .modal-cls:hover{color:#231f20;}
+
+    /* Form */
+    .fg{margin-bottom:13px;}
+    .fl{display:block;font-size:.72rem;font-weight:700;color:#6f6f6f;margin-bottom:5px;}
+    .fi{width:100%;padding:9px 13px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:.82rem;color:#231f20;background:#fff;outline:none;transition:border-color .15s;font-family:inherit;}
+    .fi:focus{border-color:#141516;}
+    .fi-locked{width:100%;padding:9px 13px;border:1.5px solid #f0f0f0;border-radius:10px;font-size:.82rem;color:#8a9295;background:#f8f8f8;cursor:not-allowed;font-family:inherit;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+    /* Team checkboxes */
+    .team-cbs{display:flex;flex-direction:column;gap:6px;margin-top:4px;}
+    .tcb-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;cursor:pointer;transition:background .1s;}
+    .tcb-item:hover:not(.locked){background:#f8f8f8;}
+    .tcb-item.locked{opacity:.55;cursor:not-allowed;}
+    .tcb-item input[type=checkbox]{accent-color:#141516;width:15px;height:15px;cursor:pointer;flex-shrink:0;}
+    .tcb-item.locked input{cursor:not-allowed;}
+    .tcb-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800;flex-shrink:0;}
+    .tcb-name{font-size:.78rem;font-weight:600;color:#141516;flex:1;}
+    .tcb-role{font-size:.62rem;color:#95a2a5;}
+
+    /* Modal footer */
+    .modal-footer{display:flex;gap:9px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid #f3f4f6;}
+    .btn-cancel{padding:9px 20px;border-radius:50px;background:#f3f4f6;color:#6f6f6f;border:none;font-size:.8rem;font-weight:600;cursor:pointer;}
+    .btn-cancel:hover{background:#e8e9eb;}
+    .btn-submit{padding:9px 22px;border-radius:50px;background:#141516;color:#fff;border:none;font-size:.8rem;font-weight:700;cursor:pointer;}
+    .btn-submit:hover{background:#333;}
+    .btn-danger{padding:9px 20px;border-radius:50px;background:#e02020;color:#fff;border:none;font-size:.8rem;font-weight:700;cursor:pointer;}
+    .btn-danger:hover{background:#c01515;}
+
+    /* Detail modal extras */
+    .detail-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+    .dm-lbl{font-size:.63rem;font-weight:800;color:#8a9295;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+    .dm-val{font-size:.82rem;font-weight:600;color:#141516;}
+    .detail-prog-bar{width:100%;height:7px;background:#ebebeb;border-radius:4px;overflow:hidden;margin-top:6px;}
+    .detail-prog-fill{height:100%;border-radius:4px;}
+    .detail-team{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+    .dt-member{display:flex;align-items:center;gap:7px;}
+    .dt-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.57rem;font-weight:800;}
+    .dt-name{font-size:.73rem;font-weight:600;color:#141516;}
+    .dt-role{font-size:.62rem;color:#95a2a5;}
+    .readonly-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;background:#fef3c7;color:#92400e;font-size:.65rem;font-weight:700;margin-bottom:14px;}
+    .readonly-tag svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;}
+    .section-lbl{font-size:.65rem;font-weight:800;color:#8a9295;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+
+    /* Confirm delete */
+    .confirm-box{text-align:center;padding:10px 0 4px;}
+    .confirm-icon{font-size:2rem;margin-bottom:10px;}
+    .confirm-msg{font-size:.85rem;color:#6f6f6f;line-height:1.5;}
+    .confirm-name{font-weight:700;color:#141516;}
+
+    /* Toast */
+    .toast{position:fixed;bottom:24px;right:24px;background:#141516;color:#fff;padding:12px 20px;border-radius:12px;font-size:.8rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.25);transform:translateY(16px);opacity:0;transition:transform .25s,opacity .25s;pointer-events:none;z-index:2000;display:flex;align-items:center;gap:8px;}
+    .toast.show{transform:translateY(0);opacity:1;}
+    .toast-icon{font-size:1rem;}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══ TOPBAR ══ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <span class="topbar-brand">RUNWAY SYNC</span>
+    <div class="topbar-right">
+      <!-- Notificaciones -->
+      <div class="topbar-icon" title="Notificaciones">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      <!-- Role switcher (demo) -->
+      <button class="role-badge <%= usuario.rol %>" onclick="toggleRoleDrop(event)" title="Cambiar rol (demo)">
+        <span class="role-dot"></span>
+        <%= usuario.rolLabel %>
+      </button>
+      <!-- Dropdown roles -->
+      <div class="role-drop" id="roleDrop">
+        <div class="role-drop-title">Demo · Cambiar rol</div>
+        <a class="role-drop-item <%= usuario.rol === 'directora' ? 'active-role' : '' %>" href="/proyectos?rol=directora">
+          <div class="role-drop-av" style="background:rgba(205,27,128,.18);color:#cd1b80">MR</div>
+          <div class="role-drop-info">
+            <div class="role-drop-name">Marietta</div>
+            <div class="role-drop-lbl">Directora Creativa · Acceso total</div>
+          </div>
+          <% if (usuario.rol === 'directora') { %><span class="checkmark">✓</span><% } %>
+        </a>
+        <a class="role-drop-item <%= usuario.rol === 'jefe' ? 'active-role' : '' %>" href="/proyectos?rol=jefe">
+          <div class="role-drop-av" style="background:rgba(184,137,23,.18);color:#b88917">BP</div>
+          <div class="role-drop-info">
+            <div class="role-drop-name">Bruno</div>
+            <div class="role-drop-lbl">Jefe de Área · Producción</div>
+          </div>
+          <% if (usuario.rol === 'jefe') { %><span class="checkmark">✓</span><% } %>
+        </a>
+        <a class="role-drop-item <%= usuario.rol === 'miembro' ? 'active-role' : '' %>" href="/proyectos?rol=miembro">
+          <div class="role-drop-av" style="background:rgba(8,184,100,.18);color:#08b864">CL</div>
+          <div class="role-drop-info">
+            <div class="role-drop-name">Camila</div>
+            <div class="role-drop-lbl">Miembro de Equipo · Styling</div>
+          </div>
+          <% if (usuario.rol === 'miembro') { %><span class="checkmark">✓</span><% } %>
+        </a>
+        <div class="role-drop-note">Simula los permisos de cada rol en tiempo real</div>
+      </div>
+      <!-- Perfil -->
+      <div class="profile-wrap">
+        <div class="topbar-icon" id="profileBtn" title="Perfil" onclick="toggleProfile(event)" style="cursor:pointer;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#231f20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="profile-popover" id="profilePopover">
+          <div class="pp-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80"><%= usuario.id %></div>
+          <div class="pp-name"><%= usuario.nombre %></div>
+          <div class="pp-role"><%= usuario.rolLabel %></div>
+          <div class="pp-divider"></div>
+          <a href="/" class="pp-logout">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ BODY ══ -->
+  <div class="body-row">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+      <a href="/dashboard" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></span>
+        Dashboard
+      </a>
+      <a href="/calendario" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+        Calendario
+      </a>
+      <a href="/colecciones" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg></span>
+        Colecciones
+      </a>
+      <a href="/eventos?rol=<%= usuario.rol %>" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><rect x="7" y="14" width="3" height="3" rx="0.5"/></svg></span>
+        Eventos
+      </a>
+      <a href="/proyectos?rol=<%= usuario.rol %>" class="nav-item active">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+        Proyectos
+      </a>
+      <a href="/equipo" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Equipo
+      </a>
+    </aside>
+
+    <!-- ── CONTENT ── -->
+    <div class="content">
+
+      <!-- Banner de permisos (solo jefe y miembro) -->
+      <% if (usuario.rol === 'jefe') { %>
+      <div class="perms-banner jefe">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Viendo proyectos de tu área y asignados a ti &middot; Puedes crear y editar en tu área &middot; No puedes eliminar proyectos
+      </div>
+      <% } else if (usuario.rol === 'miembro') { %>
+      <div class="perms-banner miembro">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Modo solo lectura &middot; Mostrando únicamente los proyectos asignados a ti
+      </div>
+      <% } %>
+
+      <!-- PAGE HEADER -->
+      <div class="page-hdr">
+        <div>
+          <h2>Proyectos</h2>
+          <p class="page-hdr-sub">Temporada 2026 &middot; <%= stats.total %> proyectos visibles</p>
+        </div>
+        <div class="page-actions">
+          <% if (usuario.rol === 'directora') { %>
+          <button class="btn-exportar" onclick="exportarProyectos()">Exportar</button>
+          <% } %>
+          <% if (usuario.rol !== 'miembro') { %>
+          <button class="btn-nuevo" onclick="abrirModalNuevo()">+ Nuevo proyecto</button>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-lbl">Proyectos Activos</div>
+          <div class="stat-num"><%= stats.activos %></div>
+          <div class="stat-sub green">+2 este mes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">En Revisión</div>
+          <div class="stat-num"><%= stats.revision %></div>
+          <div class="stat-sub amber"><%= stats.revision > 0 ? 'Requieren atención' : 'Al día' %></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Completados</div>
+          <div class="stat-num"><%= stats.completados %></div>
+          <div class="stat-sub green">Este trimestre</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Avance Promedio</div>
+          <div class="stat-num"><%= stats.avance %>%</div>
+          <div class="stat-sub blue">↑ 8% vs semana anterior</div>
+        </div>
+      </div>
+
+      <!-- FILTER TABS -->
+      <div class="filtros">
+        <button class="filtro active" data-filter="todos"      onclick="filtrar(this,'todos')">Todos</button>
+        <button class="filtro"        data-filter="activo"     onclick="filtrar(this,'activo')">Activos</button>
+        <button class="filtro"        data-filter="revision"   onclick="filtrar(this,'revision')">En revisi&oacute;n</button>
+        <button class="filtro"        data-filter="planeacion" onclick="filtrar(this,'planeacion')">Planeaci&oacute;n</button>
+        <button class="filtro"        data-filter="completado" onclick="filtrar(this,'completado')">Completados</button>
+      </div>
+
+      <!-- TABLE -->
+      <div class="proyectos-wrap">
+        <table class="pt">
+          <thead>
+            <tr>
+              <th>Proyecto</th>
+              <th>Colecci&oacute;n</th>
+              <th>Progreso</th>
+              <th>Entrega</th>
+              <th>Estado</th>
+              <th>Equipo</th>
+              <% if (usuario.rol !== 'miembro') { %><th></th><% } %>
+            </tr>
+          </thead>
+          <tbody>
+            <% proyectos.forEach(p => { %>
+            <%
+              const statusLabel = {
+                activo:     'Activo',
+                revision:   'En revisión',
+                planeacion: 'Planeación',
+                completado: 'Completado'
+              }[p.status] || p.status;
+            %>
+            <tr data-status="<%= p.status %>" data-id="<%= p.id %>" onclick="verDetalle(<%= p.id %>)">
+              <!-- PROYECTO -->
+              <td>
+                <div class="proy-cell">
+                  <div class="p-av" style="background:<%= p.colorBg %>;color:<%= p.color %>"><%= p.initials %></div>
+                  <div>
+                    <div class="p-name"><%= p.name %></div>
+                    <div class="p-sub"><%= p.sub %></div>
+                  </div>
+                </div>
+              </td>
+              <!-- COLECCIÓN -->
+              <td><span style="font-size:.76rem;color:#6f6f6f;font-weight:500;"><%= p.collection %></span></td>
+              <!-- PROGRESO -->
+              <td>
+                <div class="prog-cell">
+                  <div class="p-bar-wrap"><div class="p-bar" style="width:<%= p.progress %>%;background:<%= p.color %>"></div></div>
+                  <span class="p-pct"><%= p.progress %>%</span>
+                </div>
+              </td>
+              <!-- ENTREGA -->
+              <td><span class="del <%= p.overdue ? 'overdue' : '' %>"><%= p.delivery %></span></td>
+              <!-- ESTADO -->
+              <td><span class="badge badge-<%= p.status %>"><%= statusLabel %></span></td>
+              <!-- EQUIPO -->
+              <td>
+                <div class="eq-stack">
+                  <% p.team.forEach(mid => { %>
+                  <% const m = MIEMBROS[mid]; %>
+                  <% if (m) { %>
+                  <div class="eq-av" style="background:<%= m.colorBg %>;color:<%= m.color %>" title="<%= m.nombre %> · <%= m.rol %>"><%= mid %></div>
+                  <% } %>
+                  <% }) %>
+                </div>
+              </td>
+              <!-- ACCIONES (jefe y directora) -->
+              <% if (usuario.rol !== 'miembro') { %>
+              <td onclick="event.stopPropagation()">
+                <div class="acc">
+                  <% if (p.canEdit) { %>
+                  <button class="btn-ic edit" title="Editar" onclick="abrirModalEditar(<%= p.id %>)">
+                    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <% } %>
+                  <% if (p.canDelete) { %>
+                  <button class="btn-ic del" title="Eliminar" onclick="abrirModalEliminar(<%= p.id %>)">
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  </button>
+                  <% } %>
+                </div>
+              </td>
+              <% } %>
+            </tr>
+            <% }) %>
+            <!-- Empty state -->
+            <tr id="emptyRow" style="display:none;">
+              <td colspan="7" style="text-align:center;padding:32px;color:#95a2a5;font-size:.82rem;font-weight:600;">
+                No hay proyectos en esta categoría
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /body-row -->
+</div><!-- /app -->
+
+<!-- ══ MODAL "MUY PRONTO" ══ -->
+<div class="modal-ov" id="muyProntoModal" onclick="closeModal('muyProntoModal', event)">
+  <div class="modal-box" style="text-align:center;padding:36px 48px;">
+    <div style="font-size:2rem;margin-bottom:10px;">🚀</div>
+    <div class="modal-ttl">Muy Pronto</div>
+    <div style="font-size:.82rem;color:#95a2a5;margin-top:6px;">Esta sección estará disponible próximamente.</div>
+    <div class="modal-footer" style="justify-content:center;border:none;padding-top:20px;margin-top:0;">
+      <button class="btn-submit" onclick="closeModal('muyProntoModal')">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL NUEVO PROYECTO ══ -->
+<div class="modal-ov" id="nuevoModal" onclick="closeModal('nuevoModal', event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-ttl">Nuevo Proyecto</div>
+        <div class="modal-sub">Completa los datos para crear el proyecto</div>
+      </div>
+      <button class="modal-cls" onclick="closeModal('nuevoModal')">&#x2715;</button>
+    </div>
+
+    <form onsubmit="crearProyecto(event)">
+      <div class="fg">
+        <label class="fl">Nombre del proyecto</label>
+        <input class="fi" type="text" id="nNombre" placeholder="Ej. Editorial FW26 Vogue Italia" required>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label class="fl">Tipo / Subtipo</label>
+          <input class="fi" type="text" id="nTipo" placeholder="Fotografía · Producción">
+        </div>
+        <div class="fg">
+          <label class="fl">Colección</label>
+          <% if (usuario.rol === 'jefe') { %>
+          <input class="fi-locked" type="text" value="FW26" readonly>
+          <% } else { %>
+          <select class="fi" id="nColeccion">
+            <option value="SS26">SS26</option>
+            <option value="FW26">FW26</option>
+            <option value="Resort">Resort</option>
+          </select>
+          <% } %>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label class="fl">Fecha de entrega</label>
+          <input class="fi" type="date" id="nFecha" required>
+        </div>
+        <div class="fg">
+          <label class="fl">Estado inicial</label>
+          <select class="fi" id="nEstado">
+            <option value="planeacion">Planeación</option>
+            <option value="activo">Activo</option>
+          </select>
+        </div>
+      </div>
+      <% if (usuario.rol === 'jefe') { %>
+      <div class="fg">
+        <label class="fl">Área responsable</label>
+        <input class="fi-locked" type="text" value="Producción" readonly>
+      </div>
+      <% } %>
+      <div class="fg">
+        <label class="fl">Equipo asignado</label>
+        <div class="team-cbs">
+          <% Object.entries(MIEMBROS).forEach(([id, m]) => { %>
+          <%
+            const isCurrentUser = id === usuario.id;
+            const isAccessible = usuario.rol === 'directora' || isCurrentUser ||
+              ['MR','BP','CL','JP'].includes(id);
+          %>
+          <% if (usuario.rol === 'directora' || isCurrentUser || ['BP','CL'].includes(id) ) { %>
+          <label class="tcb-item <%= isCurrentUser ? 'locked' : '' %>">
+            <input type="checkbox" name="equipo" value="<%= id %>" <%= isCurrentUser ? 'checked disabled' : '' %>>
+            <div class="tcb-av" style="background:<%= m.colorBg %>;color:<%= m.color %>"><%= id %></div>
+            <span class="tcb-name"><%= m.nombre %></span>
+            <span class="tcb-role"><%= m.rol %></span>
+          </label>
+          <% } %>
+          <% }) %>
+          <% if (usuario.rol === 'directora') { %>
+          <label class="tcb-item">
+            <input type="checkbox" name="equipo" value="JP">
+            <div class="tcb-av" style="background:rgba(0,74,173,.18);color:#004aad">JP</div>
+            <span class="tcb-name">Juan Pablo</span>
+            <span class="tcb-role">Fotógrafo</span>
+          </label>
+          <% } %>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeModal('nuevoModal')">Cancelar</button>
+        <button type="submit" class="btn-submit">Crear Proyecto</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ MODAL DETALLE / EDITAR ══ -->
+<div class="modal-ov" id="detalleModal" onclick="closeModal('detalleModal', event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-ttl" id="dm-nombre">—</div>
+        <div class="modal-sub" id="dm-sub">—</div>
+      </div>
+      <button class="modal-cls" onclick="closeModal('detalleModal')">&#x2715;</button>
+    </div>
+
+    <!-- Solo lectura tag (miembro) -->
+    <% if (usuario.rol === 'miembro') { %>
+    <div class="readonly-tag">
+      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      Solo lectura
+    </div>
+    <% } %>
+
+    <div class="detail-meta">
+      <div>
+        <div class="dm-lbl">Colección</div>
+        <div class="dm-val" id="dm-col">—</div>
+      </div>
+      <div>
+        <div class="dm-lbl">Estado</div>
+        <div id="dm-estado">—</div>
+      </div>
+      <div>
+        <div class="dm-lbl">Entrega</div>
+        <div class="dm-val" id="dm-fecha">—</div>
+      </div>
+      <div>
+        <div class="dm-lbl">Progreso</div>
+        <div class="dm-val" id="dm-pct">—</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <div class="section-lbl">Progreso general</div>
+      <div class="detail-prog-bar">
+        <div class="detail-prog-fill" id="dm-bar" style="width:0%;background:#ccc;"></div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div class="section-lbl">Equipo asignado</div>
+      <div class="detail-team" id="dm-team"></div>
+    </div>
+
+    <div class="modal-footer" id="dm-footer"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL CONFIRMAR ELIMINAR ══ -->
+<div class="modal-ov" id="eliminarModal" onclick="closeModal('eliminarModal', event)">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:380px;">
+    <div class="confirm-box">
+      <div class="confirm-icon">🗑️</div>
+      <div class="modal-ttl" style="margin-bottom:10px;">Eliminar Proyecto</div>
+      <p class="confirm-msg">¿Estás segura de que deseas eliminar <span class="confirm-name" id="elim-nombre">—</span>? Esta acción no se puede deshacer.</p>
+    </div>
+    <div class="modal-footer" style="justify-content:center;">
+      <button class="btn-cancel" onclick="closeModal('eliminarModal')">Cancelar</button>
+      <button class="btn-danger" onclick="confirmarEliminar()">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL EDITAR PROYECTO ══ -->
+<div class="modal-ov" id="editarModal" onclick="closeModal('editarModal', event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-ttl">Editar Proyecto</div>
+        <div class="modal-sub" id="edit-sub">—</div>
+      </div>
+      <button class="modal-cls" onclick="closeModal('editarModal')">&#x2715;</button>
+    </div>
+    <form onsubmit="guardarEdicion(event)">
+      <div class="fg">
+        <label class="fl">Nombre del proyecto</label>
+        <input class="fi" type="text" id="eNombre" required>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label class="fl">Colección</label>
+          <select class="fi" id="eColeccion">
+            <option value="SS26">SS26</option>
+            <option value="FW26">FW26</option>
+            <option value="Resort">Resort</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Estado</label>
+          <select class="fi" id="eEstado">
+            <option value="planeacion">Planeación</option>
+            <option value="activo">Activo</option>
+            <option value="revision">En Revisión</option>
+            <option value="completado">Completado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label class="fl">Fecha de entrega</label>
+          <input class="fi" type="date" id="eFecha">
+        </div>
+        <div class="fg">
+          <label class="fl">Progreso (%)</label>
+          <input class="fi" type="number" id="eProgreso" min="0" max="100">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeModal('editarModal')">Cancelar</button>
+        <button type="submit" class="btn-submit">Guardar Cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✓</span>
+  <span id="toastMsg">Acción completada</span>
+</div>
+
+<!-- ══ SCRIPT ══ -->
+<script>
+  // ── Datos en cliente ──
+  const proyectosData = <%- JSON.stringify(proyectos) %>;
+  const miembrosData  = <%- JSON.stringify(MIEMBROS) %>;
+  const usuarioData   = <%- JSON.stringify(usuario) %>;
+  let   eliminarId    = null;
+
+  // ── Filtro de tabla ──
+  function filtrar(btn, filtro) {
+    document.querySelectorAll('.filtro').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const rows = document.querySelectorAll('.pt tbody tr[data-status]');
+    let visible = 0;
+    rows.forEach(r => {
+      const show = filtro === 'todos' || r.dataset.status === filtro;
+      r.classList.toggle('hidden-row', !show);
+      if (show) visible++;
+    });
+    const emptyRow = document.getElementById('emptyRow');
+    emptyRow.style.display = visible === 0 ? 'table-row' : 'none';
+  }
+
+  // ── Role dropdown ──
+  function toggleRoleDrop(e) {
+    e.stopPropagation();
+    document.getElementById('roleDrop').classList.toggle('open');
+  }
+  document.addEventListener('click', () => {
+    document.getElementById('roleDrop').classList.remove('open');
+  });
+
+  // ── Modal helpers ──
+  function openModal(id) {
+    document.getElementById(id).classList.add('visible');
+  }
+  function closeModal(id, e) {
+    if (!e || e.target === document.getElementById(id)) {
+      document.getElementById(id).classList.remove('visible');
+    }
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-ov.visible').forEach(m => m.classList.remove('visible'));
+    }
+  });
+
+  // ── "Muy pronto" ──
+  function showMuyPronto(e) {
+    e.preventDefault();
+    openModal('muyProntoModal');
+  }
+
+  // ── Toast ──
+  function showToast(msg, icon = '✓') {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    document.getElementById('toastIcon').textContent = icon;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── Exportar (directora) ──
+  function exportarProyectos() {
+    showToast('Exportando proyectos... (CSV)', '📥');
+  }
+
+  // ── Nuevo proyecto ──
+  function abrirModalNuevo() {
+    document.getElementById('nNombre').value = '';
+    if (document.getElementById('nTipo')) document.getElementById('nTipo').value = '';
+    openModal('nuevoModal');
+  }
+  function crearProyecto(e) {
+    e.preventDefault();
+    closeModal('nuevoModal');
+    showToast('Proyecto creado correctamente', '✓');
+  }
+
+  // ── Ver detalle ──
+  function verDetalle(id) {
+    const p = proyectosData.find(x => x.id === id);
+    if (!p) return;
+
+    document.getElementById('dm-nombre').textContent = p.name;
+    document.getElementById('dm-sub').textContent    = p.sub;
+    document.getElementById('dm-col').textContent    = p.collection;
+    document.getElementById('dm-fecha').textContent  = p.delivery + (p.overdue ? ' ⚠️' : '');
+    document.getElementById('dm-pct').textContent    = p.progress + '%';
+
+    const statusLabels = { activo:'Activo', revision:'En revisión', planeacion:'Planeación', completado:'Completado' };
+    const statusClasses = { activo:'badge-activo', revision:'badge-revision', planeacion:'badge-planeacion', completado:'badge-completado' };
+    document.getElementById('dm-estado').innerHTML =
+      `<span class="badge ${statusClasses[p.status] || ''}">${statusLabels[p.status] || p.status}</span>`;
+
+    const bar = document.getElementById('dm-bar');
+    bar.style.width = p.progress + '%';
+    bar.style.background = p.color;
+
+    const teamEl = document.getElementById('dm-team');
+    teamEl.innerHTML = p.team.map(mid => {
+      const m = miembrosData[mid];
+      if (!m) return '';
+      return `<div class="dt-member">
+        <div class="dt-av" style="background:${m.colorBg};color:${m.color}">${mid}</div>
+        <div><div class="dt-name">${m.nombre}</div><div class="dt-role">${m.rol}</div></div>
+      </div>`;
+    }).join('');
+
+    const footer = document.getElementById('dm-footer');
+    footer.innerHTML = '';
+    if (usuarioData.rol === 'miembro') {
+      footer.innerHTML = `<button class="btn-cancel" onclick="closeModal('detalleModal')">Cerrar</button>`;
+    } else {
+      let btns = `<button type="button" class="btn-cancel" onclick="closeModal('detalleModal')">Cerrar</button>`;
+      if (p.canEdit) {
+        btns += `<button type="button" class="btn-submit" onclick="closeModal('detalleModal');abrirModalEditar(${p.id})">Editar</button>`;
+      }
+      if (p.canDelete) {
+        btns += `<button type="button" class="btn-danger" onclick="closeModal('detalleModal');abrirModalEliminar(${p.id})">Eliminar</button>`;
+      }
+      footer.innerHTML = btns;
+    }
+
+    openModal('detalleModal');
+  }
+
+  // ── Editar ──
+  function abrirModalEditar(id) {
+    const p = proyectosData.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('edit-sub').textContent = p.name;
+    document.getElementById('eNombre').value  = p.name;
+    document.getElementById('eColeccion').value = p.collection;
+    document.getElementById('eEstado').value  = p.status;
+    document.getElementById('eFecha').value   = p.deliveryDate;
+    document.getElementById('eProgreso').value = p.progress;
+    openModal('editarModal');
+  }
+  function guardarEdicion(e) {
+    e.preventDefault();
+    closeModal('editarModal');
+    showToast('Cambios guardados correctamente', '✓');
+  }
+
+  // ── Eliminar ──
+  function abrirModalEliminar(id) {
+    const p = proyectosData.find(x => x.id === id);
+    if (!p) return;
+    eliminarId = id;
+    document.getElementById('elim-nombre').textContent = '"' + p.name + '"';
+    openModal('eliminarModal');
+  }
+  function confirmarEliminar() {
+    const p = proyectosData.find(x => x.id === eliminarId);
+    closeModal('eliminarModal');
+    if (p) {
+      const row = document.querySelector(`tr[data-id="${eliminarId}"]`);
+      if (row) row.style.display = 'none';
+      showToast('Proyecto eliminado', '🗑');
+    }
+    eliminarId = null;
+  }
+
+  // ── PROFILE POPOVER ──
+  function toggleProfile(e) {
+    e.stopPropagation();
+    document.getElementById('profilePopover').classList.toggle('open');
+  }
+  document.addEventListener('click', function(e) {
+    const pop = document.getElementById('profilePopover');
+    if (pop && !document.getElementById('profileBtn').contains(e.target)) {
+      pop.classList.remove('open');
+    }
+  });
+</script>
+</body>
+</html>
