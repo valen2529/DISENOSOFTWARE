@@ -4,7 +4,28 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>RunwaySync - Registrarse</title>
-  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;min-height:100%;font-family:'Helvetica Neue',Arial,sans-serif;}
+    body{background:linear-gradient(135deg,#f5f0e8 0%,#ede8de 50%,#e8e2d8 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+    .register-page{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+    .register-bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0.85;}
+    .register-card{position:relative;z-index:10;background:#d9d9d9;border-radius:22px;width:448px;max-width:100%;padding:36px 46px 32px;box-shadow:0 8px 40px rgba(0,0,0,0.12);}
+    .register-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+    .back-arrow{color:#141516;text-decoration:none;font-size:1.2rem;font-weight:700;line-height:1;}
+    .register-title{font-family:'Georgia',serif;font-size:1.7rem;font-weight:700;color:#141516;}
+    .input-box{background:#fff;border-radius:14px;padding:12px 18px 10px;margin-bottom:14px;border:2px solid transparent;transition:border .2s,box-shadow .2s;}
+    .input-label{display:block;font-size:0.82rem;font-weight:700;color:#231f20;margin-bottom:2px;}
+    .input-field{width:100%;border:none;outline:none;background:transparent;font-size:0.88rem;color:#231f20;}
+    .input-field::placeholder{color:#95a2a5;}
+    .id-hint{font-size:0.74rem;color:#888;padding-left:2px;}
+    .id-error{color:#ff3131;font-weight:700;}
+    .submit-btn{display:flex;align-items:center;justify-content:center;width:100%;height:52px;background:#141516;color:#fff;font-family:'Georgia',serif;font-size:1rem;font-weight:700;border:none;cursor:pointer;border-radius:50px;letter-spacing:0.02em;margin:6px 0 18px;box-shadow:0 4px 16px rgba(0,0,0,0.22);transition:background .2s,transform .15s;}
+    .submit-btn:hover{background:#333;transform:translateY(-1px);}
+    .login-redirect{text-align:center;font-size:0.86rem;color:#6f6f6f;}
+    .login-redirect a{color:#004aad;font-weight:700;text-decoration:none;}
+    .login-redirect a:hover{text-decoration:underline;}
+  </style>
 </head>
 <body>
 <div class="register-page">

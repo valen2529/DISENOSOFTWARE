@@ -44,6 +44,20 @@
     .topbar-icon svg{width:20px;height:20px;stroke:#231f20;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
     .topbar-icon.profile svg{fill:#231f20;stroke:none;}
 
+    /* ── NOTIF POPOVER ── */
+    .notif-wrap{position:relative;}
+    .notif-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:280px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .notif-popover.open{display:block;}
+    .notif-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+    .notif-title{font-size:0.85rem;font-weight:700;color:#141516;}
+    .notif-badge{background:#cd1b80;color:#fff;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:20px;}
+    .notif-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5;cursor:pointer;transition:background .12s;}
+    .notif-item:last-child{border-bottom:none;}
+    .notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+    .notif-info{}
+    .notif-name{font-size:0.8rem;font-weight:600;color:#141516;}
+    .notif-meta{font-size:0.72rem;color:#888;margin-top:2px;}
+
     /* ── PROFILE POPOVER ── */
     .profile-wrap{position:relative;}
     .profile-popover{
@@ -223,8 +237,9 @@
     .mood-ref{font-size:0.63rem;color:#95a2a5;margin-top:2px;}
 
     /* ── TAREAS ── */
-    .task-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #f3f4f6;}
+    .task-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #f3f4f6;border-radius:8px;transition:background .12s;}
     .task-row:last-child{border-bottom:none;}
+    .task-row:hover{background:#f9f9f9;}
     .task-cb{
       width:15px;height:15px;border-radius:4px;
       border:2px solid #d0d0d0;flex-shrink:0;margin-top:1px;
@@ -270,12 +285,50 @@
     </div>
     <span class="topbar-brand">RUNWAY SYNC</span>
     <div class="topbar-right">
-      <!-- Ícono campana -->
-      <div class="topbar-icon" title="Notificaciones">
-        <svg viewBox="0 0 24 24">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-        </svg>
+      <!-- Ícono campana + popover notificaciones -->
+      <div class="notif-wrap">
+        <div class="topbar-icon" id="notifBtn" title="Notificaciones" onclick="toggleNotif(event)" style="position:relative;">
+          <svg viewBox="0 0 24 24">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#cd1b80;border-radius:50%;border:2px solid #fff;"></span>
+        </div>
+        <div class="notif-popover" id="notifPopover">
+          <div class="notif-header">
+            <span class="notif-title">Notificaciones</span>
+            <span class="notif-badge">4 próximos</span>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:#cd1b80;"></div>
+            <div class="notif-info">
+              <div class="notif-name">Casting Modelos SS26</div>
+              <div class="notif-meta">23 ABR · 10:00 AM · Estudio Norte</div>
+            </div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:#b88917;"></div>
+            <div class="notif-info">
+              <div class="notif-name">Fitting Final Colección FW26</div>
+              <div class="notif-meta">24 ABR · 2:00 PM · Atelier Principal</div>
+            </div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:#08b864;"></div>
+            <div class="notif-info">
+              <div class="notif-name">Sesión Editorial Vogue CDMX</div>
+              <div class="notif-meta">28 ABR · Todo el día · Locación TBD</div>
+            </div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:#004aad;"></div>
+            <div class="notif-info">
+              <div class="notif-name">Reunión FW2026 — Dirección Creativa</div>
+              <div class="notif-meta">2 MAY · 9:00 AM · Sala de juntas</div>
+            </div>
+          </div>
+          <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
+        </div>
       </div>
       <!-- Ícono usuario + popover -->
       <div class="profile-wrap">
@@ -530,35 +583,35 @@
         <!-- Tareas Prioritarias -->
         <div class="card">
           <div class="card-title">Tareas Prioritarias</div>
-          <div class="task-row">
+          <div class="task-row" onclick="toggleTask(this)" style="cursor:pointer;">
             <div class="task-cb done"></div>
             <div>
               <div class="task-txt">Aprobar brief editorial</div>
               <div class="task-time">Completado hoy</div>
             </div>
           </div>
-          <div class="task-row">
+          <div class="task-row" onclick="toggleTask(this)" style="cursor:pointer;">
             <div class="task-cb"></div>
             <div>
               <div class="task-txt">Confirmar stylist para casting</div>
               <div class="task-time">Hoy &middot; 3:00 PM</div>
             </div>
           </div>
-          <div class="task-row">
+          <div class="task-row" onclick="toggleTask(this)" style="cursor:pointer;">
             <div class="task-cb"></div>
             <div>
               <div class="task-txt">Revisar propuesta presupuesto FW2026</div>
               <div class="task-time">Ma&ntilde;ana</div>
             </div>
           </div>
-          <div class="task-row">
+          <div class="task-row" onclick="toggleTask(this)" style="cursor:pointer;">
             <div class="task-cb"></div>
             <div>
               <div class="task-txt">Seleccionar locaci&oacute;n editorial</div>
               <div class="task-time">23 abr</div>
             </div>
           </div>
-          <div class="task-row">
+          <div class="task-row" onclick="toggleTask(this)" style="cursor:pointer;">
             <div class="task-cb"></div>
             <div>
               <div class="task-txt">Call con Vogue CDMX &ndash; pendiente direcci&oacute;n</div>
@@ -759,17 +812,50 @@ function loadDashEvents() {
   }
 })();
 
+// ── NOTIF POPOVER ──
+function toggleNotif(e) {
+  e.stopPropagation();
+  document.getElementById('notifPopover').classList.toggle('open');
+  document.getElementById('profilePopover').classList.remove('open');
+}
+
 // ── PROFILE POPOVER ──
 function toggleProfile(e) {
   e.stopPropagation();
   document.getElementById('profilePopover').classList.toggle('open');
+  document.getElementById('notifPopover').classList.remove('open');
 }
 document.addEventListener('click', function(e) {
-  const pop = document.getElementById('profilePopover');
-  if (pop && !document.getElementById('profileBtn').contains(e.target)) {
-    pop.classList.remove('open');
-  }
+  const notifPop   = document.getElementById('notifPopover');
+  const profilePop = document.getElementById('profilePopover');
+  if (notifPop   && !document.getElementById('notifBtn').contains(e.target))   notifPop.classList.remove('open');
+  if (profilePop && !document.getElementById('profileBtn').contains(e.target)) profilePop.classList.remove('open');
 });
+
+// ── TAREAS INTERACTIVAS ──
+function toggleTask(row) {
+  const cb = row.querySelector('.task-cb');
+  const txt = row.querySelector('.task-txt');
+  const time = row.querySelector('.task-time');
+  const isDone = cb.classList.contains('done');
+  cb.classList.toggle('done');
+  if (!isDone) {
+    txt.style.textDecoration = 'line-through';
+    txt.style.color = '#aaa';
+    time.textContent = 'Completado';
+    time.style.color = '#08b864';
+  } else {
+    txt.style.textDecoration = '';
+    txt.style.color = '';
+    time.style.color = '';
+    // Restore original time — no se puede recuperar dinámicamente, solo se borra el estado
+    time.textContent = time.dataset.orig || time.textContent;
+  }
+  // Guardar tiempo original en dataset
+  if (!isDone && !time.dataset.orig) {
+    time.dataset.orig = time.textContent !== 'Completado' ? time.textContent : '';
+  }
+}
 </script>
 </body>
 </html>
