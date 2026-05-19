@@ -88,9 +88,7 @@
       box-shadow:0 1px 4px rgba(0,0,0,0.06);
       transition:box-shadow 0.2s;
     }
-    .code-input:focus{
-      box-shadow:0 0 0 2px #141516;
-    }
+    .code-input:focus{box-shadow:0 0 0 2px #141516;}
     .resend-row{
       text-align:center;
       margin-top:6px;
@@ -108,6 +106,13 @@
       font-weight:700;
     }
     .resend-link:hover{text-decoration:underline;}
+    .error-msg{
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.82rem;
+      color:#ff3131;
+      text-align:center;
+      margin-top:8px;
+    }
     .btn-main{
       display:flex;
       align-items:center;
@@ -142,23 +147,29 @@
     <h2 class="card-title">Verificar Código</h2>
     <p class="card-subtitle">Ingresa el código de 4 dígitos que enviamos a <span>tu correo</span>.</p>
 
+    <!-- ✅ action y names corregidos -->
     <form action="/verificar-codigo" method="POST">
       <div class="code-row">
-        <input class="code-input" type="text" name="c1" maxlength="1" inputmode="numeric" pattern="[0-9]" required autofocus/>
-        <input class="code-input" type="text" name="c2" maxlength="1" inputmode="numeric" pattern="[0-9]" required/>
-        <input class="code-input" type="text" name="c3" maxlength="1" inputmode="numeric" pattern="[0-9]" required/>
-        <input class="code-input" type="text" name="c4" maxlength="1" inputmode="numeric" pattern="[0-9]" required/>
+        <input class="code-input" type="text" name="digit1" maxlength="1" inputmode="numeric" pattern="[0-9]" required autofocus/>
+        <input class="code-input" type="text" name="digit2" maxlength="1" inputmode="numeric" pattern="[0-9]" required/>
+        <input class="code-input" type="text" name="digit3" maxlength="1" inputmode="numeric" pattern="[0-9]" required/>
+        <input class="code-input" type="text" name="digit4" maxlength="1" inputmode="numeric" pattern="[0-9]" required/>
       </div>
       <div class="resend-row">
         <span class="resend-text">¿No recibiste el código? </span>
         <a href="/recuperar" class="resend-link">Reenviar</a>
       </div>
+
+      <!-- ✅ Muestra error del servidor si existe -->
+      <% if (error) { %>
+        <p class="error-msg"><%= error %></p>
+      <% } %>
+
       <button type="submit" class="btn-main">Verificar</button>
     </form>
   </div>
 </div>
 <script>
-  // Auto-avanza al siguiente input al escribir
   const inputs = document.querySelectorAll('.code-input');
   inputs.forEach((input, i) => {
     input.addEventListener('input', () => {

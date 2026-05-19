@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: runwaysync
+    env: node
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGODB_URI
+        sync: false        # lo pegas manualmente en el dashboard de Render
+      - key: NODE_ENV
+        value: production

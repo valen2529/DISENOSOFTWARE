@@ -101,14 +101,12 @@
       align-items:center;
     }
     .toggle-eye svg{width:16px;height:16px;stroke:#95a2a5;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-    .error-msg{
+    .server-error{
       font-family:'Helvetica Neue',Arial,sans-serif;
-      font-size:0.78rem;
+      font-size:0.82rem;
       color:#ff3131;
-      margin-top:-8px;
-      margin-bottom:10px;
-      display:none;
-      padding:0 4px;
+      text-align:center;
+      margin-top:8px;
     }
     .btn-main{
       display:flex;
@@ -149,7 +147,7 @@
         <label class="input-label" for="password">Nueva Contraseña</label>
         <div class="input-row">
           <input type="password" id="password" name="password" class="input-field" placeholder="****************" required/>
-          <button type="button" class="toggle-eye" onclick="togglePass('password', this)">
+          <button type="button" class="toggle-eye" onclick="togglePass('password')">
             <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
@@ -158,36 +156,26 @@
       <div class="input-box">
         <label class="input-label" for="confirmar">Confirmar Contraseña</label>
         <div class="input-row">
-          <input type="password" id="confirmar" name="confirmar" class="input-field" placeholder="****************" required/>
-          <button type="button" class="toggle-eye" onclick="togglePass('confirmar', this)">
+          <input type="password" id="confirmar" name="confirmPassword" class="input-field" placeholder="****************" required/>
+          <button type="button" class="toggle-eye" onclick="togglePass('confirmar')">
             <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
       </div>
 
-      <div class="error-msg" id="errorMsg">Las contraseñas no coinciden.</div>
+      <% if (error) { %>
+        <p class="server-error"><%= error %></p>
+      <% } %>
 
       <button type="submit" class="btn-main">Restablecer Contraseña</button>
     </form>
   </div>
 </div>
 <script>
-  function togglePass(id, btn) {
+  function togglePass(id) {
     const input = document.getElementById(id);
     input.type = input.type === 'password' ? 'text' : 'password';
   }
-
-  document.getElementById('formContrasena').addEventListener('submit', function(e) {
-    const p1 = document.getElementById('password').value;
-    const p2 = document.getElementById('confirmar').value;
-    const err = document.getElementById('errorMsg');
-    if (p1 !== p2) {
-      e.preventDefault();
-      err.style.display = 'block';
-    } else {
-      err.style.display = 'none';
-    }
-  });
 </script>
 </body>
 </html>
