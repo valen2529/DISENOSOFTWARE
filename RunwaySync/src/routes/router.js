@@ -127,11 +127,6 @@ router.post('/login', (req, res) => {
   res.redirect('/dashboard');
 });
 
-// Registro
-router.get('/register',  (req, res) => res.render('register.ejs'));
-router.get('/registro',  (req, res) => res.render('register.ejs'));
-router.post('/register', (req, res) => res.redirect('/login'));
-router.post('/registro', (req, res) => res.redirect('/login'));
 
 // Logout
 router.get('/logout', (req, res) => {
@@ -248,5 +243,23 @@ router.get('/colecciones', (req, res) => {
   const usuario = getUsuario(req);
   res.render('colecciones.ejs', { usuario });
 });
+// ── Invitar miembro (solo directora) ──
+router.post('/invitar-miembro', async (req, res) => {
+  const usuario = getUsuario(req);
+  if (usuario.rol !== 'directora') return res.status(403).send('No autorizado');
 
+  const { nombre, id_empresarial, telefono, rol, password } = req.body;
+  try {
+    const User = (await import('../models/User.model.js')).default;
+    const bcryptjs = (await import('bcryptjs')).default;
+    const existe = await User.findOne({ id_empresarial });
+    if (existe) return res.json({ ok: false, error: 'Ya existe un usuario con ese ID empresarial.' });
+    const hash = await bcryptjs.hash(password, 10);
+    await User.create({ nombre, id_empresarial, telefono, rol, password: hash });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.json({ ok: false, error: 'Error al crear el usuario.' });
+  }
+});
 export default router;
