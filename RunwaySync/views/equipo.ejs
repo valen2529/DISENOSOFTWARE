@@ -72,39 +72,20 @@
 
     /* ── TEAM GRID ── */
     .team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
-    .member-card{
-      background:#fff;border-radius:16px;padding:22px 18px;
-      text-align:center;cursor:pointer;
-      border:1px solid #f0f0f0;
-      box-shadow:0 1px 4px rgba(0,0,0,0.05);
-      transition:transform 0.2s,box-shadow 0.2s;
-    }
+    .member-card{background:#fff;border-radius:16px;padding:22px 18px;text-align:center;cursor:pointer;border:1px solid #f0f0f0;box-shadow:0 1px 4px rgba(0,0,0,0.05);transition:transform 0.2s,box-shadow 0.2s;}
     .member-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.1);}
-    .member-av{
-      width:58px;height:58px;border-radius:50%;
-      display:flex;align-items:center;justify-content:center;
-      margin:0 auto 12px;font-weight:800;font-size:1.1rem;
-      position:relative;
-    }
-    .online-dot{
-      position:absolute;bottom:2px;right:2px;
-      width:11px;height:11px;border-radius:50%;
-      border:2px solid #fff;
-    }
+    .member-av{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-weight:800;font-size:1.1rem;position:relative;}
+    .online-dot{position:absolute;bottom:2px;right:2px;width:11px;height:11px;border-radius:50%;border:2px solid #fff;}
     .member-name{font-size:0.9rem;font-weight:700;color:#141516;margin-bottom:3px;}
     .member-role{font-size:0.75rem;color:#8a9295;margin-bottom:12px;}
     .skills-wrap{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:12px;}
     .skill-tag{background:#f3f4f6;color:#6f6f6f;padding:3px 9px;border-radius:20px;font-size:0.63rem;font-weight:600;}
     .member-footer{font-size:0.68rem;color:#b0b0b0;border-top:1px solid #f3f4f6;padding-top:10px;}
 
-    /* ── DETAIL PANEL ── */
+    /* ── OVERLAYS ── */
     .detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;justify-content:flex-end;z-index:1000;}
     .detail-overlay.open{display:flex;}
-    .detail-panel{
-      width:360px;background:#fff;height:100%;
-      padding:28px 24px;overflow-y:auto;
-      animation:slideIn 0.25s ease;
-    }
+    .detail-panel{width:360px;background:#fff;height:100%;padding:28px 24px;overflow-y:auto;animation:slideIn 0.25s ease;}
     @keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
     .dp-close{background:none;border:none;cursor:pointer;font-size:1.2rem;color:#8a9295;float:right;}
     .dp-av{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;margin:16px auto 10px;}
@@ -118,6 +99,13 @@
     .dp-status.offline{background:#f3f4f6;color:#6b7280;}
     .btn-dp{width:100%;padding:10px;background:#141516;color:#fff;border:none;border-radius:50px;cursor:pointer;font-family:'Georgia',serif;font-size:0.85rem;font-weight:700;margin-top:18px;transition:background 0.15s;}
     .btn-dp:hover{background:#333;}
+
+    /* ── POPUP INVITAR ── */
+    .inv-field{background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px;}
+    .inv-label{font-size:0.75rem;font-weight:700;color:#231f20;display:block;margin-bottom:4px;}
+    .inv-input{width:100%;border:none;outline:none;font-size:0.88rem;color:#231f20;background:transparent;}
+    .inv-input::placeholder{color:#95a2a5;}
+    .inv-select{width:100%;border:none;outline:none;font-size:0.88rem;color:#231f20;background:transparent;cursor:pointer;}
   </style>
 </head>
 <body>
@@ -126,9 +114,7 @@
   <!-- ══ TOPBAR ══ -->
   <header class="topbar">
     <div class="topbar-left">
-      <button class="hamburger" aria-label="Menú">
-        <span></span><span></span><span></span>
-      </button>
+      <button class="hamburger" aria-label="Menú"><span></span><span></span><span></span></button>
     </div>
     <span class="topbar-brand">RUNWAY SYNC</span>
     <div class="topbar-right">
@@ -147,7 +133,7 @@
         </div>
       </div>
       <div class="profile-wrap">
-        <div class="topbar-icon" id="profileBtn" title="Perfil" onclick="toggleProfile(event)" style="cursor:pointer;">
+        <div class="topbar-icon" id="profileBtn" title="Perfil" onclick="toggleProfile(event)">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         </div>
         <div class="profile-popover" id="profilePopover">
@@ -204,9 +190,11 @@
           <h1>Equipo</h1>
           <p>Equipo Creativo &middot; <%= miembros.length %> miembros activos</p>
         </div>
-        <button class="btn-new" onclick="alert('Función invitar próximamente')">
+        <% if (usuario.rol === 'directora') { %>
+        <button class="btn-new" onclick="abrirInvitar()">
           + Invitar Miembro
         </button>
+        <% } %>
       </div>
 
       <!-- STATS -->
@@ -253,10 +241,9 @@
         <% }) %>
       </div>
 
-    </div><!-- /content -->
-  </div><!-- /body-row -->
-
-</div><!-- /app -->
+    </div>
+  </div>
+</div>
 
 <!-- ── DETAIL PANEL ── -->
 <div class="detail-overlay" id="detailOverlay" onclick="cerrarDetalle(event)">
@@ -274,7 +261,67 @@
   </div>
 </div>
 
+<!-- ── POPUP INVITAR MIEMBRO ── -->
+<div class="detail-overlay" id="invitarOverlay" onclick="cerrarInvitar(event)">
+  <div class="detail-panel" onclick="event.stopPropagation()" style="width:420px;">
+    <button class="dp-close" onclick="cerrarInvitar()">&#x2715;</button>
+    <div style="margin-top:16px;">
+      <h2 style="font-family:'Georgia',serif;font-size:1.2rem;color:#141516;margin-bottom:4px;">Invitar Miembro</h2>
+      <p style="font-size:0.75rem;color:#8a9295;margin-bottom:20px;">Completa los datos del nuevo integrante</p>
+
+      <div id="invitar-error" style="display:none;background:#fff0f0;color:#ff3131;border-radius:10px;padding:10px 14px;font-size:0.8rem;margin-bottom:14px;"></div>
+      <div id="invitar-exito" style="display:none;background:#f0fff8;color:#08b864;border-radius:10px;padding:10px 14px;font-size:0.8rem;margin-bottom:14px;"></div>
+
+      <div class="inv-field">
+        <label class="inv-label">Nombres y Apellidos</label>
+        <input id="inv-nombre" type="text" class="inv-input" placeholder="Ej: Juan Pablo Torres"/>
+      </div>
+
+      <div class="inv-field">
+        <label class="inv-label">Rol</label>
+        <select id="inv-rol" class="inv-select" onchange="actualizarSufijo()">
+          <option value="">Seleccionar rol...</option>
+          <option value="directora">Directora</option>
+          <option value="jefe">Jefe de Área</option>
+          <option value="miembro">Miembro</option>
+        </select>
+      </div>
+
+      <div class="inv-field">
+        <label class="inv-label">ID Empresarial</label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input id="inv-id-base" type="text" class="inv-input" placeholder="Ej: 11.00.095" style="flex:1;"/>
+          <span style="color:#95a2a5;font-size:0.88rem;flex-shrink:0;">.</span>
+          <span id="inv-id-sufijo" style="font-size:0.88rem;font-weight:700;color:#95a2a5;min-width:28px;flex-shrink:0;">___</span>
+        </div>
+        <div style="font-size:0.68rem;color:#95a2a5;margin-top:5px;">Los últimos 3 dígitos se asignan según el rol</div>
+      </div>
+
+      <div class="inv-field">
+        <label class="inv-label">Número de Celular</label>
+        <input id="inv-tel" type="tel" class="inv-input" placeholder="Ej: 3001234567"/>
+      </div>
+
+      <div class="inv-field" style="margin-bottom:20px;">
+        <label class="inv-label">Contraseña</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input id="inv-pass" type="password" class="inv-input" placeholder="Mínimo 6 caracteres" style="flex:1;"/>
+          <button type="button" onclick="togglePassVis()" style="background:none;border:none;cursor:pointer;padding:0;color:#8a9295;flex-shrink:0;" title="Mostrar/ocultar contraseña">
+            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-dp" onclick="enviarInvitacion()">Registrar Miembro</button>
+    </div>
+  </div>
+</div>
+
 <script>
+  // ── DETAIL PANEL ──
   function abrirDetalle(m) {
     document.getElementById('dpAv').style.background = m.bg;
     document.getElementById('dpAv').style.color      = m.color;
@@ -293,10 +340,112 @@
     }
   }
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') document.getElementById('detailOverlay').classList.remove('open');
-  });
+  // ── POPUP INVITAR ──
+  function abrirInvitar() {
+    document.getElementById('invitarOverlay').classList.add('open');
+    document.getElementById('invitar-error').style.display = 'none';
+    document.getElementById('invitar-exito').style.display = 'none';
+    // Resetear sufijo al abrir
+    const sufijo = document.getElementById('inv-id-sufijo');
+    sufijo.textContent = '___';
+    sufijo.style.color = '#95a2a5';
+  }
 
+  function cerrarInvitar(e) {
+    if (!e || e.target === document.getElementById('invitarOverlay')) {
+      document.getElementById('invitarOverlay').classList.remove('open');
+    }
+  }
+
+  // Sufijos por rol
+  const SUFIJOS = { directora: '789', jefe: '456', miembro: '123' };
+
+  function actualizarSufijo() {
+    const rol    = document.getElementById('inv-rol').value;
+    const sufijo = document.getElementById('inv-id-sufijo');
+    if (rol && SUFIJOS[rol]) {
+      sufijo.textContent = SUFIJOS[rol];
+      sufijo.style.color = '#cd1b80';
+    } else {
+      sufijo.textContent = '___';
+      sufijo.style.color = '#95a2a5';
+    }
+  }
+
+  function buildIdFinal() {
+    const base = document.getElementById('inv-id-base').value.trim();
+    const rol  = document.getElementById('inv-rol').value;
+    if (!base || !rol || !SUFIJOS[rol]) return base;
+    return base + '.' + SUFIJOS[rol];
+  }
+
+  // Mostrar / ocultar contraseña
+  function togglePassVis() {
+    const input = document.getElementById('inv-pass');
+    const icon  = document.getElementById('eye-icon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.innerHTML = `
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+        <line x1="1" y1="1" x2="23" y2="23"/>`;
+    } else {
+      input.type = 'password';
+      icon.innerHTML = `
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>`;
+    }
+  }
+
+  async function enviarInvitacion() {
+    const nombre = document.getElementById('inv-nombre').value.trim();
+    const base   = document.getElementById('inv-id-base').value.trim();
+    const id     = buildIdFinal();
+    const tel    = document.getElementById('inv-tel').value.trim();
+    const rol    = document.getElementById('inv-rol').value;
+    const pass   = document.getElementById('inv-pass').value;
+
+    const errDiv = document.getElementById('invitar-error');
+    const okDiv  = document.getElementById('invitar-exito');
+    errDiv.style.display = 'none';
+    okDiv.style.display  = 'none';
+
+    if (!nombre || !base || !tel || !rol || !pass) {
+      errDiv.textContent = 'Por favor completa todos los campos.';
+      errDiv.style.display = 'block';
+      return;
+    }
+    if (pass.length < 6) {
+      errDiv.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+      errDiv.style.display = 'block';
+      return;
+    }
+
+    const res = await fetch('/invitar-miembro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, id_empresarial: id, telefono: tel, rol, password: pass }),
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      okDiv.textContent = '¡Miembro registrado exitosamente!';
+      okDiv.style.display = 'block';
+      document.getElementById('inv-nombre').value  = '';
+      document.getElementById('inv-id-base').value = '';
+      document.getElementById('inv-tel').value     = '';
+      document.getElementById('inv-rol').value     = '';
+      document.getElementById('inv-pass').value    = '';
+      const sufijo = document.getElementById('inv-id-sufijo');
+      sufijo.textContent = '___';
+      sufijo.style.color = '#95a2a5';
+    } else {
+      errDiv.textContent = data.error || 'Error al registrar el miembro.';
+      errDiv.style.display = 'block';
+    }
+  }
+
+  // ── NOTIF / PROFILE ──
   function toggleNotif(e) {
     e.stopPropagation();
     document.getElementById('notifPopover').classList.toggle('open');
@@ -312,6 +461,13 @@
     const pp = document.getElementById('profilePopover');
     if (np && !document.getElementById('notifBtn').contains(e.target))   np.classList.remove('open');
     if (pp && !document.getElementById('profileBtn').contains(e.target)) pp.classList.remove('open');
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.getElementById('detailOverlay').classList.remove('open');
+      document.getElementById('invitarOverlay').classList.remove('open');
+    }
   });
 </script>
 </body>
