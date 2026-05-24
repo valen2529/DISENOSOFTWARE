@@ -125,16 +125,47 @@ router.get('/proyectos', async (req, res) => {
   });
 });
 
+// ── Helpers de equipo ──
+const AREA_COLOR = {
+  directora:  { color: '#cd1b80', bg: 'rgba(205,27,128,0.18)' },
+  fotografia: { color: '#004aad', bg: 'rgba(0,74,173,0.18)'   },
+  styling:    { color: '#08b864', bg: 'rgba(8,184,100,0.18)'  },
+  produccion: { color: '#b88917', bg: 'rgba(184,137,23,0.18)' },
+};
+const AREA_SKILLS = {
+  fotografia: ['Fotografía','Edición','Iluminación'],
+  styling:    ['Styling','Fitting','Tendencias'],
+  produccion: ['Producción','Logística','Presupuesto'],
+};
+const AREA_LABEL = { fotografia:'Fotografía', styling:'Styling', produccion:'Producción' };
+
+function mapMiembro(u) {
+  const key    = u.rol === 'directora' ? 'directora' : u.area;
+  const c      = AREA_COLOR[key] || { color:'#6f6f6f', bg:'rgba(111,111,111,0.15)' };
+  const words  = u.nombre.trim().split(' ');
+  const ini    = (words[0][0] + (words[1]?.[0] || words[0][1])).toUpperCase();
+  const rolLabel = u.rol === 'directora' ? 'Directora Creativa'
+    : u.rol === 'jefe' ? `Jefe de ${AREA_LABEL[u.area] || u.area}`
+    : `Miembro · ${AREA_LABEL[u.area] || u.area}`;
+  return {
+    _id:    u._id.toString(),
+    ini, nombre: u.nombre, rolLabel,
+    rol:    u.rol, area: u.area || null,
+    id_empresarial: u.id_empresarial,
+    telefono: u.telefono,
+    bg: c.bg, color: c.color,
+    skills: u.rol === 'directora' ? ['Dirección','Moodboard','Casting'] : (AREA_SKILLS[u.area] || []),
+    online: false,
+  };
+}
+
 // ── GET /equipo ──
 router.get('/equipo', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
-  const u = await User.findById(req.session.userId);
-  const miembros = [
-    { ini:'MR', nombre:'Marietta Ríos',     rol:'Directora Creativa', bg:'rgba(205,27,128,0.18)', color:'#cd1b80', online:true,  skills:['Dirección','Moodboard','Casting'],      proyectos:7 },
-    { ini:'JP', nombre:'Juan Pablo Torres', rol:'Fotógrafo',          bg:'rgba(0,74,173,0.18)',   color:'#004aad', online:true,  skills:['Fotografía','Edición','Iluminación'],    proyectos:4 },
-    { ini:'CL', nombre:'Camila López',      rol:'Stylist',            bg:'rgba(8,184,100,0.18)',  color:'#08b864', online:false, skills:['Styling','Fitting','Tendencias'],        proyectos:5 },
-    { ini:'BP', nombre:'Bruno Paredes',     rol:'Productor',          bg:'rgba(184,137,23,0.18)', color:'#b88917', online:false, skills:['Producción','Logística','Presupuesto'],  proyectos:3 },
-  ];
+  const u        = await User.findById(req.session.userId);
+  const todos    = await User.find().sort({ rol: 1, area: 1 });
+  const miembros = todos.map(mapMiembro);
+
   const stats = {
     miembros:        miembros.length,
     disponibles:     miembros.filter(m => m.online).length,
@@ -146,18 +177,25 @@ router.get('/equipo', async (req, res) => {
 
 // ── POST /invitar-miembro ──
 router.post('/invitar-miembro', async (req, res) => {
-  console.log('Body recibido:', req.body);
   if (!req.session.userId) return res.status(401).json({ ok: false, error: 'No autorizado.' });
-  const { nombre, id_empresarial, telefono, rol, password } = req.body;
+  const sesionUser = await User.findById(req.session.userId);
+  if (sesionUser.rol !== 'directora') return res.status(403).json({ ok: false, error: 'Sin permisos.' });
+
+  const { nombre, id_empresarial, telefono, rol, area, password } = req.body;
+  if (!nombre || !id_empresarial || !telefono || !rol || !password)
+    return res.json({ ok: false, error: 'Completa todos los campos obligatorios.' });
+  if (password.length < 6)
+    return res.json({ ok: false, error: 'La contraseña debe tener al menos 6 caracteres.' });
+  if ((rol === 'jefe' || rol === 'miembro') && !area)
+    return res.json({ ok: false, error: 'Selecciona el área del integrante.' });
   try {
     const existe = await User.findOne({ id_empresarial });
-    if (existe) return res.json({ ok: false, error: 'El ID empresarial ya existe.' });
+    if (existe) return res.json({ ok: false, error: 'Ese ID empresarial ya existe.' });
     const hash = await bcryptjs.hash(password, 10);
-    await User.create({ nombre, id_empresarial, telefono, rol, password: hash });
-    console.log('Usuario creado:', nombre);
-    res.json({ ok: true });
+    const nuevo = await User.create({ nombre, id_empresarial, telefono, rol, area: area || null, password: hash });
+    res.json({ ok: true, miembro: mapMiembro(nuevo) });
   } catch (err) {
-    console.error('Error al crear usuario:', err);
+    console.error(err);
     res.json({ ok: false, error: 'Error al registrar el miembro.' });
   }
 });
