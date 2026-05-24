@@ -1,63 +1,52 @@
-import nodemailer from 'nodemailer';
+import twilio from 'twilio';
 import bcryptjs from 'bcryptjs';
 import * as authRepo from '../repositories/auth.repository.js';
-import { validateEmail, validatePasswords } from '../validators/auth.validator.js';
+import { validatePasswords } from '../validators/auth.validator.js';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: 'saraletradoco@gmail.com',     // 👈 tu correo Gmail
-    pass: 'umyaebawnyhmnfyi',   // 👈 reemplaza con los 16 caracteres
-  },
-});
+const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
-export const processSendCode = async (email) => {
-  if (!validateEmail(email)) {
-    return { ok: false, error: 'Correo electrónico inválido.' };
+export const processSendCode = async (telefono) => {
+  if (!telefono || telefono.length < 10) {
+    return { ok: false, error: 'Número de celular inválido.' };
   }
-  const user = await authRepo.findUserByEmail(email);
+
+  const user = await authRepo.findUserByTelefono(telefono);
   if (!user) {
-    return { ok: false, error: 'No existe una cuenta con ese correo.' };
+    return { ok: false, error: 'No encontramos un usuario con ese número.' };
   }
 
-  const code = Math.floor(1000 + Math.random() * 9000).toString();
+  const code    = Math.floor(1000 + Math.random() * 9000).toString();
   const expires = new Date(Date.now() + 10 * 60 * 1000);
   await authRepo.saveResetCode(user, code, expires);
 
-  await transporter.sendMail({
-    from: '"RunwaySync" <saraletradoco@gmail.com>',  // 👈 tu correo Gmail
-    to: email,
-    subject: 'Código de verificación - RunwaySync',
-    html: `
-      <h2>Recuperación de contraseña</h2>
-      <p>Tu código de verificación es:</p>
-      <h1 style="letter-spacing:8px">${code}</h1>
-      <p>Expira en 10 minutos.</p>
-    `,
+  await client.messages.create({
+    body: `Tu PIN de RunwaySync es: ${code}. Válido por 10 minutos.`,
+    from: process.env.TWILIO_PHONE,
+    to:   `+57${telefono}`,
   });
 
   return { ok: true };
 };
 
-export const processVerifyCode = async (email, digits) => {
+export const processVerifyCode = async (telefono, digits) => {
   const code = digits.join('');
-  const user = await authRepo.findUserByEmail(email);
+  const user = await authRepo.findUserByTelefono(telefono);
 
   if (!user || user.resetCode !== code) {
-    return { ok: false, error: 'Código incorrecto.' };
+    return { ok: false, error: 'PIN incorrecto.' };
   }
   if (user.resetCodeExpires < Date.now()) {
-    return { ok: false, error: 'El código ha expirado. Solicita uno nuevo.' };
+    return { ok: false, error: 'El PIN ha expirado. Solicita uno nuevo.' };
   }
   return { ok: true };
 };
 
-export const processResetPassword = async (email, password, confirmPassword) => {
+export const processResetPassword = async (telefono, password, confirmPassword) => {
   const validationError = validatePasswords(password, confirmPassword);
   if (validationError) {
     return { ok: false, error: validationError };
   }
-  const user = await authRepo.findUserByEmail(email);
+  const user           = await authRepo.findUserByTelefono(telefono);
   const hashedPassword = await bcryptjs.hash(password, 10);
   await authRepo.updatePassword(user, hashedPassword);
   return { ok: true };

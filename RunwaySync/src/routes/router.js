@@ -1,265 +1,238 @@
-import { Router } from "express";
-import express from "express";
-import authRoutes from './auth.routes.js';
+import { Router } from 'express';
+import twilio from 'twilio';
+import User from '../models/User.model.js';
+import bcryptjs from 'bcryptjs';
 
 const router = Router();
-router.use(express.urlencoded({ extended: true }));
+const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
-// ══════════════════════════════════════════════
-//  DATOS COMPARTIDOS
-// ══════════════════════════════════════════════
+const getUsuario = (u) => ({
+  id: u.id_empresarial,
+  nombre: u.nombre,
+  rol: u.rol,
+  rolLabel: u.rol.charAt(0).toUpperCase() + u.rol.slice(1),
+});
 
 const MIEMBROS = {
-  MR: { nombre: 'Marietta',   rol: 'Dir. Creativa', color: '#cd1b80', colorBg: 'rgba(205,27,128,0.18)' },
-  JP: { nombre: 'Juan Pablo', rol: 'Fotógrafo',     color: '#004aad', colorBg: 'rgba(0,74,173,0.18)'   },
-  CL: { nombre: 'Camila',     rol: 'Stylist',       color: '#08b864', colorBg: 'rgba(8,184,100,0.18)'  },
-  BP: { nombre: 'Bruno',      rol: 'Productor',     color: '#b88917', colorBg: 'rgba(184,137,23,0.18)' },
+  MR: { nombre:'Marietta', rol:'Dir. Creativa', color:'#cd1b80', colorBg:'rgba(205,27,128,0.18)' },
+  JP: { nombre:'Juan Pablo', rol:'Fotógrafo', color:'#004aad', colorBg:'rgba(0,74,173,0.18)' },
+  CL: { nombre:'Camila', rol:'Stylist', color:'#08b864', colorBg:'rgba(8,184,100,0.18)' },
+  BP: { nombre:'Bruno', rol:'Productor', color:'#b88917', colorBg:'rgba(184,137,23,0.18)' },
+  AG: { nombre:'Agencia', rol:'Externo', color:'#7611bd', colorBg:'rgba(118,17,189,0.18)' },
 };
 
-const MIEMBROS_EQUIPO = [
-  {
-    ini: 'MR', nombre: 'Marietta Rojas',    rol: 'Directora Creativa',
-    bg: 'rgba(205,27,128,0.18)', color: '#cd1b80', online: true,
-    proyectos: 4,
-    skills: ['Dirección Creativa', 'Branding', 'Editorial', 'Moodboard'],
-  },
-  {
-    ini: 'JP', nombre: 'Juan Pablo Torres', rol: 'Fotógrafo',
-    bg: 'rgba(0,74,173,0.18)', color: '#004aad', online: true,
-    proyectos: 3,
-    skills: ['Fotografía', 'Retoque', 'Iluminación', 'Video'],
-  },
-  {
-    ini: 'CL', nombre: 'Camila López',      rol: 'Stylist',
-    bg: 'rgba(8,184,100,0.18)', color: '#08b864', online: false,
-    proyectos: 2,
-    skills: ['Styling', 'Tendencias', 'Lookbook', 'Fitting'],
-  },
-  {
-    ini: 'BP', nombre: 'Bruno Pedraza',     rol: 'Productor',
-    bg: 'rgba(184,137,23,0.18)', color: '#b88917', online: false,
-    proyectos: 3,
-    skills: ['Producción', 'Logística', 'Presupuesto', 'Locaciones'],
-  },
-];
-
-const USUARIOS = {
-  directora: { id:'MR', nombre:'Marietta', rol:'directora', rolLabel:'Directora Creativa',          area: null       },
-  jefe:      { id:'BP', nombre:'Bruno',    rol:'jefe',      rolLabel:'Jefe de Área · Producción',   area:'produccion'},
-  miembro:   { id:'CL', nombre:'Camila',   rol:'miembro',   rolLabel:'Miembro de Equipo · Styling', area: null       },
-};
-
-const PROYECTOS_DATA = [
-  { id:1, initials:'SS', name:'Editorial SS26 Vogue Milan',      sub:'Fotografía · Producción',  collection:'SS26',   progress:75, delivery:'28 abr', deliveryDate:'2026-04-28', status:'activo',     team:['MR','JP','CL'], area:'fotografia',     color:'#cd1b80', colorBg:'rgba(205,27,128,0.18)' },
-  { id:2, initials:'FW', name:'Lookbook FW26 — Campaña Digital', sub:'Fotografía · Diseño',      collection:'FW26',   progress:40, delivery:'15 may', deliveryDate:'2026-05-15', status:'revision',   team:['MR','BP'],      area:'diseno',         color:'#08b864', colorBg:'rgba(8,184,100,0.18)'  },
-  { id:3, initials:'RS', name:'Moodboard Resort 2026',           sub:'Dirección de arte',        collection:'Resort', progress:20, delivery:'1 jun',  deliveryDate:'2026-06-01', status:'planeacion', team:['MR','JP'],      area:'arte',           color:'#004aad', colorBg:'rgba(0,74,173,0.18)'   },
-  { id:4, initials:'EV', name:'Producción Evento Showroom',      sub:'Eventos · Producción',     collection:'FW26',   progress:50, delivery:'20 may', deliveryDate:'2026-05-20', status:'activo',     team:['BP','CL'],      area:'produccion',     color:'#b88917', colorBg:'rgba(184,137,23,0.18)' },
-  { id:5, initials:'CO', name:'Catálogo Digital Temporada',      sub:'Diseño · Contenido',       collection:'SS26',   progress:10, delivery:'30 jun', deliveryDate:'2026-06-30', status:'planeacion', team:['MR'],           area:'diseno',         color:'#231f20', colorBg:'rgba(35,31,32,0.12)'   },
-  { id:6, initials:'PR', name:'Prensa y PR Vogue CDMX',          sub:'Comunicaciones',           collection:'FW26',   progress:60, delivery:'28 abr', deliveryDate:'2026-04-28', status:'revision',   team:['MR','CL'],      area:'comunicaciones', color:'#7611bd', colorBg:'rgba(118,17,189,0.18)' },
-  { id:7, initials:'CA', name:'Casting & Selección Modelos',     sub:'Casting · Producción',     collection:'SS26',   progress:85, delivery:'23 abr', deliveryDate:'2026-04-23', status:'activo',     team:['JP','BP','CL'], area:'casting',        color:'#08b864', colorBg:'rgba(8,184,100,0.18)'  },
-];
-
-const EVENTOS_DATA = [
-  {
-    id:1, dia:23, mes:'ABR',
-    nombre:'Casting Modelos SS26',
-    tipo:'casting', status:'confirmado',
-    lugar:'Estudio Norte', hora:'10:00 AM – 2:00 PM',
-    descripcion:'Selección de modelos para la campaña Spring/Summer 2026. Se evaluarán 12 perfiles pre-seleccionados por agencia.',
-    tags:['Casting','SS26'], team:['MR','JP','CL'],
-    color:'#cd1b80', dateStr:'2026-04-23',
-  },
-  {
-    id:2, dia:24, mes:'ABR',
-    nombre:'Fitting Final Colección FW26',
-    tipo:'fitting', status:'confirmado',
-    lugar:'Atelier Principal', hora:'2:00 PM – 6:00 PM',
-    descripcion:'Revisión final de prendas antes de la sesión fotográfica. Ajustes de sastrería y aprobación de la directora creativa.',
-    tags:['Fitting','FW26'], team:['MR','BP'],
-    color:'#b88917', dateStr:'2026-04-24',
-  },
-  {
-    id:3, dia:28, mes:'ABR',
-    nombre:'Sesión Editorial Vogue CDMX',
-    tipo:'editorial', status:'pendiente',
-    lugar:'Locación TBD', hora:'Todo el día',
-    descripcion:'Sesión fotográfica para publicación en Vogue México. Colección FW26 completa con equipo de producción externo.',
-    tags:['Editorial','FW26','Prensa'], team:['MR','JP','CL','BP'],
-    color:'#08b864', dateStr:'2026-04-28',
-  },
-  {
-    id:4, dia:2, mes:'MAY',
-    nombre:'Reunión FW2026 — Dirección Creativa',
-    tipo:'reunion', status:'por_confirmar',
-    lugar:'Sala de juntas', hora:'9:00 AM – 11:00 AM',
-    descripcion:'Revisión de avances FW26 y definición de dirección para Resort 2026. Presentación de moodboard y referencias.',
-    tags:['Reunión','FW26'], team:['MR','JP'],
-    color:'#004aad', dateStr:'2026-05-02',
-  },
-];
-
-const PROXIMOS_MAYO = [
-  { nombre:'Casting Resort 2026',         fecha:'5 may',  lugar:'Estudio Sur',   color:'#cd1b80' },
-  { nombre:'Fitting SS26 — Ronda 1',      fecha:'12 may', lugar:'Atelier',       color:'#004aad' },
-  { nombre:'Shooting Lookbook FW26',      fecha:'18 may', lugar:'Estudio Norte', color:'#08b864' },
-  { nombre:'Presentación Colección SS26', fecha:'28 may', lugar:'Showroom',      color:'#7611bd' },
-];
-
-// ══════════════════════════════════════════════
-//  RUTAS PÚBLICAS (sin sesión)
-// ══════════════════════════════════════════════
-
-// Pantalla de inicio
+// ── GET / ──
 router.get('/', (req, res) => {
   res.render('index.ejs');
 });
 
-// Login
+// ── GET /login ──
 router.get('/login', (req, res) => {
-  res.render('login.ejs');
+  res.render('login.ejs', { error: null });
 });
 
-router.post('/login', (req, res) => {
-  // TODO: validar contra BD con mongoose
-  // Demo: se usa rol por defecto 'directora'
-  const rolKey = ['directora','jefe','miembro'].includes(req.body.rol) ? req.body.rol : 'directora';
-  req.session.usuario = USUARIOS[rolKey];
-  res.redirect('/dashboard');
-});
-
-
-// Logout
-router.get('/logout', (req, res) => {
-  req.session.destroy(() => res.redirect('/login'));
-});
-
-// ── Recuperar contraseña (auth flow) ──
-router.use('/', authRoutes);
-
-// ══════════════════════════════════════════════
-//  RUTAS PRIVADAS (app)
-// ══════════════════════════════════════════════
-
-// Helper: obtener usuario de sesión o usar demo 'directora'
-function getUsuario(req) {
-  return req.session?.usuario || USUARIOS['directora'];
-}
-
-// Dashboard
-router.get('/dashboard', (req, res) => {
-  const usuario = getUsuario(req);
-  res.render('dashboard.ejs', { usuario });
-});
-
-// ── Proyectos ──
-router.get('/proyectos', (req, res) => {
-  const rolKey = ['directora','jefe','miembro'].includes(req.query.rol)
-    ? req.query.rol
-    : (req.session?.usuario?.rol || 'directora');
-  const usuario = USUARIOS[rolKey];
-  const hoy     = new Date();
-
-  let lista = PROYECTOS_DATA.map(p => ({
-    ...p,
-    overdue:   new Date(p.deliveryDate) < hoy && p.status !== 'completado',
-    canEdit:   usuario.rol === 'directora' || p.team.includes(usuario.id),
-    canDelete: usuario.rol === 'directora',
-  }));
-
-  if (usuario.rol === 'jefe') {
-    lista = lista.filter(p => p.team.includes(usuario.id) || p.area === usuario.area);
-  } else if (usuario.rol === 'miembro') {
-    lista = lista.filter(p => p.team.includes(usuario.id));
+// ── POST /login ──
+router.post('/login', async (req, res) => {
+  const { id_empresarial, password } = req.body;
+  try {
+    const usuario = await User.findOne({ id_empresarial });
+    if (!usuario) return res.render('login.ejs', { error: 'Usuario no encontrado.' });
+    const coincide = await bcryptjs.compare(password, usuario.password);
+    if (!coincide) return res.render('login.ejs', { error: 'Contraseña incorrecta.' });
+    req.session.userId  = usuario._id;
+    req.session.userRol = usuario.rol;
+    res.redirect('/dashboard');
+  } catch (err) {
+    console.error(err);
+    res.render('login.ejs', { error: 'Error al iniciar sesión.' });
   }
-
-  const stats = {
-    total:       lista.length,
-    activos:     lista.filter(p => p.status === 'activo').length,
-    revision:    lista.filter(p => p.status === 'revision').length,
-    completados: usuario.rol === 'directora' ? 3 : usuario.rol === 'jefe' ? 1 : 2,
-    avance:      lista.length > 0
-      ? Math.round(lista.reduce((s, p) => s + p.progress, 0) / lista.length)
-      : 0,
-  };
-
-  res.render('proyectos.ejs', { proyectos: lista, usuario, stats, MIEMBROS });
 });
 
-// ── Eventos ──
-router.get('/eventos', (req, res) => {
-  const rolKey = ['directora','jefe','miembro'].includes(req.query.rol)
-    ? req.query.rol
-    : (req.session?.usuario?.rol || 'directora');
-  const usuario = USUARIOS[rolKey];
-
-  let lista = EVENTOS_DATA.map(e => ({
-    ...e,
-    canEdit:   usuario.rol === 'directora' || e.team.includes(usuario.id),
-    canDelete: usuario.rol === 'directora',
-  }));
-
-  if (usuario.rol !== 'directora') {
-    lista = lista.filter(e => e.team.includes(usuario.id));
+// ── GET /dashboard ──
+router.get('/dashboard', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/login');
+  try {
+    const u = await User.findById(req.session.userId);
+    if (!u) return res.redirect('/login');
+    res.render('dashboard.ejs', { usuario: getUsuario(u) });
+  } catch (err) {
+    console.error(err);
+    res.redirect('/login');
   }
+});
 
+// ── GET /calendario ──
+router.get('/calendario', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/login');
+  const u = await User.findById(req.session.userId);
+  res.render('calendario.ejs', { usuario: getUsuario(u) });
+});
+
+// ── GET /colecciones ──
+router.get('/colecciones', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/login');
+  const u = await User.findById(req.session.userId);
+  res.render('colecciones.ejs', { usuario: getUsuario(u) });
+});
+
+// ── GET /eventos ──
+router.get('/eventos', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/login');
+  const u   = await User.findById(req.session.userId);
+  const rol = req.query.rol || u.rol;
+  const eventos = [
+    { id:1, nombre:'Casting SS26', tipo:'casting', dia:'12', mes:'MAY', lugar:'Estudio Norte', hora:'10:00 AM – 6:00 PM', descripcion:'Primer casting de modelos para colección SS26', status:'confirmado', color:'#cd1b80', tags:['Casting','SS26'], team:['MR','JP','CL'], dateStr:'2026-05-12', canEdit: rol==='directora', canDelete: rol==='directora' },
+    { id:2, nombre:'Fitting FW26', tipo:'fitting', dia:'15', mes:'MAY', lugar:'Atelier Central', hora:'11:00 AM – 2:00 PM', descripcion:'Revisión de prendas para colección FW26', status:'pendiente', color:'#b88917', tags:['Fitting','FW26'], team:['MR','CL'], dateStr:'2026-05-15', canEdit: rol!=='miembro', canDelete: rol==='directora' },
+    { id:3, nombre:'Sesión Editorial', tipo:'editorial', dia:'26', mes:'MAY', lugar:'Locación TBD', hora:'8:00 AM – 8:00 PM', descripcion:'Sesión editorial principal para Vogue CDMX', status:'por_confirmar', color:'#08b864', tags:['Editorial','SS26'], team:['MR','JP','CL','BP'], dateStr:'2026-05-26', canEdit: rol==='directora', canDelete: rol==='directora' },
+  ];
   const resumen = {
-    total:        lista.length,
-    confirmados:  lista.filter(e => e.status === 'confirmado').length,
-    pendientes:   lista.filter(e => e.status === 'pendiente').length,
-    porConfirmar: lista.filter(e => e.status === 'por_confirmar').length,
+    total: eventos.length,
+    confirmados: eventos.filter(e => e.status === 'confirmado').length,
+    pendientes:  eventos.filter(e => e.status === 'pendiente').length,
+    porConfirmar: eventos.filter(e => e.status === 'por_confirmar').length,
   };
-
+  const PROXIMOS_MAYO = [
+    { nombre:'Casting SS26',    fecha:'12 Mayo', lugar:'Estudio Norte',   color:'#cd1b80' },
+    { nombre:'Fitting FW26',    fecha:'15 Mayo', lugar:'Atelier Central', color:'#b88917' },
+    { nombre:'Sesión Editorial',fecha:'26 Mayo', lugar:'TBD',             color:'#08b864' },
+  ];
   res.render('eventos.ejs', {
-    eventos:  lista,
-    usuario,
-    resumen,
-    PROXIMOS_MAYO,
-    MIEMBROS,
+    usuario: { ...getUsuario(u), rol },
+    eventos, MIEMBROS, resumen, PROXIMOS_MAYO
   });
 });
 
-// ── Equipo ──
-router.get('/equipo', (req, res) => {
-  const usuario = getUsuario(req);
-
+// ── GET /proyectos ──
+router.get('/proyectos', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/login');
+  const u   = await User.findById(req.session.userId);
+  const rol = req.query.rol || u.rol;
+  const proyectos = [
+    { id:1, name:'Editorial SS26 Vogue Milan', sub:'Fotografía · Producción', initials:'SS', color:'#cd1b80', colorBg:'rgba(205,27,128,0.18)', collection:'SS26', progress:75, delivery:'28 Abr', deliveryDate:'2026-04-28', status:'activo',     overdue:true,  team:['MR','JP'], canEdit: rol!=='miembro', canDelete: rol==='directora' },
+    { id:2, name:'Colección FW26 Lookbook',    sub:'Diseño · Fotografía',     initials:'FW', color:'#004aad', colorBg:'rgba(0,74,173,0.18)',   collection:'FW26', progress:40, delivery:'15 Jun', deliveryDate:'2026-06-15', status:'activo',     overdue:false, team:['MR','CL'], canEdit: rol!=='miembro', canDelete: rol==='directora' },
+    { id:3, name:'Resort 2027 Moodboard',      sub:'Dirección de Arte',        initials:'RS', color:'#08b864', colorBg:'rgba(8,184,100,0.18)',  collection:'Resort',progress:20, delivery:'30 Jul', deliveryDate:'2026-07-30', status:'planeacion', overdue:false, team:['MR'],      canEdit: rol==='directora', canDelete: rol==='directora' },
+    { id:4, name:'Evento Vogue CDMX',          sub:'Producción · Logística',   initials:'EV', color:'#b88917', colorBg:'rgba(184,137,23,0.18)', collection:'SS26', progress:50, delivery:'26 May', deliveryDate:'2026-05-26', status:'revision',   overdue:false, team:['MR','BP'], canEdit: rol!=='miembro', canDelete: rol==='directora' },
+  ];
   const stats = {
-    miembros:        MIEMBROS_EQUIPO.length,
-    disponibles:     MIEMBROS_EQUIPO.filter(m => m.online).length,
-    proyectos:       PROYECTOS_DATA.length,
+    total:      proyectos.length,
+    activos:    proyectos.filter(p => p.status === 'activo').length,
+    revision:   proyectos.filter(p => p.status === 'revision').length,
+    completados:proyectos.filter(p => p.status === 'completado').length,
+    avance:     Math.round(proyectos.reduce((a, p) => a + p.progress, 0) / proyectos.length),
+  };
+  res.render('proyectos.ejs', {
+    usuario: { ...getUsuario(u), rol },
+    proyectos, MIEMBROS, stats
+  });
+});
+
+// ── GET /equipo ──
+router.get('/equipo', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/login');
+  const u = await User.findById(req.session.userId);
+  const miembros = [
+    { ini:'MR', nombre:'Marietta Ríos',     rol:'Directora Creativa', bg:'rgba(205,27,128,0.18)', color:'#cd1b80', online:true,  skills:['Dirección','Moodboard','Casting'],      proyectos:7 },
+    { ini:'JP', nombre:'Juan Pablo Torres', rol:'Fotógrafo',          bg:'rgba(0,74,173,0.18)',   color:'#004aad', online:true,  skills:['Fotografía','Edición','Iluminación'],    proyectos:4 },
+    { ini:'CL', nombre:'Camila López',      rol:'Stylist',            bg:'rgba(8,184,100,0.18)',  color:'#08b864', online:false, skills:['Styling','Fitting','Tendencias'],        proyectos:5 },
+    { ini:'BP', nombre:'Bruno Paredes',     rol:'Productor',          bg:'rgba(184,137,23,0.18)', color:'#b88917', online:false, skills:['Producción','Logística','Presupuesto'],  proyectos:3 },
+  ];
+  const stats = {
+    miembros:        miembros.length,
+    disponibles:     miembros.filter(m => m.online).length,
+    proyectos:       7,
     nuevosProyectos: 2,
   };
-
-  res.render('equipo.ejs', { miembros: MIEMBROS_EQUIPO, stats, usuario });
+  res.render('equipo.ejs', { usuario: getUsuario(u), miembros, stats });
 });
 
-// ── Calendario ──
-router.get('/calendario', (req, res) => {
-  const usuario = getUsuario(req);
-  res.render('calendario.ejs', { usuario });
-});
-
-// ── Colecciones ──
-router.get('/colecciones', (req, res) => {
-  const usuario = getUsuario(req);
-  res.render('colecciones.ejs', { usuario });
-});
-// ── Invitar miembro (solo directora) ──
+// ── POST /invitar-miembro ──
 router.post('/invitar-miembro', async (req, res) => {
-  const usuario = getUsuario(req);
-  if (usuario.rol !== 'directora') return res.status(403).send('No autorizado');
-
+  console.log('Body recibido:', req.body);
+  if (!req.session.userId) return res.status(401).json({ ok: false, error: 'No autorizado.' });
   const { nombre, id_empresarial, telefono, rol, password } = req.body;
   try {
-    const User = (await import('../models/User.model.js')).default;
-    const bcryptjs = (await import('bcryptjs')).default;
     const existe = await User.findOne({ id_empresarial });
-    if (existe) return res.json({ ok: false, error: 'Ya existe un usuario con ese ID empresarial.' });
+    if (existe) return res.json({ ok: false, error: 'El ID empresarial ya existe.' });
     const hash = await bcryptjs.hash(password, 10);
     await User.create({ nombre, id_empresarial, telefono, rol, password: hash });
+    console.log('Usuario creado:', nombre);
     res.json({ ok: true });
   } catch (err) {
-    console.error(err);
-    res.json({ ok: false, error: 'Error al crear el usuario.' });
+    console.error('Error al crear usuario:', err);
+    res.json({ ok: false, error: 'Error al registrar el miembro.' });
   }
 });
+
+// ── GET /recuperar ──
+router.get('/recuperar', (req, res) => {
+  res.render('recuperar.ejs', { error: null });
+});
+
+// ── POST /recuperar ──
+router.post('/recuperar', async (req, res) => {
+  const { telefono } = req.body;
+  try {
+    const usuario = await User.findOne({ telefono });
+    if (!usuario) return res.render('recuperar.ejs', { error: 'No encontramos un usuario con ese número.' });
+    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    req.session.resetPin      = pin;
+    req.session.resetTelefono = telefono;
+    req.session.resetExpira   = Date.now() + 10 * 60 * 1000;
+    await client.messages.create({
+      body: `Tu PIN de RunwaySync es: ${pin}. Válido por 10 minutos.`,
+      from: process.env.TWILIO_PHONE,
+      to:   `+57${telefono}`,
+    });
+    res.redirect('/verificar-codigo');
+  } catch (err) {
+    console.error(err);
+    res.render('recuperar.ejs', { error: 'Error al enviar el PIN. Intenta de nuevo.' });
+  }
+});
+
+// ── GET /verificar-codigo ──
+router.get('/verificar-codigo', (req, res) => {
+  if (!req.session.resetPin) return res.redirect('/recuperar');
+  res.render('verificar-codigo.ejs', { error: null });
+});
+
+// ── POST /verificar-codigo ──
+router.post('/verificar-codigo', (req, res) => {
+  const { digit1, digit2, digit3, digit4 } = req.body;
+  const pinIngresado = `${digit1}${digit2}${digit3}${digit4}`;
+  if (!req.session.resetPin) return res.redirect('/recuperar');
+  if (Date.now() > req.session.resetExpira) {
+    req.session.resetPin = null;
+    return res.render('verificar-codigo.ejs', { error: 'El PIN expiró. Solicita uno nuevo.' });
+  }
+  if (pinIngresado !== req.session.resetPin) {
+    return res.render('verificar-codigo.ejs', { error: 'PIN incorrecto. Intenta de nuevo.' });
+  }
+  req.session.resetVerificado = true;
+  res.redirect('/nueva-contrasena');
+});
+
+// ── GET /nueva-contrasena ──
+router.get('/nueva-contrasena', (req, res) => {
+  if (!req.session.resetVerificado) return res.redirect('/recuperar');
+  res.render('nueva-contrasena.ejs', { error: null });
+});
+
+// ── POST /nueva-contrasena ──
+router.post('/nueva-contrasena', async (req, res) => {
+  if (!req.session.resetVerificado) return res.redirect('/recuperar');
+  const { password, confirmar } = req.body;
+  if (password !== confirmar) return res.render('nueva-contrasena.ejs', { error: 'Las contraseñas no coinciden.' });
+  if (password.length < 6)    return res.render('nueva-contrasena.ejs', { error: 'Mínimo 6 caracteres.' });
+  try {
+    const hash = await bcryptjs.hash(password, 10);
+    await User.updateOne({ telefono: req.session.resetTelefono }, { password: hash });
+    req.session.resetPin = req.session.resetTelefono = req.session.resetExpira = req.session.resetVerificado = null;
+    res.redirect('/login');
+  } catch (err) {
+    console.error(err);
+    res.render('nueva-contrasena.ejs', { error: 'Error al actualizar la contraseña.' });
+  }
+});
+
 export default router;
