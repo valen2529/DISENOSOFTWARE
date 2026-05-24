@@ -137,7 +137,7 @@
           <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         </div>
         <div class="profile-popover" id="profilePopover">
-          <div class="pp-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80"><%= usuario.id %></div>
+          <div class="pp-avatar" style="background:<%= usuario.colorBg %>;color:<%= usuario.color %>"><%= usuario.ini %></div>
           <div class="pp-name"><%= usuario.nombre %></div>
           <div class="pp-role"><%= usuario.rolLabel %></div>
           <div class="pp-divider"></div>

@@ -225,6 +225,12 @@
     .toast{position:fixed;bottom:24px;right:24px;background:#141516;color:#fff;padding:12px 20px;border-radius:12px;font-size:.8rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.25);transform:translateY(16px);opacity:0;transition:transform .25s,opacity .25s;pointer-events:none;z-index:2000;display:flex;align-items:center;gap:8px;}
     .toast.show{transform:translateY(0);opacity:1;}
     .toast-icon{font-size:1rem;}
+
+    .role-badge-static{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:.68rem;font-weight:700;border:none;cursor:default;}
+    .role-badge-static.directora{background:rgba(205,27,128,.12);color:#cd1b80;}
+    .role-badge-static.jefe{background:rgba(184,137,23,.15);color:#a07312;}
+    .role-badge-static.miembro{background:rgba(8,184,100,.13);color:#057a42;}
+    .role-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;}
   </style>
 </head>
 <body>
@@ -254,39 +260,9 @@
           <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
         </div>
       </div>
-      <!-- Role switcher (demo) -->
-      <button class="role-badge <%= usuario.rol %>" onclick="toggleRoleDrop(event)" title="Cambiar rol (demo)">
+      <div class="role-badge-static <%= usuario.rol %>">
         <span class="role-dot"></span>
         <%= usuario.rolLabel %>
-      </button>
-      <!-- Dropdown roles -->
-      <div class="role-drop" id="roleDrop">
-        <div class="role-drop-title">Demo · Cambiar rol</div>
-        <a class="role-drop-item <%= usuario.rol === 'directora' ? 'active-role' : '' %>" href="/proyectos?rol=directora">
-          <div class="role-drop-av" style="background:rgba(205,27,128,.18);color:#cd1b80">MR</div>
-          <div class="role-drop-info">
-            <div class="role-drop-name">Marietta</div>
-            <div class="role-drop-lbl">Directora Creativa · Acceso total</div>
-          </div>
-          <% if (usuario.rol === 'directora') { %><span class="checkmark">✓</span><% } %>
-        </a>
-        <a class="role-drop-item <%= usuario.rol === 'jefe' ? 'active-role' : '' %>" href="/proyectos?rol=jefe">
-          <div class="role-drop-av" style="background:rgba(184,137,23,.18);color:#b88917">BP</div>
-          <div class="role-drop-info">
-            <div class="role-drop-name">Bruno</div>
-            <div class="role-drop-lbl">Jefe de Área · Producción</div>
-          </div>
-          <% if (usuario.rol === 'jefe') { %><span class="checkmark">✓</span><% } %>
-        </a>
-        <a class="role-drop-item <%= usuario.rol === 'miembro' ? 'active-role' : '' %>" href="/proyectos?rol=miembro">
-          <div class="role-drop-av" style="background:rgba(8,184,100,.18);color:#08b864">CL</div>
-          <div class="role-drop-info">
-            <div class="role-drop-name">Camila</div>
-            <div class="role-drop-lbl">Miembro de Equipo · Styling</div>
-          </div>
-          <% if (usuario.rol === 'miembro') { %><span class="checkmark">✓</span><% } %>
-        </a>
-        <div class="role-drop-note">Simula los permisos de cada rol en tiempo real</div>
       </div>
       <!-- Perfil -->
       <div class="profile-wrap">
@@ -294,7 +270,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="#231f20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         </div>
         <div class="profile-popover" id="profilePopover">
-          <div class="pp-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80"><%= usuario.id %></div>
+          <div class="pp-avatar" style="background:<%= usuario.colorBg %>;color:<%= usuario.color %>"><%= usuario.ini %></div>
           <div class="pp-name"><%= usuario.nombre %></div>
           <div class="pp-role"><%= usuario.rolLabel %></div>
           <div class="pp-divider"></div>
@@ -324,11 +300,11 @@
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg></span>
         Colecciones
       </a>
-      <a href="/eventos?rol=<%= usuario.rol %>" class="nav-item">
+      <a href="/eventos" class="nav-item">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><rect x="7" y="14" width="3" height="3" rx="0.5"/></svg></span>
         Eventos
       </a>
-      <a href="/proyectos?rol=<%= usuario.rol %>" class="nav-item active">
+      <a href="/proyectos" class="nav-item active">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
         Proyectos
       </a>
@@ -747,10 +723,6 @@
   }
 
   // ── Role dropdown ──
-  function toggleRoleDrop(e) {
-    e.stopPropagation();
-    document.getElementById('roleDrop').classList.toggle('open');
-  }
   document.addEventListener('click', () => {
     document.getElementById('roleDrop').classList.remove('open');
   });

@@ -339,7 +339,7 @@
           </svg>
         </div>
         <div class="profile-popover" id="profilePopover">
-          <div class="pp-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80"><%= usuario.id %></div>
+          <div class="pp-avatar" style="background:<%= usuario.colorBg %>;color:<%= usuario.color %>"><%= usuario.ini %></div>
           <div class="pp-name"><%= usuario.nombre %></div>
           <div class="pp-role"><%= usuario.rolLabel %></div>
           <div class="pp-divider"></div>
@@ -430,7 +430,7 @@
 
       <!-- WELCOME -->
       <div class="welcome">
-        <h2 id="dashGreeting">Buenos D&iacute;as Marietta</h2>
+        <h2 id="dashGreeting">Buenos Días <%= usuario.nombre.split(" ")[0] %></h2>
         <p id="dashDate">Cargando...</p>
       </div>
 
@@ -736,7 +736,7 @@ function loadDashEvents() {
   /* ── Actualizar bienvenida ── */
   const greetEl = document.getElementById('dashGreeting');
   const dateEl  = document.getElementById('dashDate');
-  if (greetEl) greetEl.textContent = greet + ' Marietta';
+  if (greetEl) greetEl.textContent = greet + ' <%= usuario.nombre.split(" ")[0] %>';
   if (dateEl)  dateEl.textContent  = `${dayName}, ${now.getDate()} de ${monthName} de ${now.getFullYear()} · Semana ${weekNum}`;
 
   /* ── Renderizar mini-calendario ── */
