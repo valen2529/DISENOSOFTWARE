@@ -221,25 +221,65 @@
         </div>
       </div>
 
-      <!-- TEAM GRID -->
-      <div class="team-grid">
-        <% miembros.forEach(m => { %>
-        <div class="member-card" onclick="abrirDetalle(<%= JSON.stringify(m) %>)">
-          <div class="member-av" style="background:<%= m.bg %>;color:<%= m.color %>">
-            <%= m.ini %>
-            <span class="online-dot" style="background:<%= m.online ? '#08b864' : '#d1d5db' %>"></span>
+      <%
+        const directora  = miembros.filter(m => m.rol === 'directora');
+        const areas      = ['fotografia','styling','produccion'];
+        const areaLabel  = { fotografia:'Fotografía', styling:'Styling', produccion:'Producción' };
+        const areaColor  = { fotografia:'#004aad', styling:'#08b864', produccion:'#b88917' };
+      %>
+
+      <!-- Directora -->
+      <% if (directora.length) { %>
+      <div style="margin-bottom:8px;">
+        <div style="font-size:0.62rem;font-weight:800;letter-spacing:0.1em;color:#8a9295;text-transform:uppercase;margin-bottom:10px;">Dirección Creativa</div>
+        <div class="team-grid">
+          <% directora.forEach(m => { %>
+          <div class="member-card" onclick="abrirDetalle(<%- JSON.stringify(m) %>)">
+            <div class="member-av" style="background:<%= m.bg %>;color:<%= m.color %>">
+              <%= m.ini %>
+              <span class="online-dot" style="background:<%= m.online ? '#08b864' : '#d1d5db' %>"></span>
+            </div>
+            <div class="member-name"><%= m.nombre %></div>
+            <div class="member-role"><%= m.rolLabel %></div>
+            <div style="font-size:0.68rem;color:#95a2a5;margin-bottom:10px;"><%= m.id_empresarial %></div>
+            <div class="skills-wrap">
+              <% m.skills.forEach(s => { %><span class="skill-tag"><%= s %></span><% }) %>
+            </div>
           </div>
-          <div class="member-name"><%= m.nombre %></div>
-          <div class="member-role"><%= m.rol %></div>
-          <div class="skills-wrap">
-            <% m.skills.forEach(s => { %>
-            <span class="skill-tag"><%= s %></span>
-            <% }) %>
-          </div>
-          <div class="member-footer"><%= m.proyectos %> proyecto<%= m.proyectos !== 1 ? 's' : '' %> activo<%= m.proyectos !== 1 ? 's' : '' %></div>
+          <% }) %>
         </div>
-        <% }) %>
       </div>
+      <% } %>
+
+      <!-- Áreas -->
+      <% areas.forEach(area => {
+        const jefes    = miembros.filter(m => m.area === area && m.rol === 'jefe');
+        const empleados = miembros.filter(m => m.area === area && m.rol === 'miembro');
+        if (!jefes.length && !empleados.length) return;
+      %>
+      <div style="margin-bottom:18px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:<%= areaColor[area] %>"></div>
+          <span style="font-size:0.62rem;font-weight:800;letter-spacing:0.1em;color:#8a9295;text-transform:uppercase;">Área de <%= areaLabel[area] %></span>
+        </div>
+        <div class="team-grid">
+          <% [...jefes, ...empleados].forEach(m => { %>
+          <div class="member-card" onclick="abrirDetalle(<%- JSON.stringify(m) %>)">
+            <div class="member-av" style="background:<%= m.bg %>;color:<%= m.color %>">
+              <%= m.ini %>
+              <span class="online-dot" style="background:<%= m.online ? '#08b864' : '#d1d5db' %>"></span>
+            </div>
+            <div class="member-name"><%= m.nombre %></div>
+            <div class="member-role"><%= m.rolLabel %></div>
+            <div style="font-size:0.68rem;color:#95a2a5;margin-bottom:10px;"><%= m.id_empresarial %></div>
+            <div class="skills-wrap">
+              <% m.skills.forEach(s => { %><span class="skill-tag"><%= s %></span><% }) %>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+      <% }) %>
 
     </div>
   </div>
@@ -295,6 +335,16 @@
           <span id="inv-id-sufijo" style="font-size:0.88rem;font-weight:700;color:#95a2a5;min-width:28px;flex-shrink:0;">___</span>
         </div>
         <div style="font-size:0.68rem;color:#95a2a5;margin-top:5px;">Los últimos 3 dígitos se asignan según el rol</div>
+      </div>
+
+      <div class="inv-field" id="area-field" style="display:none;">
+        <label class="inv-label">Área</label>
+        <select id="inv-area" class="inv-select">
+          <option value="">Seleccionar área...</option>
+          <option value="fotografia">Fotografía</option>
+          <option value="styling">Styling</option>
+          <option value="produccion">Producción</option>
+        </select>
       </div>
 
       <div class="inv-field">
@@ -358,11 +408,12 @@
   }
 
   // Sufijos por rol
-  const SUFIJOS = { directora: '789', jefe: '456', miembro: '123' };
+  const SUFIJOS = { directora: '001', jefe: 'X00', miembro: 'X01' };
 
   function actualizarSufijo() {
     const rol    = document.getElementById('inv-rol').value;
     const sufijo = document.getElementById('inv-id-sufijo');
+    const areaField = document.getElementById('area-field');
     if (rol && SUFIJOS[rol]) {
       sufijo.textContent = SUFIJOS[rol];
       sufijo.style.color = '#cd1b80';
@@ -370,6 +421,7 @@
       sufijo.textContent = '___';
       sufijo.style.color = '#95a2a5';
     }
+    areaField.style.display = (rol === 'jefe' || rol === 'miembro') ? 'block' : 'none';
   }
 
   function buildIdFinal() {
@@ -421,10 +473,11 @@
       return;
     }
 
+    const area = document.getElementById('inv-area').value;
     const res = await fetch('/invitar-miembro', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, id_empresarial: id, telefono: tel, rol, password: pass }),
+      body: JSON.stringify({ nombre, id_empresarial: id, telefono: tel, rol, area, password: pass }),
     });
     const data = await res.json();
 
@@ -435,10 +488,13 @@
       document.getElementById('inv-id-base').value = '';
       document.getElementById('inv-tel').value     = '';
       document.getElementById('inv-rol').value     = '';
+      document.getElementById('inv-area').value    = '';
       document.getElementById('inv-pass').value    = '';
+      document.getElementById('area-field').style.display = 'none';
       const sufijo = document.getElementById('inv-id-sufijo');
       sufijo.textContent = '___';
       sufijo.style.color = '#95a2a5';
+      setTimeout(() => location.reload(), 1200);
     } else {
       errDiv.textContent = data.error || 'Error al registrar el miembro.';
       errDiv.style.display = 'block';
