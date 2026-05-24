@@ -222,6 +222,11 @@ router.post('/invitar-miembro', async (req, res) => {
   }
 });
 
+// ── GET /logout ──
+router.get('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/'));
+});
+
 // ── GET /recuperar ──
 router.get('/recuperar', (req, res) => {
   res.render('recuperar.ejs', { error: null });
