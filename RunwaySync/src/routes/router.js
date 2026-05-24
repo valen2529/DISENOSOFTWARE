@@ -21,14 +21,13 @@ const MIEMBROS = {
   AG: { nombre:'Agencia', rol:'Externo', color:'#7611bd', colorBg:'rgba(118,17,189,0.18)' },
 };
 
-// ── GET / ──
+// ── GET / y /login ──
 router.get('/', (req, res) => {
-  res.render('index.ejs');
+  res.render('index.ejs', { error: null });
 });
 
-// ── GET /login ──
 router.get('/login', (req, res) => {
-  res.render('login.ejs', { error: null });
+  res.redirect('/');
 });
 
 // ── POST /login ──
@@ -36,48 +35,48 @@ router.post('/login', async (req, res) => {
   const { id_empresarial, password } = req.body;
   try {
     const usuario = await User.findOne({ id_empresarial });
-    if (!usuario) return res.render('login.ejs', { error: 'Usuario no encontrado.' });
+    if (!usuario) return res.render('index.ejs', { error: 'Usuario no encontrado.' });
     const coincide = await bcryptjs.compare(password, usuario.password);
-    if (!coincide) return res.render('login.ejs', { error: 'Contraseña incorrecta.' });
+    if (!coincide) return res.render('index.ejs', { error: 'Contraseña incorrecta.' });
     req.session.userId  = usuario._id;
     req.session.userRol = usuario.rol;
     res.redirect('/dashboard');
   } catch (err) {
     console.error(err);
-    res.render('login.ejs', { error: 'Error al iniciar sesión.' });
+    res.render('index.ejs', { error: 'Error al iniciar sesión.' });
   }
 });
 
 // ── GET /dashboard ──
 router.get('/dashboard', async (req, res) => {
-  if (!req.session.userId) return res.redirect('/login');
+  if (!req.session.userId) return res.redirect('/');
   try {
     const u = await User.findById(req.session.userId);
-    if (!u) return res.redirect('/login');
+    if (!u) return res.redirect('/');
     res.render('dashboard.ejs', { usuario: getUsuario(u) });
   } catch (err) {
     console.error(err);
-    res.redirect('/login');
+    res.redirect('/');
   }
 });
 
 // ── GET /calendario ──
 router.get('/calendario', async (req, res) => {
-  if (!req.session.userId) return res.redirect('/login');
+  if (!req.session.userId) return res.redirect('/');
   const u = await User.findById(req.session.userId);
   res.render('calendario.ejs', { usuario: getUsuario(u) });
 });
 
 // ── GET /colecciones ──
 router.get('/colecciones', async (req, res) => {
-  if (!req.session.userId) return res.redirect('/login');
+  if (!req.session.userId) return res.redirect('/');
   const u = await User.findById(req.session.userId);
   res.render('colecciones.ejs', { usuario: getUsuario(u) });
 });
 
 // ── GET /eventos ──
 router.get('/eventos', async (req, res) => {
-  if (!req.session.userId) return res.redirect('/login');
+  if (!req.session.userId) return res.redirect('/');
   const u   = await User.findById(req.session.userId);
   const rol = req.query.rol || u.rol;
   const eventos = [
@@ -104,7 +103,7 @@ router.get('/eventos', async (req, res) => {
 
 // ── GET /proyectos ──
 router.get('/proyectos', async (req, res) => {
-  if (!req.session.userId) return res.redirect('/login');
+  if (!req.session.userId) return res.redirect('/');
   const u   = await User.findById(req.session.userId);
   const rol = req.query.rol || u.rol;
   const proyectos = [
@@ -128,7 +127,7 @@ router.get('/proyectos', async (req, res) => {
 
 // ── GET /equipo ──
 router.get('/equipo', async (req, res) => {
-  if (!req.session.userId) return res.redirect('/login');
+  if (!req.session.userId) return res.redirect('/');
   const u = await User.findById(req.session.userId);
   const miembros = [
     { ini:'MR', nombre:'Marietta Ríos',     rol:'Directora Creativa', bg:'rgba(205,27,128,0.18)', color:'#cd1b80', online:true,  skills:['Dirección','Moodboard','Casting'],      proyectos:7 },
@@ -228,7 +227,7 @@ router.post('/nueva-contrasena', async (req, res) => {
     const hash = await bcryptjs.hash(password, 10);
     await User.updateOne({ telefono: req.session.resetTelefono }, { password: hash });
     req.session.resetPin = req.session.resetTelefono = req.session.resetExpira = req.session.resetVerificado = null;
-    res.redirect('/login');
+    res.redirect('/');
   } catch (err) {
     console.error(err);
     res.render('nueva-contrasena.ejs', { error: 'Error al actualizar la contraseña.' });
