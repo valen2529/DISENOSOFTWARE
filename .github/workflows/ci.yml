@@ -1,26 +1,53 @@
-name: RunwaySync CI Pipeline
+name: CI Pipeline
 
-# ── Triggers ──
+# ── 1. TRIGGERS ──
 on:
   push:
     branches: [ main, Valentina ]
   pull_request:
     branches: [ main ]
 
-# ── Variables globales ──
+# ── 2. ENV VARS globales ──
 env:
   NODE_ENV: test
+  APP_NAME: runwaysync
 
+# ── 3. JOBS ──
 jobs:
 
-  # ── JOB 1: Instalar dependencias y verificar build ──
-  build:
-    name: Build & Verify
+  # ── Job 1: Lint (se ejecuta inmediatamente) ──
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+          cache-dependency-path: RunwaySync/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: RunwaySync
+        run: npm ci
+
+      - name: Linting
+        working-directory: RunwaySync
+        run: npm run lint
+
+  # ── Job 2: Tests (se ejecuta en paralelo con lint) ──
+  test:
+    name: Tests Unitarios
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [18.x, 20.x, 22.x]
 
     steps:
       - name: Checkout código
@@ -30,55 +57,70 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: RunwaySync/package-lock.json
 
       - name: Instalar dependencias
         working-directory: RunwaySync
         run: npm ci
 
-      - name: Verificar que el proyecto arranca sin errores de sintaxis
+      - name: Tests unitarios
         working-directory: RunwaySync
-        run: node --check src/app.js && node --check src/routes/router.js && node --check src/models/User.model.js
+        run: npm test
 
-  # ── JOB 2: Verificar estructura de archivos ──
-  structure:
-    name: Verify Project Structure
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-node-${{ matrix.node-version }}
+          path: RunwaySync/coverage/
+          if-no-files-found: ignore
+
+  # ── Job 3: Build (espera que lint Y test terminen con éxito) ──
+  build:
+    name: Build & Verify
     runs-on: ubuntu-latest
-    needs: build
+    needs: [ lint, test ]
 
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Verificar archivos críticos existen
-        run: |
-          echo "Verificando estructura del proyecto..."
-          test -f RunwaySync/src/app.js           && echo "✅ app.js existe"
-          test -f RunwaySync/src/routes/router.js  && echo "✅ router.js existe"
-          test -f RunwaySync/src/models/User.model.js && echo "✅ User.model.js existe"
-          test -f RunwaySync/views/index.ejs       && echo "✅ index.ejs existe"
-          test -f RunwaySync/views/dashboard.ejs   && echo "✅ dashboard.ejs existe"
-          test -f RunwaySync/views/equipo.ejs      && echo "✅ equipo.ejs existe"
-          test -f RunwaySync/views/proyectos.ejs   && echo "✅ proyectos.ejs existe"
-          test -f RunwaySync/views/eventos.ejs     && echo "✅ eventos.ejs existe"
-          test -f RunwaySync/package.json          && echo "✅ package.json existe"
-          echo "Estructura verificada correctamente ✓"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+          cache-dependency-path: RunwaySync/package-lock.json
 
-  # ── JOB 3: Notificar resultado ──
-  notify:
-    name: Notify Status
+      - name: Instalar dependencias
+        working-directory: RunwaySync
+        run: npm ci
+
+      - name: Verificar archivos críticos
+        run: |
+          test -f RunwaySync/src/app.js              && echo "✅ app.js"
+          test -f RunwaySync/src/routes/router.js    && echo "✅ router.js"
+          test -f RunwaySync/src/models/User.model.js && echo "✅ User.model.js"
+          test -f RunwaySync/views/index.ejs         && echo "✅ index.ejs"
+          test -f RunwaySync/views/dashboard.ejs     && echo "✅ dashboard.ejs"
+          test -f RunwaySync/views/equipo.ejs        && echo "✅ equipo.ejs"
+          test -f RunwaySync/views/proyectos.ejs     && echo "✅ proyectos.ejs"
+          test -f RunwaySync/views/eventos.ejs       && echo "✅ eventos.ejs"
+
+      - name: Build exitoso
+        run: echo "✅ Build completado correctamente para ${{ env.APP_NAME }}"
+
+  # ── Job 4: Deploy (solo si build tuvo éxito) ──
+  deploy:
+    name: Deploy Notification
     runs-on: ubuntu-latest
-    needs: [build, structure]
-    if: always()
+    needs: build
+    if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Pipeline exitoso
-        if: ${{ needs.build.result == 'success' && needs.structure.result == 'success' }}
-        run: echo "✅ CI Pipeline completado exitosamente para RunwaySync"
-
-      - name: Pipeline fallido
-        if: ${{ needs.build.result == 'failure' || needs.structure.result == 'failure' }}
+      - name: Notificar deploy
         run: |
-          echo "❌ CI Pipeline falló — revisar los jobs anteriores"
-          exit 1
+          echo "🚀 ${{ env.APP_NAME }} listo para deploy en Render"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Autor: ${{ github.actor }}"
