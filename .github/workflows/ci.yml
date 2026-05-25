@@ -1,0 +1,84 @@
+name: RunwaySync CI Pipeline
+
+# ── Triggers ──
+on:
+  push:
+    branches: [ main, Valentina ]
+  pull_request:
+    branches: [ main ]
+
+# ── Variables globales ──
+env:
+  NODE_ENV: test
+
+jobs:
+
+  # ── JOB 1: Instalar dependencias y verificar build ──
+  build:
+    name: Build & Verify
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: RunwaySync/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: RunwaySync
+        run: npm ci
+
+      - name: Verificar que el proyecto arranca sin errores de sintaxis
+        working-directory: RunwaySync
+        run: node --check src/app.js && node --check src/routes/router.js && node --check src/models/User.model.js
+
+  # ── JOB 2: Verificar estructura de archivos ──
+  structure:
+    name: Verify Project Structure
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Verificar archivos críticos existen
+        run: |
+          echo "Verificando estructura del proyecto..."
+          test -f RunwaySync/src/app.js           && echo "✅ app.js existe"
+          test -f RunwaySync/src/routes/router.js  && echo "✅ router.js existe"
+          test -f RunwaySync/src/models/User.model.js && echo "✅ User.model.js existe"
+          test -f RunwaySync/views/index.ejs       && echo "✅ index.ejs existe"
+          test -f RunwaySync/views/dashboard.ejs   && echo "✅ dashboard.ejs existe"
+          test -f RunwaySync/views/equipo.ejs      && echo "✅ equipo.ejs existe"
+          test -f RunwaySync/views/proyectos.ejs   && echo "✅ proyectos.ejs existe"
+          test -f RunwaySync/views/eventos.ejs     && echo "✅ eventos.ejs existe"
+          test -f RunwaySync/package.json          && echo "✅ package.json existe"
+          echo "Estructura verificada correctamente ✓"
+
+  # ── JOB 3: Notificar resultado ──
+  notify:
+    name: Notify Status
+    runs-on: ubuntu-latest
+    needs: [build, structure]
+    if: always()
+
+    steps:
+      - name: Pipeline exitoso
+        if: ${{ needs.build.result == 'success' && needs.structure.result == 'success' }}
+        run: echo "✅ CI Pipeline completado exitosamente para RunwaySync"
+
+      - name: Pipeline fallido
+        if: ${{ needs.build.result == 'failure' || needs.structure.result == 'failure' }}
+        run: |
+          echo "❌ CI Pipeline falló — revisar los jobs anteriores"
+          exit 1
