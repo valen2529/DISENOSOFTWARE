@@ -581,26 +581,14 @@
       <div class="fg">
         <label class="fl">Equipo asignado</label>
         <div class="team-cbs">
-          <% Object.entries(MIEMBROS).forEach(([id, m]) => {
-            const isCurrentUser = id === usuario.id;
-            const show = usuario.rol === 'directora' || isCurrentUser || ['BP','CL'].includes(id);
-          %>
-          <% if (show) { %>
-          <label class="tcb-item <%= isCurrentUser ? 'locked' : '' %>">
-            <input type="checkbox" name="equipo" value="<%= id %>" <%= isCurrentUser ? 'checked disabled' : '' %>>
-            <div class="tcb-av" style="background:<%= m.colorBg %>;color:<%= m.color %>"><%= id %></div>
+          <% miembros.forEach(m => { %>
+          <% const esSelf = m._id === usuario.id; %>
+          <label class="tcb-item <%= esSelf ? 'locked' : '' %>">
+            <input type="checkbox" name="equipo" value="<%= m._id %>" <%= esSelf ? 'checked disabled' : '' %>>
+            <div class="tcb-av" style="background:<%= m.bg %>;color:<%= m.color %>"><%= m.ini %></div>
             <span class="tcb-name"><%= m.nombre %></span>
-            <span class="tcb-role"><%= m.rol %></span>
+            <span class="tcb-role"><%= m.rolLabel %></span>
           </label>
-          <% } %>
-          <% if (usuario.rol === 'directora' && id === 'JP') { %>
-          <label class="tcb-item">
-            <input type="checkbox" name="equipo" value="JP">
-            <div class="tcb-av" style="background:rgba(0,74,173,.18);color:#004aad">JP</div>
-            <span class="tcb-name">Juan Pablo</span>
-            <span class="tcb-role">Fotógrafo</span>
-          </label>
-          <% } %>
           <% }) %>
         </div>
       </div>
@@ -699,6 +687,7 @@
 <script>
   const eventosData  = <%- JSON.stringify(eventos) %>;
   const miembrosData = <%- JSON.stringify(MIEMBROS) %>;
+  const miembrosReal = <%- JSON.stringify(miembros) %>;
   const usuarioData  = <%- JSON.stringify(usuario) %>;
   const tagStyles    = {
     'Casting':   { bg:'#fce4f0', color:'#9b174e' },
@@ -727,9 +716,6 @@
     });
     document.getElementById('evEmpty').classList.toggle('show', visible === 0);
   }
-
-  // ── Role dropdown ──
-  document.addEventListener('click', () => document.getElementById('roleDrop').classList.remove('open'));
 
   // ── Modal helpers ──
   function openModal(id) { document.getElementById(id).classList.add('visible'); }
