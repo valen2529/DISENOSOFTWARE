@@ -6,12 +6,34 @@ import bcryptjs from 'bcryptjs';
 const router = Router();
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
-const getUsuario = (u) => ({
-  id: u.id_empresarial,
-  nombre: u.nombre,
-  rol: u.rol,
-  rolLabel: u.rol.charAt(0).toUpperCase() + u.rol.slice(1),
-});
+const ROL_LABEL = {
+  directora: 'Directora Creativa',
+  jefe:      'Jefe de Área',
+  miembro:   'Miembro de Equipo',
+};
+const ROL_COLOR = {
+  directora:  { color: '#cd1b80', bg: 'rgba(205,27,128,0.18)' },
+  fotografia: { color: '#004aad', bg: 'rgba(0,74,173,0.18)'   },
+  styling:    { color: '#08b864', bg: 'rgba(8,184,100,0.18)'  },
+  produccion: { color: '#b88917', bg: 'rgba(184,137,23,0.18)' },
+};
+
+const getUsuario = (u) => {
+  const colorKey = u.rol === 'directora' ? 'directora' : u.area;
+  const c = ROL_COLOR[colorKey] || { color: '#6f6f6f', bg: 'rgba(111,111,111,0.15)' };
+  const words = u.nombre.trim().split(' ');
+  const ini = (words[0][0] + (words[1]?.[0] || words[0][1])).toUpperCase();
+  return {
+    id:       u.id_empresarial,
+    ini,
+    nombre:   u.nombre,
+    rol:      u.rol,
+    area:     u.area || null,
+    rolLabel: ROL_LABEL[u.rol] || u.rol,
+    color:    c.color,
+    colorBg:  c.bg,
+  };
+};
 
 const MIEMBROS = {
   MR: { nombre:'Marietta', rol:'Dir. Creativa', color:'#cd1b80', colorBg:'rgba(205,27,128,0.18)' },
@@ -78,7 +100,7 @@ router.get('/colecciones', async (req, res) => {
 router.get('/eventos', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   const u   = await User.findById(req.session.userId);
-  const rol = req.query.rol || u.rol;
+  const rol = u.rol;
   const eventos = [
     { id:1, nombre:'Casting SS26', tipo:'casting', dia:'12', mes:'MAY', lugar:'Estudio Norte', hora:'10:00 AM – 6:00 PM', descripcion:'Primer casting de modelos para colección SS26', status:'confirmado', color:'#cd1b80', tags:['Casting','SS26'], team:['MR','JP','CL'], dateStr:'2026-05-12', canEdit: rol==='directora', canDelete: rol==='directora' },
     { id:2, nombre:'Fitting FW26', tipo:'fitting', dia:'15', mes:'MAY', lugar:'Atelier Central', hora:'11:00 AM – 2:00 PM', descripcion:'Revisión de prendas para colección FW26', status:'pendiente', color:'#b88917', tags:['Fitting','FW26'], team:['MR','CL'], dateStr:'2026-05-15', canEdit: rol!=='miembro', canDelete: rol==='directora' },
@@ -105,7 +127,7 @@ router.get('/eventos', async (req, res) => {
 router.get('/proyectos', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   const u   = await User.findById(req.session.userId);
-  const rol = req.query.rol || u.rol;
+  const rol = u.rol;
   const proyectos = [
     { id:1, name:'Editorial SS26 Vogue Milan', sub:'Fotografía · Producción', initials:'SS', color:'#cd1b80', colorBg:'rgba(205,27,128,0.18)', collection:'SS26', progress:75, delivery:'28 Abr', deliveryDate:'2026-04-28', status:'activo',     overdue:true,  team:['MR','JP'], canEdit: rol!=='miembro', canDelete: rol==='directora' },
     { id:2, name:'Colección FW26 Lookbook',    sub:'Diseño · Fotografía',     initials:'FW', color:'#004aad', colorBg:'rgba(0,74,173,0.18)',   collection:'FW26', progress:40, delivery:'15 Jun', deliveryDate:'2026-06-15', status:'activo',     overdue:false, team:['MR','CL'], canEdit: rol!=='miembro', canDelete: rol==='directora' },
@@ -198,6 +220,11 @@ router.post('/invitar-miembro', async (req, res) => {
     console.error(err);
     res.json({ ok: false, error: 'Error al registrar el miembro.' });
   }
+});
+
+// ── GET /logout ──
+router.get('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/'));
 });
 
 // ── GET /recuperar ──

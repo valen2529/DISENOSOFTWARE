@@ -185,11 +185,11 @@
           <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         </div>
         <div class="profile-popover" id="profilePopover">
-          <div class="pp-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80"><%= usuario.id %></div>
+          <div class="pp-avatar" style="background:<%= usuario.colorBg %>;color:<%= usuario.color %>"><%= usuario.ini %></div>
           <div class="pp-name"><%= usuario.nombre %></div>
           <div class="pp-role"><%= usuario.rolLabel %></div>
           <div class="pp-divider"></div>
-          <a href="/" class="pp-logout">
+          <a href="/logout" class="pp-logout">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             Cerrar sesión
           </a>
