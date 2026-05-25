@@ -329,12 +329,7 @@
 
       <div class="inv-field">
         <label class="inv-label">ID Empresarial</label>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <input id="inv-id-base" type="text" class="inv-input" placeholder="Ej: 11.00.095" style="flex:1;"/>
-          <span style="color:#95a2a5;font-size:0.88rem;flex-shrink:0;">.</span>
-          <span id="inv-id-sufijo" style="font-size:0.88rem;font-weight:700;color:#95a2a5;min-width:28px;flex-shrink:0;">___</span>
-        </div>
-        <div style="font-size:0.68rem;color:#95a2a5;margin-top:5px;">Los últimos 3 dígitos se asignan según el rol</div>
+        <input id="inv-id-base" type="text" class="inv-input" placeholder="Ej: 11.00.095"/>
       </div>
 
       <div class="inv-field" id="area-field" style="display:none;">
@@ -395,10 +390,6 @@
     document.getElementById('invitarOverlay').classList.add('open');
     document.getElementById('invitar-error').style.display = 'none';
     document.getElementById('invitar-exito').style.display = 'none';
-    // Resetear sufijo al abrir
-    const sufijo = document.getElementById('inv-id-sufijo');
-    sufijo.textContent = '___';
-    sufijo.style.color = '#95a2a5';
   }
 
   function cerrarInvitar(e) {
@@ -407,28 +398,13 @@
     }
   }
 
-  // Sufijos por rol
-  const SUFIJOS = { directora: '001', jefe: 'X00', miembro: 'X01' };
-
   function actualizarSufijo() {
-    const rol    = document.getElementById('inv-rol').value;
-    const sufijo = document.getElementById('inv-id-sufijo');
-    const areaField = document.getElementById('area-field');
-    if (rol && SUFIJOS[rol]) {
-      sufijo.textContent = SUFIJOS[rol];
-      sufijo.style.color = '#cd1b80';
-    } else {
-      sufijo.textContent = '___';
-      sufijo.style.color = '#95a2a5';
-    }
-    areaField.style.display = (rol === 'jefe' || rol === 'miembro') ? 'block' : 'none';
+    const rol = document.getElementById('inv-rol').value;
+    document.getElementById('area-field').style.display = (rol === 'jefe' || rol === 'miembro') ? 'block' : 'none';
   }
 
   function buildIdFinal() {
-    const base = document.getElementById('inv-id-base').value.trim();
-    const rol  = document.getElementById('inv-rol').value;
-    if (!base || !rol || !SUFIJOS[rol]) return base;
-    return base + '.' + SUFIJOS[rol];
+    return document.getElementById('inv-id-base').value.trim();
   }
 
   // Mostrar / ocultar contraseña
@@ -491,9 +467,6 @@
       document.getElementById('inv-area').value    = '';
       document.getElementById('inv-pass').value    = '';
       document.getElementById('area-field').style.display = 'none';
-      const sufijo = document.getElementById('inv-id-sufijo');
-      sufijo.textContent = '___';
-      sufijo.style.color = '#95a2a5';
       setTimeout(() => location.reload(), 1200);
     } else {
       errDiv.textContent = data.error || 'Error al registrar el miembro.';
