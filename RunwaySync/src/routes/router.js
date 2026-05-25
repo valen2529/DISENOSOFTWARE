@@ -117,9 +117,11 @@ router.get('/eventos', async (req, res) => {
     { nombre:'Fitting FW26',    fecha:'15 Mayo', lugar:'Atelier Central', color:'#b88917' },
     { nombre:'Sesión Editorial',fecha:'26 Mayo', lugar:'TBD',             color:'#08b864' },
   ];
+  const todosEv = await User.find().sort({ rol: 1, area: 1 });
+  const miembros = todosEv.map(mapMiembro);
   res.render('eventos.ejs', {
     usuario: { ...getUsuario(u), rol },
-    eventos, MIEMBROS, resumen, PROXIMOS_MAYO
+    eventos, MIEMBROS, miembros, resumen, PROXIMOS_MAYO
   });
 });
 
@@ -141,9 +143,11 @@ router.get('/proyectos', async (req, res) => {
     completados:proyectos.filter(p => p.status === 'completado').length,
     avance:     Math.round(proyectos.reduce((a, p) => a + p.progress, 0) / proyectos.length),
   };
+  const todosUsuarios = await User.find().sort({ rol: 1, area: 1 });
+  const miembros = todosUsuarios.map(mapMiembro);
   res.render('proyectos.ejs', {
     usuario: { ...getUsuario(u), rol },
-    proyectos, MIEMBROS, stats
+    proyectos, MIEMBROS, miembros, stats
   });
 });
 
