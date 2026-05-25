@@ -141,9 +141,11 @@ router.get('/proyectos', async (req, res) => {
     completados:proyectos.filter(p => p.status === 'completado').length,
     avance:     Math.round(proyectos.reduce((a, p) => a + p.progress, 0) / proyectos.length),
   };
+  const todosUsuarios = await User.find().sort({ rol: 1, area: 1 });
+  const miembros = todosUsuarios.map(mapMiembro);
   res.render('proyectos.ejs', {
     usuario: { ...getUsuario(u), rol },
-    proyectos, MIEMBROS, stats
+    proyectos, MIEMBROS, miembros, stats
   });
 });
 
