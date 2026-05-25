@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RunwaySync – Equipo</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;}
+    body{background:#ebebeb;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#231f20;}
+    .app{display:flex;flex-direction:column;height:100vh;}
+
+    /* ── TOPBAR ── */
+    .topbar{background:#fff;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 16px;border-bottom:1px solid #e0e0e0;flex-shrink:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:10px;}
+    .hamburger{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:4px;}
+    .hamburger span{display:block;width:20px;height:2px;background:#231f20;border-radius:2px;}
+    .topbar-brand{font-family:'Georgia',serif;font-size:0.98rem;font-weight:400;letter-spacing:0.2em;color:#141516;}
+    .topbar-right{display:flex;align-items:center;gap:16px;}
+    .topbar-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+    .topbar-icon:hover{background:#f3f4f6;}
+    .topbar-icon svg{width:20px;height:20px;stroke:#231f20;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    .notif-wrap{position:relative;}
+    .notif-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:280px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .notif-popover.open{display:block;}
+    .notif-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+    .notif-title{font-size:0.85rem;font-weight:700;color:#141516;}
+    .notif-badge{background:#cd1b80;color:#fff;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:20px;}
+    .notif-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5;}
+    .notif-item:last-child{border-bottom:none;}
+    .notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+    .notif-name{font-size:0.8rem;font-weight:600;color:#141516;}
+    .notif-meta{font-size:0.72rem;color:#888;margin-top:2px;}
+    .profile-wrap{position:relative;}
+    .profile-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .profile-popover.open{display:block;}
+    .pp-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;margin:0 auto 10px;}
+    .pp-name{font-weight:700;font-size:0.92rem;color:#141516;text-align:center;}
+    .pp-role{font-size:0.78rem;color:#888;text-align:center;margin-top:2px;margin-bottom:14px;}
+    .pp-divider{height:1px;background:#f0f0f0;margin-bottom:12px;}
+    .pp-logout{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:8px 14px;border-radius:10px;background:#fff3f8;color:#cd1b80;font-size:0.84rem;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .pp-logout:hover{background:#fce4f1;}
+
+    /* ── BODY ── */
+    .body-row{display:flex;flex:1;overflow:hidden;}
+
+    /* ── SIDEBAR ── */
+    .sidebar{flex:0 0 210px;background:#fff;display:flex;flex-direction:column;padding:12px 10px;border-right:1px solid #e0e0e0;gap:3px;overflow-y:auto;}
+    .nav-item{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:14px;text-decoration:none;color:#6f6f6f;font-size:0.88rem;font-weight:500;transition:background 0.15s,color 0.15s;}
+    .nav-item:hover{background:#f3f4f6;color:#231f20;}
+    .nav-item.active{background:#f0f0f0;color:#141516;font-weight:700;}
+    .nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .nav-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+    .nav-item.active .nav-icon svg{stroke:#141516;}
+
+    /* ── CONTENT ── */
+    .content{flex:1;overflow-y:auto;padding:22px 24px;}
+
+    /* ── PAGE HEADER ── */
+    .page-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;}
+    .page-header h1{font-family:'Georgia',serif;font-size:1.55rem;font-weight:800;color:#141516;}
+    .page-header p{font-size:0.75rem;color:#95a2a5;margin-top:2px;}
+    .btn-new{display:flex;align-items:center;gap:6px;padding:9px 20px;background:#141516;color:#fff;border:none;border-radius:50px;cursor:pointer;font-family:'Georgia',serif;font-size:0.85rem;font-weight:600;letter-spacing:0.03em;transition:background 0.15s,transform 0.12s;}
+    .btn-new:hover{background:#333;transform:translateY(-1px);}
+
+    /* ── STATS ── */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+    .stat-card{background:#fff;border-radius:16px;padding:15px 18px 13px;box-shadow:0 1px 4px rgba(0,0,0,0.05);}
+    .stat-lbl{font-size:0.73rem;color:#8a9295;font-weight:600;margin-bottom:5px;}
+    .stat-num{font-size:2rem;font-weight:800;color:#141516;line-height:1.1;}
+    .stat-sub{font-size:0.7rem;margin-top:4px;font-weight:600;}
+
+    /* ── TEAM GRID ── */
+    .team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+    .member-card{background:#fff;border-radius:16px;padding:22px 18px;text-align:center;cursor:pointer;border:1px solid #f0f0f0;box-shadow:0 1px 4px rgba(0,0,0,0.05);transition:transform 0.2s,box-shadow 0.2s;}
+    .member-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+    .member-av{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-weight:800;font-size:1.1rem;position:relative;}
+    .online-dot{position:absolute;bottom:2px;right:2px;width:11px;height:11px;border-radius:50%;border:2px solid #fff;}
+    .member-name{font-size:0.9rem;font-weight:700;color:#141516;margin-bottom:3px;}
+    .member-role{font-size:0.75rem;color:#8a9295;margin-bottom:12px;}
+    .skills-wrap{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:12px;}
+    .skill-tag{background:#f3f4f6;color:#6f6f6f;padding:3px 9px;border-radius:20px;font-size:0.63rem;font-weight:600;}
+    .member-footer{font-size:0.68rem;color:#b0b0b0;border-top:1px solid #f3f4f6;padding-top:10px;}
+
+    /* ── OVERLAYS ── */
+    .detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;justify-content:flex-end;z-index:1000;}
+    .detail-overlay.open{display:flex;}
+    .detail-panel{width:360px;background:#fff;height:100%;padding:28px 24px;overflow-y:auto;animation:slideIn 0.25s ease;}
+    @keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+    .dp-close{background:none;border:none;cursor:pointer;font-size:1.2rem;color:#8a9295;float:right;}
+    .dp-av{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;margin:16px auto 10px;}
+    .dp-name{font-family:'Georgia',serif;font-size:1.2rem;font-weight:700;color:#141516;text-align:center;}
+    .dp-role{font-size:0.8rem;color:#8a9295;text-align:center;margin-bottom:18px;}
+    .dp-section{font-size:0.62rem;font-weight:800;letter-spacing:0.1em;color:#8a9295;text-transform:uppercase;margin:14px 0 6px;}
+    .dp-skills{display:flex;flex-wrap:wrap;gap:5px;}
+    .dp-proyectos{font-size:0.82rem;color:#141516;font-weight:600;}
+    .dp-status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;margin-bottom:4px;}
+    .dp-status.online{background:#d1fae5;color:#065f46;}
+    .dp-status.offline{background:#f3f4f6;color:#6b7280;}
+    .btn-dp{width:100%;padding:10px;background:#141516;color:#fff;border:none;border-radius:50px;cursor:pointer;font-family:'Georgia',serif;font-size:0.85rem;font-weight:700;margin-top:18px;transition:background 0.15s;}
+    .btn-dp:hover{background:#333;}
+
+    /* ── POPUP INVITAR ── */
+    .inv-field{background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px;}
+    .inv-label{font-size:0.75rem;font-weight:700;color:#231f20;display:block;margin-bottom:4px;}
+    .inv-input{width:100%;border:none;outline:none;font-size:0.88rem;color:#231f20;background:transparent;}
+    .inv-input::placeholder{color:#95a2a5;}
+    .inv-select{width:100%;border:none;outline:none;font-size:0.88rem;color:#231f20;background:transparent;cursor:pointer;}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══ TOPBAR ══ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" aria-label="Menú"><span></span><span></span><span></span></button>
+    </div>
+    <span class="topbar-brand">RUNWAY SYNC</span>
+    <div class="topbar-right">
+      <div class="notif-wrap">
+        <div class="topbar-icon" id="notifBtn" title="Notificaciones" onclick="toggleNotif(event)" style="position:relative;">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#cd1b80;border-radius:50%;border:2px solid #fff;"></span>
+        </div>
+        <div class="notif-popover" id="notifPopover">
+          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge">4 próximos</span></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#cd1b80;"></div><div><div class="notif-name">Casting Modelos SS26</div><div class="notif-meta">23 ABR · 10:00 AM · Estudio Norte</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#b88917;"></div><div><div class="notif-name">Fitting Final Colección FW26</div><div class="notif-meta">24 ABR · 2:00 PM · Atelier Principal</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#08b864;"></div><div><div class="notif-name">Sesión Editorial Vogue CDMX</div><div class="notif-meta">28 ABR · Todo el día · Locación TBD</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#004aad;"></div><div><div class="notif-name">Reunión FW2026 — Dir. Creativa</div><div class="notif-meta">2 MAY · 9:00 AM · Sala de juntas</div></div></div>
+          <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
+        </div>
+      </div>
+      <div class="profile-wrap">
+        <div class="topbar-icon" id="profileBtn" title="Perfil" onclick="toggleProfile(event)">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="profile-popover" id="profilePopover">
+          <div class="pp-avatar" style="background:<%= usuario.colorBg %>;color:<%= usuario.color %>"><%= usuario.ini %></div>
+          <div class="pp-name"><%= usuario.nombre %></div>
+          <div class="pp-role"><%= usuario.rolLabel %></div>
+          <div class="pp-divider"></div>
+          <a href="/logout" class="pp-logout">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ BODY ══ -->
+  <div class="body-row">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+      <a href="/dashboard" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></span>
+        Dashboard
+      </a>
+      <a href="/calendario" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+        Calendario
+      </a>
+      <a href="/colecciones" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg></span>
+        Colecciones
+      </a>
+      <a href="/eventos" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><rect x="7" y="14" width="3" height="3" rx="0.5"/></svg></span>
+        Eventos
+      </a>
+      <a href="/proyectos" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+        Proyectos
+      </a>
+      <a href="/equipo" class="nav-item active">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Equipo
+      </a>
+    </aside>
+
+    <!-- ── CONTENT ── -->
+    <div class="content">
+
+      <!-- HEADER -->
+      <div class="page-header">
+        <div>
+          <h1>Equipo</h1>
+          <p>Equipo Creativo &middot; <%= miembros.length %> miembros activos</p>
+        </div>
+        <% if (usuario.rol === 'directora') { %>
+        <button class="btn-new" onclick="abrirInvitar()">
+          + Invitar Miembro
+        </button>
+        <% } %>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-lbl">Miembros Activos</div>
+          <div class="stat-num"><%= stats.miembros %></div>
+          <div class="stat-sub" style="color:#08b864"><%= stats.disponibles %> disponibles</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Proyectos Activos</div>
+          <div class="stat-num"><%= stats.proyectos %></div>
+          <div class="stat-sub" style="color:#cd1b80"><%= stats.nuevosProyectos %> nuevos este mes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Disponibles Ahora</div>
+          <div class="stat-num"><%= stats.disponibles %></div>
+          <div class="stat-sub" style="color:#8a9295">en línea</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Áreas Cubiertas</div>
+          <div class="stat-num">4</div>
+          <div class="stat-sub" style="color:#004aad">Creativa · Foto · Styling · Prod.</div>
+        </div>
+      </div>
+
+      <%
+        const directora  = miembros.filter(m => m.rol === 'directora');
+        const areas      = ['fotografia','styling','produccion'];
+        const areaLabel  = { fotografia:'Fotografía', styling:'Styling', produccion:'Producción' };
+        const areaColor  = { fotografia:'#004aad', styling:'#08b864', produccion:'#b88917' };
+      %>
+
+      <!-- Directora -->
+      <% if (directora.length) { %>
+      <div style="margin-bottom:8px;">
+        <div style="font-size:0.62rem;font-weight:800;letter-spacing:0.1em;color:#8a9295;text-transform:uppercase;margin-bottom:10px;">Dirección Creativa</div>
+        <div class="team-grid">
+          <% directora.forEach(m => { %>
+          <div class="member-card" onclick="abrirDetalle(<%- JSON.stringify(m) %>)">
+            <div class="member-av" style="background:<%= m.bg %>;color:<%= m.color %>">
+              <%= m.ini %>
+              <span class="online-dot" style="background:<%= m.online ? '#08b864' : '#d1d5db' %>"></span>
+            </div>
+            <div class="member-name"><%= m.nombre %></div>
+            <div class="member-role"><%= m.rolLabel %></div>
+            <div style="font-size:0.68rem;color:#95a2a5;margin-bottom:10px;"><%= m.id_empresarial %></div>
+            <div class="skills-wrap">
+              <% m.skills.forEach(s => { %><span class="skill-tag"><%= s %></span><% }) %>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Áreas -->
+      <% areas.forEach(area => {
+        const jefes    = miembros.filter(m => m.area === area && m.rol === 'jefe');
+        const empleados = miembros.filter(m => m.area === area && m.rol === 'miembro');
+        if (!jefes.length && !empleados.length) return;
+      %>
+      <div style="margin-bottom:18px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:<%= areaColor[area] %>"></div>
+          <span style="font-size:0.62rem;font-weight:800;letter-spacing:0.1em;color:#8a9295;text-transform:uppercase;">Área de <%= areaLabel[area] %></span>
+        </div>
+        <div class="team-grid">
+          <% [...jefes, ...empleados].forEach(m => { %>
+          <div class="member-card" onclick="abrirDetalle(<%- JSON.stringify(m) %>)">
+            <div class="member-av" style="background:<%= m.bg %>;color:<%= m.color %>">
+              <%= m.ini %>
+              <span class="online-dot" style="background:<%= m.online ? '#08b864' : '#d1d5db' %>"></span>
+            </div>
+            <div class="member-name"><%= m.nombre %></div>
+            <div class="member-role"><%= m.rolLabel %></div>
+            <div style="font-size:0.68rem;color:#95a2a5;margin-bottom:10px;"><%= m.id_empresarial %></div>
+            <div class="skills-wrap">
+              <% m.skills.forEach(s => { %><span class="skill-tag"><%= s %></span><% }) %>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+      <% }) %>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── DETAIL PANEL ── -->
+<div class="detail-overlay" id="detailOverlay" onclick="cerrarDetalle(event)">
+  <div class="detail-panel" onclick="event.stopPropagation()">
+    <button class="dp-close" onclick="document.getElementById('detailOverlay').classList.remove('open')">&#x2715;</button>
+    <div class="dp-av" id="dpAv"></div>
+    <div class="dp-name" id="dpName"></div>
+    <div class="dp-role" id="dpRole"></div>
+    <div id="dpStatus"></div>
+    <div class="dp-section">Skills</div>
+    <div class="dp-skills" id="dpSkills"></div>
+    <div class="dp-section">Proyectos activos</div>
+    <div class="dp-proyectos" id="dpProyectos"></div>
+    <button class="btn-dp" onclick="document.getElementById('detailOverlay').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<!-- ── POPUP INVITAR MIEMBRO ── -->
+<div class="detail-overlay" id="invitarOverlay" onclick="cerrarInvitar(event)">
+  <div class="detail-panel" onclick="event.stopPropagation()" style="width:420px;">
+    <button class="dp-close" onclick="cerrarInvitar()">&#x2715;</button>
+    <div style="margin-top:16px;">
+      <h2 style="font-family:'Georgia',serif;font-size:1.2rem;color:#141516;margin-bottom:4px;">Invitar Miembro</h2>
+      <p style="font-size:0.75rem;color:#8a9295;margin-bottom:20px;">Completa los datos del nuevo integrante</p>
+
+      <div id="invitar-error" style="display:none;background:#fff0f0;color:#ff3131;border-radius:10px;padding:10px 14px;font-size:0.8rem;margin-bottom:14px;"></div>
+      <div id="invitar-exito" style="display:none;background:#f0fff8;color:#08b864;border-radius:10px;padding:10px 14px;font-size:0.8rem;margin-bottom:14px;"></div>
+
+      <div class="inv-field">
+        <label class="inv-label">Nombres y Apellidos</label>
+        <input id="inv-nombre" type="text" class="inv-input" placeholder="Ej: Juan Pablo Torres"/>
+      </div>
+
+      <div class="inv-field">
+        <label class="inv-label">Rol</label>
+        <select id="inv-rol" class="inv-select" onchange="actualizarSufijo()">
+          <option value="">Seleccionar rol...</option>
+          <option value="directora">Directora</option>
+          <option value="jefe">Jefe de Área</option>
+          <option value="miembro">Miembro</option>
+        </select>
+      </div>
+
+      <div class="inv-field">
+        <label class="inv-label">ID Empresarial</label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input id="inv-id-base" type="text" class="inv-input" placeholder="Ej: 11.00.095" style="flex:1;"/>
+          <span style="color:#95a2a5;font-size:0.88rem;flex-shrink:0;">.</span>
+          <span id="inv-id-sufijo" style="font-size:0.88rem;font-weight:700;color:#95a2a5;min-width:28px;flex-shrink:0;">___</span>
+        </div>
+        <div style="font-size:0.68rem;color:#95a2a5;margin-top:5px;">Los últimos 3 dígitos se asignan según el rol</div>
+      </div>
+
+      <div class="inv-field" id="area-field" style="display:none;">
+        <label class="inv-label">Área</label>
+        <select id="inv-area" class="inv-select">
+          <option value="">Seleccionar área...</option>
+          <option value="fotografia">Fotografía</option>
+          <option value="styling">Styling</option>
+          <option value="produccion">Producción</option>
+        </select>
+      </div>
+
+      <div class="inv-field">
+        <label class="inv-label">Número de Celular</label>
+        <input id="inv-tel" type="tel" class="inv-input" placeholder="Ej: 3001234567"/>
+      </div>
+
+      <div class="inv-field" style="margin-bottom:20px;">
+        <label class="inv-label">Contraseña</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input id="inv-pass" type="password" class="inv-input" placeholder="Mínimo 6 caracteres" style="flex:1;"/>
+          <button type="button" onclick="togglePassVis()" style="background:none;border:none;cursor:pointer;padding:0;color:#8a9295;flex-shrink:0;" title="Mostrar/ocultar contraseña">
+            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-dp" onclick="enviarInvitacion()">Registrar Miembro</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── DETAIL PANEL ──
+  function abrirDetalle(m) {
+    document.getElementById('dpAv').style.background = m.bg;
+    document.getElementById('dpAv').style.color      = m.color;
+    document.getElementById('dpAv').textContent      = m.ini;
+    document.getElementById('dpName').textContent    = m.nombre;
+    document.getElementById('dpRole').textContent    = m.rol;
+    document.getElementById('dpStatus').innerHTML    = `<span class="dp-status ${m.online ? 'online' : 'offline'}">${m.online ? '● En línea' : '○ Desconectado'}</span>`;
+    document.getElementById('dpSkills').innerHTML    = m.skills.map(s => `<span class="skill-tag">${s}</span>`).join('');
+    document.getElementById('dpProyectos').textContent = `${m.proyectos} proyecto${m.proyectos !== 1 ? 's' : ''} asignado${m.proyectos !== 1 ? 's' : ''}`;
+    document.getElementById('detailOverlay').classList.add('open');
+  }
+
+  function cerrarDetalle(e) {
+    if (e.target === document.getElementById('detailOverlay')) {
+      document.getElementById('detailOverlay').classList.remove('open');
+    }
+  }
+
+  // ── POPUP INVITAR ──
+  function abrirInvitar() {
+    document.getElementById('invitarOverlay').classList.add('open');
+    document.getElementById('invitar-error').style.display = 'none';
+    document.getElementById('invitar-exito').style.display = 'none';
+    // Resetear sufijo al abrir
+    const sufijo = document.getElementById('inv-id-sufijo');
+    sufijo.textContent = '___';
+    sufijo.style.color = '#95a2a5';
+  }
+
+  function cerrarInvitar(e) {
+    if (!e || e.target === document.getElementById('invitarOverlay')) {
+      document.getElementById('invitarOverlay').classList.remove('open');
+    }
+  }
+
+  // Sufijos por rol
+  const SUFIJOS = { directora: '001', jefe: 'X00', miembro: 'X01' };
+
+  function actualizarSufijo() {
+    const rol    = document.getElementById('inv-rol').value;
+    const sufijo = document.getElementById('inv-id-sufijo');
+    const areaField = document.getElementById('area-field');
+    if (rol && SUFIJOS[rol]) {
+      sufijo.textContent = SUFIJOS[rol];
+      sufijo.style.color = '#cd1b80';
+    } else {
+      sufijo.textContent = '___';
+      sufijo.style.color = '#95a2a5';
+    }
+    areaField.style.display = (rol === 'jefe' || rol === 'miembro') ? 'block' : 'none';
+  }
+
+  function buildIdFinal() {
+    const base = document.getElementById('inv-id-base').value.trim();
+    const rol  = document.getElementById('inv-rol').value;
+    if (!base || !rol || !SUFIJOS[rol]) return base;
+    return base + '.' + SUFIJOS[rol];
+  }
+
+  // Mostrar / ocultar contraseña
+  function togglePassVis() {
+    const input = document.getElementById('inv-pass');
+    const icon  = document.getElementById('eye-icon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.innerHTML = `
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+        <line x1="1" y1="1" x2="23" y2="23"/>`;
+    } else {
+      input.type = 'password';
+      icon.innerHTML = `
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>`;
+    }
+  }
+
+  async function enviarInvitacion() {
+    const nombre = document.getElementById('inv-nombre').value.trim();
+    const base   = document.getElementById('inv-id-base').value.trim();
+    const id     = buildIdFinal();
+    const tel    = document.getElementById('inv-tel').value.trim();
+    const rol    = document.getElementById('inv-rol').value;
+    const pass   = document.getElementById('inv-pass').value;
+
+    const errDiv = document.getElementById('invitar-error');
+    const okDiv  = document.getElementById('invitar-exito');
+    errDiv.style.display = 'none';
+    okDiv.style.display  = 'none';
+
+    if (!nombre || !base || !tel || !rol || !pass) {
+      errDiv.textContent = 'Por favor completa todos los campos.';
+      errDiv.style.display = 'block';
+      return;
+    }
+    if (pass.length < 6) {
+      errDiv.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+      errDiv.style.display = 'block';
+      return;
+    }
+
+    const area = document.getElementById('inv-area').value;
+    const res = await fetch('/invitar-miembro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, id_empresarial: id, telefono: tel, rol, area, password: pass }),
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      okDiv.textContent = '¡Miembro registrado exitosamente!';
+      okDiv.style.display = 'block';
+      document.getElementById('inv-nombre').value  = '';
+      document.getElementById('inv-id-base').value = '';
+      document.getElementById('inv-tel').value     = '';
+      document.getElementById('inv-rol').value     = '';
+      document.getElementById('inv-area').value    = '';
+      document.getElementById('inv-pass').value    = '';
+      document.getElementById('area-field').style.display = 'none';
+      const sufijo = document.getElementById('inv-id-sufijo');
+      sufijo.textContent = '___';
+      sufijo.style.color = '#95a2a5';
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      errDiv.textContent = data.error || 'Error al registrar el miembro.';
+      errDiv.style.display = 'block';
+    }
+  }
+
+  // ── NOTIF / PROFILE ──
+  function toggleNotif(e) {
+    e.stopPropagation();
+    document.getElementById('notifPopover').classList.toggle('open');
+    document.getElementById('profilePopover').classList.remove('open');
+  }
+  function toggleProfile(e) {
+    e.stopPropagation();
+    document.getElementById('profilePopover').classList.toggle('open');
+    document.getElementById('notifPopover').classList.remove('open');
+  }
+  document.addEventListener('click', function(e) {
+    const np = document.getElementById('notifPopover');
+    const pp = document.getElementById('profilePopover');
+    if (np && !document.getElementById('notifBtn').contains(e.target))   np.classList.remove('open');
+    if (pp && !document.getElementById('profileBtn').contains(e.target)) pp.classList.remove('open');
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.getElementById('detailOverlay').classList.remove('open');
+      document.getElementById('invitarOverlay').classList.remove('open');
+    }
+  });
+</script>
+</body>
+</html>

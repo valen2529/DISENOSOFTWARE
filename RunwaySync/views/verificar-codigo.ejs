@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RunwaySync - Verificar Código</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;}
+    body{background:#ffffff;}
+    .page{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .bg-svg{
+      position:absolute;
+      top:0;left:0;
+      width:100%;
+      height:100%;
+      object-fit:fill;
+      z-index:1;
+    }
+    .card-overlay{
+      position:relative;
+      z-index:10;
+      background:#d9d9d9;
+      border-radius:22px;
+      width:448px;
+      padding:40px 46px 34px;
+      box-shadow:0 8px 40px rgba(0,0,0,0.12);
+    }
+    .back-link{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.82rem;
+      color:#004aad;
+      text-decoration:none;
+      margin-bottom:18px;
+    }
+    .back-link:hover{text-decoration:underline;}
+    .back-link svg{width:14px;height:14px;stroke:#004aad;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .card-title{
+      font-family:'Georgia',serif;
+      font-size:2rem;
+      font-weight:700;
+      color:#141516;
+      text-align:center;
+      margin-bottom:10px;
+      letter-spacing:0.01em;
+    }
+    .card-subtitle{
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.85rem;
+      color:#6f6f6f;
+      text-align:center;
+      margin-bottom:28px;
+      line-height:1.5;
+    }
+    .card-subtitle span{
+      color:#141516;
+      font-weight:700;
+    }
+    .code-row{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      margin-bottom:14px;
+    }
+    .code-input{
+      width:56px;
+      height:62px;
+      background:#ffffff;
+      border-radius:14px;
+      border:none;
+      outline:none;
+      text-align:center;
+      font-family:'Georgia',serif;
+      font-size:1.6rem;
+      font-weight:700;
+      color:#141516;
+      box-shadow:0 1px 4px rgba(0,0,0,0.06);
+      transition:box-shadow 0.2s;
+    }
+    .code-input:focus{box-shadow:0 0 0 2px #141516;}
+    .resend-row{
+      text-align:center;
+      margin-top:6px;
+    }
+    .resend-text{
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.82rem;
+      color:#6f6f6f;
+    }
+    .resend-link{
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.82rem;
+      color:#004aad;
+      text-decoration:none;
+      font-weight:700;
+    }
+    .resend-link:hover{text-decoration:underline;}
+    .error-msg{
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.82rem;
+      color:#ff3131;
+      text-align:center;
+      margin-top:8px;
+    }
+    .btn-main{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      height:52px;
+      background:#141516;
+      color:#ffffff;
+      font-family:'Georgia',serif;
+      font-size:1.05rem;
+      font-weight:700;
+      text-decoration:none;
+      border:none;
+      cursor:pointer;
+      border-radius:50px;
+      letter-spacing:0.02em;
+      margin:24px 0 0;
+      box-shadow:0 4px 16px rgba(0,0,0,0.22);
+      transition:background 0.2s, transform 0.15s;
+    }
+    .btn-main:hover{background:#333;transform:translateY(-1px);}
+  </style>
+</head>
+<body>
+<div class="page">
+  <img class="bg-svg" src="/svg/9.svg" alt=""/>
+  <div class="card-overlay">
+    <a href="/recuperar" class="back-link">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Volver
+    </a>
+    <h2 class="card-title">Verificar Código</h2>
+    <p class="card-subtitle">Ingresa el PIN de 4 dígitos que enviamos a <span>tu celular</span>.</p>
+
+    <!-- ✅ action y names corregidos -->
+    <form action="/verificar-codigo" method="POST">
+      <div class="code-row">
+        <input class="code-input" type="text" name="digit1" maxlength="1" inputmode="numeric" pattern="[0-9]" required autofocus/>
+        <input class="code-input" type="text" name="digit2" maxlength="1" inputmode="numeric" pattern="[0-9]" required/>
+        <input class="code-input" type="text" name="digit3" maxlength="1" inputmode="numeric" pattern="[0-9]" required/>
+        <input class="code-input" type="text" name="digit4" maxlength="1" inputmode="numeric" pattern="[0-9]" required/>
+      </div>
+      <div class="resend-row">
+        <span class="resend-text">¿No recibiste el código? </span>
+        <a href="/recuperar" class="resend-link">Reenviar</a>
+      </div>
+
+      <!-- ✅ Muestra error del servidor si existe -->
+      <% if (error) { %>
+        <p class="error-msg"><%= error %></p>
+      <% } %>
+
+      <button type="submit" class="btn-main">Verificar</button>
+    </form>
+  </div>
+</div>
+<script>
+  const inputs = document.querySelectorAll('.code-input');
+  inputs.forEach((input, i) => {
+    input.addEventListener('input', () => {
+      if (input.value.length === 1 && i < inputs.length - 1) {
+        inputs[i + 1].focus();
+      }
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && input.value === '' && i > 0) {
+        inputs[i - 1].focus();
+      }
+    });
+  });
+</script>
+</body>
+</html>

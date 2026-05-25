@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RunwaySync - Calendario</title>
+  <style>
+    /* ── RESET & BASE ── */
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;}
+    body{background:#ebebeb;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#231f20;}
+
+    /* ── APP LAYOUT ── */
+    .app{display:flex;flex-direction:column;height:100vh;}
+
+    /* ── TOP BAR ── */
+    .topbar{background:#fff;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 16px;border-bottom:1px solid #e0e0e0;flex-shrink:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:10px;}
+    .hamburger{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:4px;}
+    .hamburger span{display:block;width:20px;height:2px;background:#231f20;border-radius:2px;}
+    .topbar-brand{font-family:'Georgia',serif;font-size:0.98rem;font-weight:400;letter-spacing:0.2em;color:#141516;}
+    .topbar-right{display:flex;align-items:center;gap:16px;}
+    .topbar-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+    .topbar-icon:hover{background:#f3f4f6;}
+    .topbar-icon svg{width:20px;height:20px;stroke:#231f20;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    /* ── NOTIF POPOVER ── */
+    .notif-wrap{position:relative;}
+    .notif-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:280px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .notif-popover.open{display:block;}
+    .notif-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+    .notif-title{font-size:0.85rem;font-weight:700;color:#141516;}
+    .notif-badge{background:#cd1b80;color:#fff;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:20px;}
+    .notif-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5;}
+    .notif-item:last-child{border-bottom:none;}
+    .notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+    .notif-name{font-size:0.8rem;font-weight:600;color:#141516;}
+    .notif-meta{font-size:0.72rem;color:#888;margin-top:2px;}
+    /* ── PROFILE POPOVER ── */
+    .profile-wrap{position:relative;}
+    .profile-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .profile-popover.open{display:block;}
+    .pp-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;margin:0 auto 10px;}
+    .pp-name{font-weight:700;font-size:0.92rem;color:#141516;text-align:center;}
+    .pp-role{font-size:0.78rem;color:#888;text-align:center;margin-top:2px;margin-bottom:14px;}
+    .pp-divider{height:1px;background:#f0f0f0;margin-bottom:12px;}
+    .pp-logout{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:8px 14px;border-radius:10px;background:#fff3f8;color:#cd1b80;font-size:0.84rem;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .pp-logout:hover{background:#fce4f1;}
+
+    /* ── BODY ROW ── */
+    .body-row{display:flex;flex:1;overflow:hidden;}
+
+    /* ── SIDEBAR ── */
+    .sidebar{flex:0 0 210px;background:#fff;display:flex;flex-direction:column;padding:12px 10px;border-right:1px solid #e0e0e0;gap:3px;overflow-y:auto;}
+    .nav-item{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:14px;text-decoration:none;color:#6f6f6f;font-size:0.88rem;font-weight:500;transition:background .15s,color .15s;}
+    .nav-item:hover{background:#f3f4f6;color:#231f20;}
+    .nav-item.active{background:#f0f0f0;color:#141516;font-weight:700;}
+    .nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .nav-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+
+    /* ── CALENDAR WRAPPER ── */
+    .cal-wrapper{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+
+    /* ── MONTH VIEW ── */
+    .cal-page{flex:1;padding:18px 20px 12px;display:flex;flex-direction:column;gap:10px;overflow:hidden;}
+    .cal-page-header{display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0;}
+    .cal-title{font-family:'Georgia',serif;font-size:1.5rem;font-weight:800;color:#141516;}
+    .cal-subtitle{font-size:0.74rem;color:#95a2a5;margin-top:3px;}
+    .cal-controls{display:flex;align-items:center;gap:10px;}
+    .cal-view-toggle{display:flex;background:#f0f0f0;border-radius:8px;padding:3px;gap:2px;}
+    .cal-view-btn{padding:6px 14px;border-radius:6px;border:none;background:transparent;font-size:0.78rem;font-weight:600;cursor:pointer;color:#6f6f6f;transition:all .15s;}
+    .cal-view-btn.active{background:#141516;color:#fff;}
+    .cal-nav{display:flex;align-items:center;gap:6px;}
+    .cal-nav-btn{background:#fff;border:1px solid #e0e0e0;border-radius:7px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.85rem;color:#6f6f6f;transition:background .12s;}
+    .cal-nav-btn:hover{background:#f3f4f6;}
+    .cal-month-lbl{font-size:0.86rem;font-weight:700;min-width:100px;text-align:center;color:#141516;}
+    .btn-nuevo-evento{background:#141516;color:#fff;border:none;border-radius:50px;padding:9px 18px;font-size:0.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;letter-spacing:0.02em;transition:background .15s;}
+    .btn-nuevo-evento:hover{background:#333;}
+
+    /* ── CALENDAR CONTAINER ── */
+    .cal-container{flex:1;background:#fff;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1px 4px rgba(0,0,0,0.05);min-height:0;}
+    .cal-col-headers{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid #e8e8e8;flex-shrink:0;}
+    .cal-col-h{padding:10px 8px;font-size:0.65rem;font-weight:800;color:#8a9295;text-transform:uppercase;letter-spacing:0.08em;text-align:center;border-right:1px solid #f0f0f0;}
+    .cal-col-h:last-child{border-right:none;}
+    .cal-body-grid{flex:1;display:grid;grid-template-columns:repeat(7,1fr);min-height:0;}
+    .cal-cell{border-right:1px solid #e8e8e8;border-bottom:1px solid #e8e8e8;padding:8px 7px;position:relative;cursor:pointer;overflow:hidden;transition:background .12s;}
+    .cal-cell:nth-child(7n){border-right:none;}
+    .cal-cell:hover{background:#fafafa;}
+    .cal-cell.other-month{background:#f9f9f9;}
+    .cal-cell.is-today-row{background:rgba(245,242,235,0.5);}
+    .cal-cell.is-today-row:hover{background:rgba(245,242,235,0.8);}
+
+    /* Day number */
+    .day-num-wrap{display:inline-flex;flex-direction:column;align-items:center;margin-bottom:4px;}
+    .day-num{font-size:0.76rem;color:#6f6f6f;font-weight:500;line-height:1;}
+    .day-num.other{color:#c4c4c4;}
+    .day-num-circle{width:25px;height:25px;background:#141516;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;}
+    .hoy-label{font-size:0.52rem;color:#8a9295;text-transform:uppercase;letter-spacing:0.06em;margin-top:1px;}
+
+    /* Event pills */
+    .event-pill{display:flex;align-items:center;gap:5px;padding:3px 7px;border-radius:5px;margin-bottom:3px;cursor:pointer;overflow:hidden;width:100%;}
+    .event-pill:hover{filter:brightness(0.95);}
+    .event-pill-title{font-size:0.64rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+    .more-pill{font-size:0.6rem;color:#8a9295;padding:1px 4px;cursor:pointer;}
+
+    /* ── CALENDAR LEGEND ── */
+    .cal-legend{display:flex;gap:18px;align-items:center;flex-shrink:0;}
+    .legend-item{display:flex;align-items:center;gap:6px;font-size:0.7rem;color:#6f6f6f;}
+    .legend-dot{width:10px;height:10px;border-radius:50%;}
+
+    /* ── EVENT DETAIL VIEW ── */
+    .event-detail-page{flex:1;overflow-y:auto;padding:18px 20px;}
+    .ev-breadcrumb{font-size:0.74rem;color:#8a9295;margin-bottom:3px;display:flex;align-items:center;gap:5px;}
+    .ev-breadcrumb a{color:#cd1b80;text-decoration:none;cursor:pointer;font-weight:600;}
+    .ev-breadcrumb a:hover{text-decoration:underline;}
+    .ev-sub-header{display:flex;align-items:center;gap:8px;font-size:0.74rem;color:#8a9295;margin-bottom:18px;}
+    .ev-sub-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .event-detail-grid{display:grid;grid-template-columns:1fr 380px;gap:14px;align-items:start;}
+
+    /* Event card (left) */
+    .ev-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+    .ev-card-bar{height:5px;}
+    .ev-card-body{padding:24px;}
+    .ev-type-label{font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;}
+    .ev-card-title{font-family:'Georgia',serif;font-size:1.7rem;font-weight:800;color:#141516;margin-bottom:6px;}
+    .ev-card-desc{font-size:0.8rem;color:#8a9295;margin-bottom:0;line-height:1.5;}
+    .ev-section{border-top:1px solid #f0f0f0;padding:14px 0;}.ev-section:last-child{padding-bottom:0;}
+    .ev-section-label{font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#8a9295;margin-bottom:8px;}
+    .ev-section-val{font-size:0.86rem;color:#141516;font-weight:500;line-height:1.4;}
+    .ev-type-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:0.7rem;font-weight:700;}
+    /* Model rows */
+    .model-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+    .model-row:last-child{margin-bottom:0;}
+    .model-av{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;flex-shrink:0;}
+    .model-info{flex:1;}
+    .model-name{font-size:0.76rem;font-weight:700;color:#141516;}
+    .model-sub{font-size:0.62rem;color:#b0b0b0;margin-top:1px;}
+    .model-badge{padding:4px 12px;border-radius:20px;font-size:0.62rem;font-weight:700;flex-shrink:0;}
+    .badge-confirmed{background:#d1fae5;color:#065f46;}
+    .badge-review{background:#fef3c7;color:#92400e;}
+    .badge-pending{background:#fce4f0;color:#9b174e;}
+
+    /* Right side cards */
+    .ev-right{display:flex;flex-direction:column;gap:14px;}
+    .ev-side-card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+    .ev-side-title{font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#8a9295;margin-bottom:14px;}
+    /* Agenda timeline */
+    .agenda-row{display:flex;gap:12px;margin-bottom:12px;}
+    .agenda-row:last-child{margin-bottom:0;}
+    .agenda-time{font-size:0.66rem;color:#8a9295;width:38px;flex-shrink:0;padding-top:8px;font-weight:600;}
+    .agenda-block{flex:1;padding:9px 12px;border-radius:10px;}
+    .agenda-block-title{font-size:0.74rem;font-weight:700;}
+    .agenda-block-sub{font-size:0.62rem;margin-top:2px;opacity:0.75;}
+    /* Attendees */
+    .attendees-row{display:flex;gap:14px;flex-wrap:wrap;}
+    .attendee-item{display:flex;flex-direction:column;align-items:center;gap:4px;}
+    .attendee-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:800;}
+    .attendee-name{font-size:0.61rem;color:#8a9295;text-align:center;}
+    /* Action buttons */
+    .ev-action-row{display:flex;gap:10px;}
+    .btn-edit-ev{background:#141516;color:#fff;border:none;border-radius:50px;padding:10px 22px;font-size:0.8rem;font-weight:700;cursor:pointer;transition:background .15s;}
+    .btn-edit-ev:hover{background:#333;}
+    .btn-cancel-ev{background:transparent;color:#231f20;border:1.5px solid #d0d0d0;border-radius:50px;padding:10px 22px;font-size:0.8rem;font-weight:600;cursor:pointer;transition:background .12s;}
+    .btn-cancel-ev:hover{background:#f3f4f6;}
+
+    /* ── MODAL NUEVO EVENTO ── */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(20,21,22,0.45);z-index:900;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+    .modal-backdrop.open{opacity:1;pointer-events:all;}
+    .modal-card{background:#fff;border-radius:20px;width:540px;max-height:88vh;overflow-y:auto;padding:30px 32px;box-shadow:0 12px 48px rgba(0,0,0,0.18);transform:translateY(14px);transition:transform .22s;}
+    .modal-backdrop.open .modal-card{transform:translateY(0);}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;}
+    .modal-title{font-family:'Georgia',serif;font-size:1.2rem;font-weight:800;color:#141516;}
+    .modal-close-btn{background:none;border:none;cursor:pointer;font-size:1.3rem;color:#8a9295;line-height:1;padding:2px 6px;border-radius:6px;}
+    .modal-close-btn:hover{background:#f3f4f6;color:#141516;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .form-group{margin-bottom:16px;}
+    .form-label{font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#8a9295;margin-bottom:6px;display:block;}
+    .form-input,.form-textarea,.form-select{width:100%;padding:10px 13px;background:#f5f5f5;border:1.5px solid transparent;border-radius:10px;font-size:0.84rem;color:#231f20;outline:none;transition:border .15s;font-family:inherit;}
+    .form-input:focus,.form-textarea:focus,.form-select:focus{border-color:#141516;background:#fff;}
+    .form-textarea{resize:vertical;min-height:68px;}
+    .time-row{display:flex;gap:8px;align-items:center;}
+    .time-sep{color:#8a9295;font-size:0.85rem;}
+    /* Color picker */
+    .color-options{display:flex;gap:8px;flex-wrap:wrap;}
+    .color-opt{display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:50px;border:2px solid transparent;cursor:pointer;font-size:0.72rem;font-weight:700;transition:border .15s,box-shadow .15s;background:#f5f5f5;}
+    .color-opt:hover{box-shadow:0 0 0 2px rgba(0,0,0,0.1);}
+    .color-opt.selected{border-color:#141516;background:#fff;}
+    .color-opt-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+    /* Attendees picker in modal */
+    .att-grid{display:flex;gap:12px;flex-wrap:wrap;}
+    .att-check{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;}
+    .att-check input{display:none;}
+    .att-av-sm{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;border:2px solid transparent;transition:border .15s,transform .15s;}
+    .att-check:hover .att-av-sm{transform:scale(1.05);}
+    .att-check input:checked~.att-av-sm{border-color:#141516;}
+    .att-lbl-sm{font-size:0.6rem;color:#8a9295;}
+    .form-buttons{display:flex;gap:10px;margin-top:20px;}
+    .btn-submit-form{flex:1;background:#141516;color:#fff;border:none;border-radius:50px;padding:12px;font-size:0.84rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;transition:background .15s;}
+    .btn-submit-form:hover{background:#333;}
+    .btn-cancel-form{padding:12px 20px;background:transparent;border:1.5px solid #e0e0e0;border-radius:50px;font-size:0.84rem;cursor:pointer;color:#6f6f6f;transition:background .12s;}
+    .btn-cancel-form:hover{background:#f3f4f6;}
+
+    /* ── MODAL MUY PRONTO ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(20,21,22,0.45);display:flex;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:opacity .2s ease;}
+    .modal-overlay.visible{opacity:1;pointer-events:all;}
+    .modal-box{background:#fff;border-radius:20px;padding:36px 48px;text-align:center;box-shadow:0 12px 48px rgba(0,0,0,0.18);transform:translateY(10px) scale(0.97);transition:transform .22s ease,opacity .22s ease;opacity:0;}
+    .modal-overlay.visible .modal-box{transform:translateY(0) scale(1);opacity:1;}
+    .modal-icon{font-size:2rem;margin-bottom:10px;}
+    .modal-title-mp{font-family:'Georgia',serif;font-size:1.6rem;font-weight:700;color:#141516;letter-spacing:.04em;margin-bottom:6px;}
+    .modal-sub-mp{font-size:0.82rem;color:#95a2a5;}
+    .modal-close{margin-top:22px;display:inline-block;padding:8px 28px;background:#141516;color:#fff;border:none;border-radius:50px;font-size:0.82rem;font-weight:700;cursor:pointer;letter-spacing:.04em;transition:background .15s;}
+    .modal-close:hover{background:#333;}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══ TOPBAR ══ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" aria-label="Menú"><span></span><span></span><span></span></button>
+    </div>
+    <span class="topbar-brand">RUNWAY SYNC</span>
+    <div class="topbar-right">
+      <div class="notif-wrap">
+        <div class="topbar-icon" id="notifBtn" title="Notificaciones" onclick="toggleNotif(event)" style="position:relative;">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#cd1b80;border-radius:50%;border:2px solid #fff;"></span>
+        </div>
+        <div class="notif-popover" id="notifPopover">
+          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge">4 próximos</span></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#cd1b80;"></div><div><div class="notif-name">Casting Modelos SS26</div><div class="notif-meta">23 ABR · 10:00 AM · Estudio Norte</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#b88917;"></div><div><div class="notif-name">Fitting Final Colección FW26</div><div class="notif-meta">24 ABR · 2:00 PM · Atelier Principal</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#08b864;"></div><div><div class="notif-name">Sesión Editorial Vogue CDMX</div><div class="notif-meta">28 ABR · Todo el día · Locación TBD</div></div></div>
+          <div class="notif-item"><div class="notif-dot" style="background:#004aad;"></div><div><div class="notif-name">Reunión FW2026 — Dir. Creativa</div><div class="notif-meta">2 MAY · 9:00 AM · Sala de juntas</div></div></div>
+          <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
+        </div>
+      </div>
+      <div class="profile-wrap">
+        <div class="topbar-icon" id="profileBtn" title="Perfil" onclick="toggleProfile(event)" style="cursor:pointer;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#231f20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="profile-popover" id="profilePopover">
+          <div class="pp-avatar" style="background:<%= usuario.colorBg %>;color:<%= usuario.color %>"><%= usuario.ini %></div>
+          <div class="pp-name"><%= usuario.nombre %></div>
+          <div class="pp-role"><%= usuario.rolLabel %></div>
+          <div class="pp-divider"></div>
+          <a href="/logout" class="pp-logout">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ BODY ══ -->
+  <div class="body-row">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+      <a href="/dashboard" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></span>
+        Dashboard
+      </a>
+      <a href="/calendario" class="nav-item active">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+        Calendario
+      </a>
+      <a href="/colecciones" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg></span>
+        Colecciones
+      </a>
+      <a href="/eventos" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><rect x="7" y="14" width="3" height="3" rx="0.5"/></svg></span>
+        Eventos
+      </a>
+      <a href="/proyectos" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+        Proyectos
+      </a>
+      <a href="/equipo" class="nav-item">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Equipo
+      </a>
+    </aside>
+
+    <!-- ── CALENDAR CONTENT (JS-rendered) ── -->
+    <div class="cal-wrapper" id="calWrapper"></div>
+
+  </div><!-- /body-row -->
+</div><!-- /app -->
+
+<!-- ══ MODAL NUEVO EVENTO ══ -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">Nuevo Evento</span>
+      <button class="modal-close-btn" onclick="closeNuevoEvento()">&#x2715;</button>
+    </div>
+    <form id="formNuevoEvento" onsubmit="handleNuevoEvento(event)">
+
+      <div class="form-group">
+        <label class="form-label">Nombre del evento</label>
+        <input type="text" id="ev-nombre" class="form-input" placeholder="Ej. Casting Final SS26" required/>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input type="date" id="ev-fecha" class="form-input" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora</label>
+          <div class="time-row">
+            <input type="time" id="ev-inicio" class="form-input" value="10:00"/>
+            <span class="time-sep">—</span>
+            <input type="time" id="ev-fin" class="form-input" value="18:00"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Asignar color</label>
+        <div class="color-options" id="colorOptions">
+          <div class="color-opt selected" data-type="casting" onclick="selectColor(this)">
+            <span class="color-opt-dot" style="background:#cd1b80"></span>Casting
+          </div>
+          <div class="color-opt" data-type="editorial" onclick="selectColor(this)">
+            <span class="color-opt-dot" style="background:#08b864"></span>Editorial
+          </div>
+          <div class="color-opt" data-type="fitting" onclick="selectColor(this)">
+            <span class="color-opt-dot" style="background:#b88917"></span>Fitting
+          </div>
+          <div class="color-opt" data-type="important" onclick="selectColor(this)">
+            <span class="color-opt-dot" style="background:#cd1b80"></span>Evento importante
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Locaci&oacute;n</label>
+        <input type="text" id="ev-locacion" class="form-input" placeholder="Estudio Norte · Av. Insurgentes, CDMX"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Modelos en casting</label>
+        <input type="text" id="ev-modelos" class="form-input" placeholder="Ej. Tatiana Carreño, Lucas Medrano (separar con comas)"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notas del evento</label>
+        <textarea id="ev-notas" class="form-textarea" placeholder="Instrucciones, requerimientos, detalles importantes..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Asistentes del evento</label>
+        <div class="att-grid">
+          <label class="att-check">
+            <input type="checkbox" value="MR" name="asistentes" checked/>
+            <div class="att-av-sm" style="background:rgba(205,27,128,0.18);color:#cd1b80">MR</div>
+            <span class="att-lbl-sm">Marina</span>
+          </label>
+          <label class="att-check">
+            <input type="checkbox" value="JP" name="asistentes"/>
+            <div class="att-av-sm" style="background:rgba(0,74,173,0.18);color:#004aad">JP</div>
+            <span class="att-lbl-sm">Juan Pablo</span>
+          </label>
+          <label class="att-check">
+            <input type="checkbox" value="CL" name="asistentes"/>
+            <div class="att-av-sm" style="background:rgba(8,184,100,0.18);color:#08b864">CL</div>
+            <span class="att-lbl-sm">Camila</span>
+          </label>
+          <label class="att-check">
+            <input type="checkbox" value="BP" name="asistentes"/>
+            <div class="att-av-sm" style="background:rgba(184,137,23,0.18);color:#b88917">BP</div>
+            <span class="att-lbl-sm">Bruno</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-buttons">
+        <button type="submit" class="btn-submit-form">Agregar a calendario</button>
+        <button type="button" class="btn-cancel-form" onclick="closeNuevoEvento()">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ MODAL MUY PRONTO ══ -->
+<div class="modal-overlay" id="muyProntoModal" onclick="cerrarModal(event)">
+  <div class="modal-box">
+    <div class="modal-icon">🚀</div>
+    <div class="modal-title-mp">Muy Pronto</div>
+    <div class="modal-sub-mp">Esta secci&oacute;n estar&aacute; disponible pr&oacute;ximamente.</div>
+    <button class="modal-close" onclick="cerrarModal()">Entendido</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   DATA & CONFIGURATION
+══════════════════════════════════════════ */
+const STORAGE_KEY = 'rws_events';
+
+const TYPE_CONFIG = {
+  casting:   { bg:'#fce4f0', text:'#cd1b80', bar:'#cd1b80', label:'Casting' },
+  editorial: { bg:'#d4f0e2', text:'#08b864', bar:'#08b864', label:'Editorial' },
+  fitting:   { bg:'#fef3cd', text:'#b88917', bar:'#b88917', label:'Fitting' },
+  important: { bg:'#cd1b80', text:'#ffffff', bar:'#cd1b80', label:'Evento importante' }
+};
+
+const TEAM = {
+  MR: { name:'Marina',    bg:'rgba(205,27,128,0.18)', text:'#cd1b80' },
+  JP: { name:'Juan Pablo',bg:'rgba(0,74,173,0.18)',   text:'#004aad' },
+  CL: { name:'Camila',    bg:'rgba(8,184,100,0.18)',  text:'#08b864' },
+  BP: { name:'Bruno',     bg:'rgba(184,137,23,0.18)', text:'#b88917' },
+  AG: { name:'Agencia',   bg:'rgba(118,17,189,0.18)', text:'#7611bd' }
+};
+
+const MODEL_COLORS = {
+  AA:{bg:'rgba(205,27,128,0.18)',text:'#cd1b80'},
+  LM:{bg:'rgba(0,74,173,0.18)',  text:'#004aad'},
+  ST:{bg:'rgba(8,184,100,0.18)', text:'#08b864'},
+  RM:{bg:'rgba(184,137,23,0.18)',text:'#b88917'},
+  TC:{bg:'rgba(205,27,128,0.18)',text:'#cd1b80'},
+  BV:{bg:'rgba(0,74,173,0.18)',  text:'#004aad'}
+};
+
+const DEFAULT_EVENTS = [
+  { id:'e1', title:'Fitting FW26',     type:'fitting',   date:'2026-05-06', startTime:'10:00', endTime:'14:00', location:'Atelier Central · Av. Álvaro Obregón 210, CDMX', description:'Fitting de prendas para la colección Fall-Winter 2026', collection:'FW26', models:[], notes:'Traer muestras de tela confirmadas. Revisar ajustes de talle.', attendees:['MR','CL'], agenda:[] },
+  { id:'e2', title:'Casting SS26',     type:'casting',   date:'2026-05-12', startTime:'10:00', endTime:'18:00', location:'Estudio Norte · Av. Insurgentes 1234, CDMX', description:'Primer casting de modelos para la colección Spring-Summer 2026', collection:'SS26',
+    models:[
+      {initials:'TC',name:'Tatiana Carreño',agency:'Elite',time:'10:00 AM',status:'confirmed'},
+      {initials:'LM',name:'Loreto Molano', agency:'Independiente',time:'11:30 AM',status:'review'},
+      {initials:'ST',name:'Sandra Torres', agency:'Next',  time:'2:00 PM', status:'review'},
+      {initials:'RM',name:'Rodolfo Mendez',agency:'DNA',   time:'4:00 PM', status:'pending'}
+    ],
+    notes:'Preparar fichas de modelos. Confirmar disponibilidad de estudio.', attendees:['MR','JP','CL'],
+    agenda:[
+      {time:'9:00', title:'Casting SS26 — Apertura',      sub:'10:00 AM · Estudio Norte', type:'casting'},
+      {time:'12:00',title:'Pausa / Almuerzo equipo',      sub:'12:30 – 1:30 PM',          type:'fitting'},
+      {time:'14:00',title:'Casting continúa — ronda 2',  sub:'2:00 – 6:00 PM',            type:'casting'}
+    ]
+  },
+  { id:'e3', title:'Revisión Look Book',  type:'fitting',   date:'2026-05-15', startTime:'11:00', endTime:'14:00', location:'Oficina RunwaySync', description:'Revisión y aprobación del Look Book SS26', collection:'SS26', models:[], notes:'Preparar selección de imágenes. Confirmar con dirección creativa.', attendees:['MR','JP'], agenda:[] },
+  { id:'e4', title:'Casting Final SS26',  type:'casting',   date:'2026-05-21', startTime:'10:00', endTime:'18:00', location:'Estudio Norte · Av. Insurgentes 1234, CDMX', description:'Selección final de modelos para colección primavera-verano', collection:'SS26',
+    models:[
+      {initials:'AA',name:'Anya Aveiro',   agency:'Elite',time:'10:00 AM',status:'confirmed'},
+      {initials:'LM',name:'Lucas Medrano', agency:'Ind.', time:'11:30 AM',status:'review'},
+      {initials:'ST',name:'Sofia Torres',  agency:'Next', time:'2:00 PM', status:'review'},
+      {initials:'RM',name:'Ravi Mukherjee',agency:'DNA',  time:'4:00 PM', status:'pending'}
+    ],
+    notes:'Preparar polaroids y medidas actualizadas. Solicitar book digital con 48h de anticipación. Confirmar catering para equipo.',
+    attendees:['MR','CL','BP','AG'],
+    agenda:[
+      {time:'9:00', title:'Casting Final SS26 — Inicio',  sub:'10:00 AM · Estudio Norte', type:'casting'},
+      {time:'12:00',title:'Pausa / Almuerzo equipo',      sub:'12:30 – 1:30 PM',          type:'fitting'},
+      {time:'14:00',title:'Casting continúa — ronda 2',  sub:'2:00 – 6:00 PM',            type:'casting'}
+    ]
+  },
+  { id:'e5', title:'Call Vogue MX',       type:'editorial', date:'2026-05-21', startTime:'15:00', endTime:'16:00', location:'Videollamada', description:'Llamada de coordinación con equipo editorial de Vogue México', collection:'SS26', models:[], notes:'Preparar propuesta de portada. Confirmar fechas de producción.', attendees:['MR'], agenda:[] },
+  { id:'e6', title:'Fitting Final',       type:'fitting',   date:'2026-05-22', startTime:'10:00', endTime:'16:00', location:'Atelier Central', description:'Fitting final de prendas para sesión editorial', collection:'SS26', models:[], notes:'Confirmar todos los ajustes. Lista definitiva de prendas.', attendees:['MR','CL','JP'], agenda:[] },
+  { id:'e7', title:'Sesión Editorial',    type:'important', date:'2026-05-26', startTime:'08:00', endTime:'20:00', location:'Locación TBD', description:'Sesión editorial principal para Vogue CDMX SS26', collection:'SS26', models:[], notes:'Confirmar locación 48h antes. Llamada de producción el día anterior.', attendees:['MR','JP','CL','BP'], agenda:[] },
+  { id:'e8', title:'Sesión todo el día', type:'editorial',  date:'2026-05-26', startTime:'08:00', endTime:'20:00', location:'Estudio Sur', description:'Sesión fotográfica de día completo para Look Book FW26', collection:'FW26', models:[], notes:'Preparar todos los looks. Confirmar equipo técnico.', attendees:['MR','JP'], agenda:[] }
+];
+
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+const today = new Date();
+let state = {
+  year:  today.getFullYear(),
+  month: today.getMonth(),  // 0-indexed
+  view:  'month',
+  selectedEvent: null,
+  selectedColorType: 'casting'
+};
+
+/* ══════════════════════════════════════════
+   STORAGE
+══════════════════════════════════════════ */
+function loadEvents() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  const def = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(def));
+  return def;
+}
+function saveEvents(evts) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(evts));
+}
+let events = loadEvents();
+
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAY_NAMES   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const DAY_NAMES_SHORT = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+
+function getDaysInMonth(y, m) { return new Date(y, m+1, 0).getDate(); }
+function getFirstDayIndex(y, m) { const d = new Date(y,m,1).getDay(); return d===0?6:d-1; } // Mon=0
+
+function dateStr(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function isToday(y, m, d) { return y===today.getFullYear() && m===today.getMonth() && d===today.getDate(); }
+function isTodayRow(y, m, d) {
+  const cellDate = new Date(y, m, d);
+  const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const diff = (cellDate - todayDate) / 86400000;
+  // same ISO week
+  const cellDay = new Date(y, m, d).getDay();
+  const monOffset = cellDay === 0 ? -6 : 1 - cellDay;
+  const monOfCell = new Date(y, m, d + monOffset);
+  const monOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (today.getDay()===0?-6:1-today.getDay()));
+  return monOfCell.toDateString() === monOfToday.toDateString();
+}
+
+function getEventsForDate(dateString) {
+  return events.filter(e => e.date === dateString);
+}
+function getEventsForMonth(y, m) {
+  const prefix = `${y}-${String(m+1).padStart(2,'0')}`;
+  return events.filter(e => e.date.startsWith(prefix));
+}
+
+function formatDisplayDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m-1, d);
+  return `${DAY_NAMES[date.getDay()]}, ${d} de ${MONTH_NAMES[m-1].toLowerCase()} ${y}`;
+}
+
+/* ══════════════════════════════════════════
+   RENDER MONTH VIEW
+══════════════════════════════════════════ */
+function renderMonth() {
+  const { year, month } = state;
+  const evtsThisMonth = getEventsForMonth(year, month);
+  const daysInMonth   = getDaysInMonth(year, month);
+  const firstIdx      = getFirstDayIndex(year, month);
+  const prevDays      = getDaysInMonth(year, month-1);
+  const totalCells    = Math.ceil((firstIdx + daysInMonth) / 7) * 7;
+
+  // Build cells array
+  const cells = [];
+  for (let i = firstIdx-1; i >= 0; i--) cells.push({ d: prevDays-i, m: month-1, y: year, other:true });
+  for (let d = 1; d <= daysInMonth; d++) cells.push({ d, m: month, y: year, other:false });
+  let nd = 1;
+  while (cells.length < totalCells) cells.push({ d: nd++, m: month+1, y: year, other:true });
+
+  // Grid rows
+  const rows = cells.length / 7;
+
+  let cellsHTML = cells.map(c => {
+    const ds    = dateStr(c.y, c.m, c.d);
+    const evts  = getEventsForDate(ds);
+    const tod   = !c.other && isToday(c.y, c.m, c.d);
+    const todRow = isTodayRow(c.y, c.m, c.d);
+    let cls = 'cal-cell';
+    if (c.other) cls += ' other-month';
+    if (todRow && !c.other) cls += ' is-today-row';
+
+    let dayNumHTML;
+    if (tod) {
+      dayNumHTML = `<div class="day-num-wrap"><div class="day-num-circle">${c.d}</div><div class="hoy-label">HOY</div></div>`;
+    } else {
+      // Color the number based on event type for the day
+      let numColor = c.other ? '#c4c4c4' : '#6f6f6f';
+      if (!c.other && evts.length > 0) {
+        const cfg = TYPE_CONFIG[evts[0].type] || TYPE_CONFIG.casting;
+        numColor = cfg.text;
+      }
+      dayNumHTML = `<div class="day-num-wrap"><div class="day-num" style="color:${numColor}">${c.d}</div></div>`;
+    }
+
+    let pillsHTML = '';
+    const maxShow = 2;
+    evts.slice(0, maxShow).forEach(ev => {
+      const cfg = TYPE_CONFIG[ev.type] || TYPE_CONFIG.casting;
+      pillsHTML += `<div class="event-pill" style="background:${cfg.bg}" onclick="showEventDetail('${ev.id}',event)">
+        <span class="event-pill-title" style="color:${cfg.text}">${ev.title}</span>
+      </div>`;
+    });
+    if (evts.length > maxShow) {
+      pillsHTML += `<div class="more-pill">+${evts.length-maxShow} más</div>`;
+    }
+
+    return `<div class="${cls}" onclick="handleCellClick('${ds}')">${dayNumHTML}${pillsHTML}</div>`;
+  }).join('');
+
+  const html = `
+  <div class="cal-page">
+    <div class="cal-page-header">
+      <div>
+        <div class="cal-title">Calendario</div>
+        <div class="cal-subtitle">${MONTH_NAMES[month]} ${year} &middot; ${evtsThisMonth.length} eventos este mes</div>
+      </div>
+      <div class="cal-controls">
+        <div class="cal-view-toggle">
+          <button class="cal-view-btn ${state.view==='month'?'active':''}" onclick="setView('month')">Mes</button>
+          <button class="cal-view-btn ${state.view==='week'?'active':''}"  onclick="setView('week')">Semana</button>
+          <button class="cal-view-btn ${state.view==='day'?'active':''}"   onclick="setView('day')">D&iacute;a</button>
+        </div>
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="navigateMonth(-1)">&#8249;</button>
+          <span class="cal-month-lbl">${MONTH_NAMES[month]} ${year}</span>
+          <button class="cal-nav-btn" onclick="navigateMonth(1)">&#8250;</button>
+        </div>
+        <button class="btn-nuevo-evento" onclick="openNuevoEvento()">+ Nuevo evento</button>
+      </div>
+    </div>
+
+    <div class="cal-container">
+      <div class="cal-col-headers">
+        ${DAY_NAMES_SHORT.map(d=>`<div class="cal-col-h">${d}</div>`).join('')}
+      </div>
+      <div class="cal-body-grid" style="grid-template-rows:repeat(${rows},1fr)">
+        ${cellsHTML}
+      </div>
+    </div>
+
+    <div class="cal-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#fce4f0;border:2px solid #cd1b80"></div>Casting</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#d4f0e2;border:2px solid #08b864"></div>Editorial</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fef3cd;border:2px solid #b88917"></div>Fitting</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#cd1b80"></div>Evento importante</div>
+    </div>
+  </div>`;
+
+  document.getElementById('calWrapper').innerHTML = html;
+}
+
+/* ══════════════════════════════════════════
+   RENDER EVENT DETAIL
+══════════════════════════════════════════ */
+function showEventDetail(evId, e) {
+  if (e) e.stopPropagation();
+  const ev = events.find(x => x.id === evId);
+  if (!ev) return;
+  state.selectedEvent = evId;
+  renderEventDetail(ev);
+}
+
+function renderEventDetail(ev) {
+  const cfg = TYPE_CONFIG[ev.type] || TYPE_CONFIG.casting;
+  const [y, m, d] = ev.date.split('-').map(Number);
+  const dayLabel = `${d} ${MONTH_NAMES[m-1].toLowerCase()}`;
+  const fullDate = formatDisplayDate(ev.date);
+
+  // Models rows
+  let modelsHTML = ev.models.length === 0 ? '<p style="font-size:0.78rem;color:#8a9295">Sin modelos asignados.</p>' : ev.models.map(mod => {
+    const ac = MODEL_COLORS[mod.initials] || {bg:'rgba(100,100,100,0.18)',text:'#6f6f6f'};
+    const badgeCls = mod.status==='confirmed'?'badge-confirmed':mod.status==='review'?'badge-review':'badge-pending';
+    const badgeTxt = mod.status==='confirmed'?'Confirmada':mod.status==='review'?'En revisi&oacute;n':'Pendiente';
+    return `<div class="model-row">
+      <div class="model-av" style="background:${ac.bg};color:${ac.text}">${mod.initials}</div>
+      <div class="model-info">
+        <div class="model-name">${mod.name}</div>
+        <div class="model-sub">${mod.agency} &middot; ${mod.time}</div>
+      </div>
+      <span class="model-badge ${badgeCls}">${badgeTxt}</span>
+    </div>`;
+  }).join('');
+
+  // Agenda
+  let agendaHTML = '';
+  if (ev.agenda.length > 0) {
+    agendaHTML = ev.agenda.map(ag => {
+      const ac = TYPE_CONFIG[ag.type] || TYPE_CONFIG.casting;
+      return `<div class="agenda-row">
+        <div class="agenda-time">${ag.time}</div>
+        <div class="agenda-block" style="background:${ac.bg}">
+          <div class="agenda-block-title" style="color:${ac.text}">${ag.title}</div>
+          <div class="agenda-block-sub" style="color:${ac.text}">${ag.sub}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    agendaHTML = '<p style="font-size:0.76rem;color:#8a9295">Sin agenda registrada.</p>';
+  }
+
+  // Attendees
+  const attendeesHTML = ev.attendees.map(a => {
+    const t = TEAM[a] || {name:a,bg:'rgba(100,100,100,0.18)',text:'#6f6f6f'};
+    return `<div class="attendee-item">
+      <div class="attendee-av" style="background:${t.bg};color:${t.text}">${a}</div>
+      <div class="attendee-name">${t.name}</div>
+    </div>`;
+  }).join('');
+
+  const html = `
+  <div class="event-detail-page">
+    <div class="ev-breadcrumb">
+      <a onclick="backToCalendar()">Calendario</a>
+      <span>›</span>
+      <span>${dayLabel}</span>
+      <span>›</span>
+      <span style="color:#141516;font-weight:600">${ev.title}</span>
+    </div>
+    <div class="ev-sub-header">
+      <div class="ev-sub-dot" style="background:${cfg.bar}"></div>
+      ${cfg.label} &middot; ${fullDate} &middot; ${ev.startTime} AM
+    </div>
+
+    <div class="event-detail-grid">
+      <!-- LEFT: Event card -->
+      <div class="ev-card">
+        <div class="ev-card-bar" style="background:${cfg.bar}"></div>
+        <div class="ev-card-body">
+          <div class="ev-type-label" style="color:${cfg.text}">${cfg.label.toUpperCase()} &middot; ${ev.collection||''}</div>
+          <div class="ev-card-title">${ev.title}</div>
+          <div class="ev-card-desc">${ev.description}</div>
+
+          <div class="ev-section">
+            <div class="ev-section-label">Fecha y hora</div>
+            <div class="ev-section-val">${fullDate} &middot; ${ev.startTime} &ndash; ${ev.endTime}</div>
+          </div>
+
+          <div class="ev-section">
+            <div class="ev-section-label">Locaci&oacute;n</div>
+            <div class="ev-section-val">${ev.location || 'Por confirmar'}</div>
+          </div>
+
+          <div class="ev-section">
+            <div class="ev-section-label">Tipo de evento</div>
+            <div class="ev-type-badge" style="background:${cfg.bg};color:${cfg.text}">${cfg.label}</div>
+          </div>
+
+          ${ev.models.length > 0 ? `
+          <div class="ev-section">
+            <div class="ev-section-label">Modelos en casting</div>
+            ${modelsHTML}
+          </div>` : ''}
+
+          ${ev.notes ? `
+          <div class="ev-section">
+            <div class="ev-section-label">Notas del evento</div>
+            <div class="ev-section-val" style="font-size:0.82rem;color:#6f6f6f;line-height:1.5">${ev.notes}</div>
+          </div>` : ''}
+        </div>
+      </div>
+
+      <!-- RIGHT: Agenda + Attendees -->
+      <div class="ev-right">
+        <div class="ev-side-card">
+          <div class="ev-side-title">Agenda del d&iacute;a &middot; ${d} ${MONTH_NAMES[m-1].toUpperCase()}</div>
+          ${agendaHTML}
+        </div>
+
+        <div class="ev-side-card">
+          <div class="ev-side-title">Asistentes al evento</div>
+          <div class="attendees-row">${attendeesHTML || '<p style="font-size:0.76rem;color:#8a9295">Sin asistentes.</p>'}</div>
+          <div class="ev-action-row" style="margin-top:18px">
+            <button class="btn-edit-ev" onclick="openNuevoEvento()">Editar evento</button>
+            <button class="btn-cancel-ev" onclick="backToCalendar()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('calWrapper').innerHTML = html;
+}
+
+/* ══════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════ */
+function navigateMonth(dir) {
+  state.month += dir;
+  if (state.month > 11) { state.month = 0;  state.year++; }
+  if (state.month < 0)  { state.month = 11; state.year--; }
+  state.selectedEvent = null;
+  render();
+}
+
+function backToCalendar() {
+  state.selectedEvent = null;
+  render();
+}
+
+function handleCellClick(ds) {
+  // Click on empty cell opens new event modal with pre-filled date
+  openNuevoEvento(ds);
+}
+
+function setView(v) {
+  state.view = v;
+  render();
+}
+
+/* ══════════════════════════════════════════
+   MODAL NUEVO EVENTO
+══════════════════════════════════════════ */
+function openNuevoEvento(preDate) {
+  const modal = document.getElementById('modalBackdrop');
+  // Set default date
+  const dateInput = document.getElementById('ev-fecha');
+  if (preDate) {
+    dateInput.value = preDate;
+  } else {
+    dateInput.value = dateStr(state.year, state.month, today.getDate());
+  }
+  // Reset form
+  document.getElementById('formNuevoEvento').reset();
+  dateInput.value = preDate || dateStr(state.year, state.month, today.getDate());
+  // Reset color selection
+  state.selectedColorType = 'casting';
+  document.querySelectorAll('.color-opt').forEach(o => o.classList.remove('selected'));
+  document.querySelector('.color-opt[data-type="casting"]').classList.add('selected');
+  modal.classList.add('open');
+}
+
+function closeNuevoEvento() {
+  document.getElementById('modalBackdrop').classList.remove('open');
+}
+
+function selectColor(el) {
+  document.querySelectorAll('.color-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedColorType = el.dataset.type;
+}
+
+function handleNuevoEvento(e) {
+  e.preventDefault();
+  const nombre   = document.getElementById('ev-nombre').value.trim();
+  const fecha    = document.getElementById('ev-fecha').value;
+  const inicio   = document.getElementById('ev-inicio').value;
+  const fin      = document.getElementById('ev-fin').value;
+  const locacion = document.getElementById('ev-locacion').value.trim();
+  const modelos  = document.getElementById('ev-modelos').value.trim();
+  const notas    = document.getElementById('ev-notas').value.trim();
+  const asistentes = [...document.querySelectorAll('input[name="asistentes"]:checked')].map(i=>i.value);
+
+  if (!nombre || !fecha) return;
+
+  const newEvent = {
+    id:          'usr_' + Date.now(),
+    title:       nombre,
+    type:        state.selectedColorType,
+    date:        fecha,
+    startTime:   inicio,
+    endTime:     fin,
+    location:    locacion,
+    description: '',
+    collection:  '',
+    models:      modelos ? modelos.split(',').map(m=>({initials:m.trim().substring(0,2).toUpperCase(),name:m.trim(),agency:'',time:'',status:'pending'})) : [],
+    notes:       notas,
+    attendees:   asistentes,
+    agenda:      []
+  };
+
+  events.push(newEvent);
+  saveEvents(events);
+  closeNuevoEvento();
+  // Navigate to the month of the new event
+  const [y, m] = fecha.split('-').map(Number);
+  state.year  = y;
+  state.month = m - 1;
+  render();
+}
+
+/* ══════════════════════════════════════════
+   MAIN RENDER
+══════════════════════════════════════════ */
+function render() {
+  if (state.selectedEvent) {
+    const ev = events.find(x => x.id === state.selectedEvent);
+    if (ev) { renderEventDetail(ev); return; }
+  }
+  if (state.view === 'month') {
+    renderMonth();
+  } else {
+    // Semana / Día → show month with a simple notice for now
+    renderMonth();
+    // Could expand to week/day views in a future iteration
+  }
+}
+
+/* ══════════════════════════════════════════
+   MODAL MUY PRONTO (sidebar nav)
+══════════════════════════════════════════ */
+function mostrarMuyPronto(e) {
+  e.preventDefault();
+  document.getElementById('muyProntoModal').classList.add('visible');
+}
+function cerrarModal(e) {
+  if (!e || e.target===document.getElementById('muyProntoModal') || e.target.classList.contains('modal-close')) {
+    document.getElementById('muyProntoModal').classList.remove('visible');
+  }
+}
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') {
+    closeNuevoEvento();
+    cerrarModal({target:document.getElementById('muyProntoModal')});
+  }
+});
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+render();
+
+// ── NOTIF POPOVER ──
+function toggleNotif(e) {
+  e.stopPropagation();
+  document.getElementById('notifPopover').classList.toggle('open');
+  document.getElementById('profilePopover').classList.remove('open');
+}
+// ── PROFILE POPOVER ──
+function toggleProfile(e) {
+  e.stopPropagation();
+  document.getElementById('profilePopover').classList.toggle('open');
+  document.getElementById('notifPopover').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  const np = document.getElementById('notifPopover');
+  const pp = document.getElementById('profilePopover');
+  if (np && !document.getElementById('notifBtn').contains(e.target))   np.classList.remove('open');
+  if (pp && !document.getElementById('profileBtn').contains(e.target)) pp.classList.remove('open');
+});
+</script>
+</body>
+</html>

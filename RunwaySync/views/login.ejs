@@ -1,69 +1,317 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión — RunwaySync</title>
-    <link rel="stylesheet" href="/css/style.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RunwaySync - Iniciar Sesión</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;}
+    body{background:#f5f0e8;}
+    .page{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(135deg,#f5f0e8 0%,#ede8de 50%,#e8e2d8 100%);
+    }
+    .bg-svg{
+      position:absolute;
+      top:0;left:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      z-index:1;
+      opacity:0.85;
+    }
+    .card-overlay{
+      position:relative;
+      z-index:10;
+      background:#d9d9d9;
+      border-radius:22px;
+      width:448px;
+      padding:40px 46px 34px;
+      box-shadow:0 8px 40px rgba(0,0,0,0.12);
+    }
+    .card-title{
+      font-family:'Georgia',serif;
+      font-size:2rem;
+      font-weight:700;
+      color:#141516;
+      text-align:center;
+      margin-bottom:28px;
+      letter-spacing:0.01em;
+    }
+    .input-box{
+      background:#ffffff;
+      border-radius:14px;
+      padding:12px 18px 10px;
+      margin-bottom:14px;
+    }
+    .input-label{
+      display:block;
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.88rem;
+      font-weight:700;
+      color:#231f20;
+      margin-bottom:2px;
+    }
+    .input-field{
+      width:100%;
+      border:none;
+      outline:none;
+      background:transparent;
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.88rem;
+      color:#95a2a5;
+    }
+    .input-field::placeholder{color:#95a2a5;}
+    .forgot-row{
+      text-align:right;
+      margin-bottom:4px;
+      margin-top:-4px;
+    }
+    .forgot-link{
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.8rem;
+      color:#004aad;
+      text-decoration:none;
+    }
+    .forgot-link:hover{text-decoration:underline;}
+    .btn-main{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      height:52px;
+      background:#141516;
+      color:#ffffff;
+      font-family:'Georgia',serif;
+      font-size:1.05rem;
+      font-weight:700;
+      text-decoration:none;
+      border:none;
+      cursor:pointer;
+      border-radius:50px;
+      letter-spacing:0.02em;
+      margin:20px 0 18px;
+      box-shadow:0 4px 16px rgba(0,0,0,0.22);
+      transition:background 0.2s, transform 0.15s;
+    }
+    .btn-main:hover{background:#333;transform:translateY(-1px);}
+
+    /* ── VALIDACIÓN ── */
+    .input-box{
+      transition: box-shadow 0.2s, border 0.2s;
+      border: 2px solid transparent;
+    }
+    .input-box.error{
+      border: 2px solid #ff3131;
+      box-shadow: 0 0 0 3px rgba(255,49,49,0.12);
+    }
+    .input-box.success{
+      border: 2px solid #08b864;
+      box-shadow: 0 0 0 3px rgba(8,184,100,0.10);
+    }
+    .field-error{
+      display: none;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.74rem;
+      color: #ff3131;
+      margin-top: -10px;
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+    .field-error.visible{ display: block; }
+
+    .btn-main:disabled{
+      background: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-main .spinner{
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 8px;
+    }
+    .btn-main.loading .spinner{ display: block; }
+    .btn-main.loading .btn-text{ opacity: 0.7; }
+    @keyframes spin{ to{ transform: rotate(360deg); } }
+
+    .toast{
+      position: fixed;
+      top: 20px; left: 50%; transform: translateX(-50%) translateY(-10px);
+      background: #231f20;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 50px;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.22);
+      z-index: 999;
+      opacity: 0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+    }
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.error-toast{ background: #ff3131; }
+  </style>
 </head>
-<body class="login-page">
+<body>
+<div class="page">
+  <img class="bg-svg" src="/svg/9.svg" alt=""/>
+  <div class="card-overlay">
+    <h2 class="card-title">Iniciar Sesión</h2>
 
-    <!--
-        FONDO: El archivo "9.svg" se sirve desde /public/svg/9.svg → ruta pública /svg/9.svg
-        Referenciado en CSS (style.css) como background-image de .login-page
-    -->
+    <form id="loginForm" action="/login" method="POST" novalidate>
 
-    <div class="login-card">
+      <div class="input-box" id="box-id">
+        <label class="input-label" for="empresarial-id">ID Empresarial</label>
+        <input
+          type="text"
+          id="empresarial-id"
+          name="id_empresarial"
+          class="input-field"
+          placeholder="11.00.095.532"
+          autocomplete="username"
+        />
+      </div>
+      <span class="field-error" id="err-id">Ingresa tu ID Empresarial.</span>
 
-        <!-- ===== Encabezado: flecha de regreso + título ===== -->
-        <div class="login-header">
-            <a href="/" class="back-arrow" aria-label="Volver al inicio">&larr;</a>
-            <h1 class="login-title">Iniciar Sesión</h1>
-        </div>
+      <div class="input-box" id="box-pw">
+        <label class="input-label" for="password">Contraseña</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          class="input-field"
+          placeholder="****************"
+          autocomplete="current-password"
+        />
+      </div>
+      <span class="field-error" id="err-pw">La contraseña debe tener al menos 6 caracteres.</span>
 
-        <!-- ===== Formulario de inicio de sesión ===== -->
-        <form class="login-form" action="/login" method="POST" novalidate>
+      <div class="forgot-row">
+        <a href="/recuperar" class="forgot-link">¿Olvidaste tu contraseña?</a>
+      </div>
 
-            <!-- E-mail -->
-            <div class="form-group">
-                <label class="form-label" for="email">E-mail</label>
-                <input
-                    class="form-input"
-                    type="email"
-                    id="email"
-                    name="email"
-                    placeholder=""
-                    autocomplete="email"
-                    required
-                >
-            </div>
+      <button type="submit" class="btn-main" id="btnLogin">
+        <span class="spinner"></span>
+        <span class="btn-text">Iniciar Sesión</span>
+      </button>
 
-            <!-- Contraseña -->
-            <div class="form-group">
-                <label class="form-label" for="password">Contraseña</label>
-                <input
-                    class="form-input"
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="················"
-                    autocomplete="current-password"
-                    required
-                >
-            </div>
+    </form>
 
-            <!-- Botón de ingreso -->
-            <button type="submit" class="submit-btn">Iniciar Sesión</button>
+    <div class="toast error-toast" id="toast"></div>
+  </div>
+</div>
+<script>
+  const form    = document.getElementById('loginForm');
+  const idInput = document.getElementById('empresarial-id');
+  const pwInput = document.getElementById('password');
+  const boxId   = document.getElementById('box-id');
+  const boxPw   = document.getElementById('box-pw');
+  const errId   = document.getElementById('err-id');
+  const errPw   = document.getElementById('err-pw');
+  const btn     = document.getElementById('btnLogin');
+  const toast   = document.getElementById('toast');
 
-        </form>
+  const ID_PATTERN = /^\d{2}\.\d{2}\.\d{3}\.\d{3}$/;
 
-        <!-- ===== Enlace a Registrarse ===== -->
-        <p class="register-redirect">
-            ¿No tienes una cuenta?
-            <a href="/register">Registrarse</a>
-        </p>
+  function setError(box, err, msg) {
+    box.classList.add('error');
+    box.classList.remove('success');
+    err.textContent = msg;
+    err.classList.add('visible');
+  }
 
-    </div>
+  function setSuccess(box, err) {
+    box.classList.remove('error');
+    box.classList.add('success');
+    err.classList.remove('visible');
+  }
 
+  function clearState(box, err) {
+    box.classList.remove('error', 'success');
+    err.classList.remove('visible');
+  }
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  function validateId() {
+    const val = idInput.value.trim();
+    if (!val) {
+      setError(boxId, errId, 'El ID Empresarial es obligatorio.');
+      return false;
+    }
+    if (!ID_PATTERN.test(val)) {
+      setError(boxId, errId, 'Formato inválido. Usa: 11.00.095.532');
+      return false;
+    }
+    setSuccess(boxId, errId);
+    return true;
+  }
+
+  function validatePassword() {
+    const val = pwInput.value;
+    if (!val) {
+      setError(boxPw, errPw, 'La contraseña es obligatoria.');
+      return false;
+    }
+    if (val.length < 6) {
+      setError(boxPw, errPw, 'Debe tener al menos 6 caracteres.');
+      return false;
+    }
+    setSuccess(boxPw, errPw);
+    return true;
+  }
+
+  idInput.addEventListener('blur', validateId);
+  pwInput.addEventListener('blur', validatePassword);
+
+  idInput.addEventListener('input', () => {
+    if (boxId.classList.contains('error')) clearState(boxId, errId);
+  });
+  pwInput.addEventListener('input', () => {
+    if (boxPw.classList.contains('error')) clearState(boxPw, errPw);
+  });
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const okId = validateId();
+    const okPw = validatePassword();
+
+    if (!okId || !okPw) {
+      showToast('Por favor corrige los campos en rojo.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.classList.add('loading');
+
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      form.submit();
+    }, 800);
+  });
+</script>
 </body>
 </html>

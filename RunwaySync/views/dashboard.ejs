@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RunwaySync - Dashboard</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;}
+    body{background:#ebebeb;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#231f20;}
+
+    /* ── GLOBAL LAYOUT ── */
+    .app{display:flex;flex-direction:column;height:100vh;}
+
+    /* ── TOP BAR (full width) ── */
+    .topbar{
+      background:#ffffff;
+      height:52px;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 20px 0 16px;
+      border-bottom:1px solid #e0e0e0;
+      flex-shrink:0;
+      z-index:100;
+    }
+    .topbar-left{display:flex;align-items:center;gap:10px;}
+    .hamburger{
+      background:none;border:none;cursor:pointer;
+      display:flex;flex-direction:column;gap:4px;padding:4px;
+    }
+    .hamburger span{display:block;width:20px;height:2px;background:#231f20;border-radius:2px;}
+    .topbar-brand{
+      font-family:'Georgia',serif;
+      font-size:0.98rem;font-weight:400;
+      letter-spacing:0.2em;
+      color:#141516;
+    }
+    .topbar-right{display:flex;align-items:center;gap:16px;}
+    .topbar-icon{
+      width:32px;height:32px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;color:#231f20;
+    }
+    .topbar-icon:hover{background:#f3f4f6;}
+    .topbar-icon svg{width:20px;height:20px;stroke:#231f20;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    .topbar-icon.profile svg{fill:#231f20;stroke:none;}
+
+    /* ── NOTIF POPOVER ── */
+    .notif-wrap{position:relative;}
+    .notif-popover{display:none;position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:16px;min-width:280px;box-shadow:0 8px 24px rgba(0,0,0,0.10);z-index:500;}
+    .notif-popover.open{display:block;}
+    .notif-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+    .notif-title{font-size:0.85rem;font-weight:700;color:#141516;}
+    .notif-badge{background:#cd1b80;color:#fff;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:20px;}
+    .notif-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5;cursor:pointer;transition:background .12s;}
+    .notif-item:last-child{border-bottom:none;}
+    .notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+    .notif-info{}
+    .notif-name{font-size:0.8rem;font-weight:600;color:#141516;}
+    .notif-meta{font-size:0.72rem;color:#888;margin-top:2px;}
+
+    /* ── PROFILE POPOVER ── */
+    .profile-wrap{position:relative;}
+    .profile-popover{
+      display:none;position:absolute;top:calc(100% + 10px);right:0;
+      background:#fff;border:1px solid #e0e0e0;border-radius:14px;
+      padding:16px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.10);
+      z-index:500;
+    }
+    .profile-popover.open{display:block;}
+    .pp-avatar{
+      width:44px;height:44px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;font-size:1rem;margin:0 auto 10px;
+    }
+    .pp-name{font-weight:700;font-size:0.92rem;color:#141516;text-align:center;}
+    .pp-role{font-size:0.78rem;color:#888;text-align:center;margin-top:2px;margin-bottom:14px;}
+    .pp-divider{height:1px;background:#f0f0f0;margin-bottom:12px;}
+    .pp-logout{
+      display:flex;align-items:center;justify-content:center;gap:7px;
+      width:100%;padding:8px 14px;border-radius:10px;
+      background:#fff3f8;color:#cd1b80;font-size:0.84rem;font-weight:600;
+      border:none;cursor:pointer;text-decoration:none;
+      transition:background .15s;
+    }
+    .pp-logout:hover{background:#fce4f1;}
+
+    /* ── BODY ROW ── */
+    .body-row{display:flex;flex:1;overflow:hidden;}
+
+    /* ── SIDEBAR ── */
+    .sidebar{
+      flex:0 0 210px;
+      background:#ffffff;
+      display:flex;flex-direction:column;
+      padding:12px 10px;
+      border-right:1px solid #e0e0e0;
+      gap:3px;
+      overflow-y:auto;
+    }
+    .nav-item{
+      display:flex;align-items:center;gap:11px;
+      padding:10px 14px;
+      border-radius:14px;
+      text-decoration:none;
+      color:#6f6f6f;
+      font-size:0.88rem;font-weight:500;
+      transition:background 0.15s,color 0.15s;
+    }
+    .nav-item:hover{background:#f3f4f6;color:#231f20;}
+    .nav-item.active{background:#f0f0f0;color:#141516;font-weight:700;}
+    .nav-icon{
+      width:20px;height:20px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .nav-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+    .nav-item.active .nav-icon svg{stroke:#141516;}
+
+    /* ── CONTENT ── */
+    .content{
+      flex:1;overflow-y:auto;
+      padding:18px 20px;
+      display:flex;flex-direction:column;gap:12px;
+    }
+
+    /* ── WELCOME ── */
+    .welcome h2{
+      font-size:1.55rem;font-weight:800;
+      color:#141516;font-family:'Georgia',serif;
+      letter-spacing:0.01em;
+    }
+    .welcome p{font-size:0.75rem;color:#95a2a5;margin-top:2px;}
+
+    /* ── STATS ROW ── */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+    .stat-card{
+      background:#ffffff;
+      border-radius:16px;
+      padding:15px 18px 13px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.05);
+    }
+    .stat-lbl{font-size:0.73rem;color:#8a9295;font-weight:600;margin-bottom:5px;letter-spacing:0.01em;}
+    .stat-num{font-size:2.1rem;font-weight:800;color:#141516;line-height:1.1;}
+    .stat-sub{font-size:0.7rem;margin-top:4px;font-weight:600;}
+    .stat-sub.green{color:#08b864;}
+    .stat-sub.pink{color:#cd1b80;}
+    .stat-sub.amber{color:#b88917;}
+    .stat-sub.purple{color:#7611bd;}
+
+    /* ── MIDDLE ROW ── */
+    .mid-row{display:grid;grid-template-columns:1fr 1.18fr;gap:10px;}
+
+    /* ── CARD base ── */
+    .card{
+      background:#ffffff;
+      border-radius:16px;
+      padding:15px 18px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.05);
+    }
+    .card-title{
+      font-size:0.65rem;font-weight:800;
+      letter-spacing:0.1em;
+      color:#8a9295;
+      text-transform:uppercase;
+      margin-bottom:13px;
+    }
+
+    /* ── PROJECTS ── */
+    .project-row{display:flex;align-items:center;gap:9px;margin-bottom:8px;}
+    .project-row:last-child{margin-bottom:0;}
+    .p-avatar{
+      width:36px;height:36px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-size:0.62rem;font-weight:800;flex-shrink:0;
+    }
+    .p-info{flex:1;min-width:0;}
+    .p-name{font-size:0.76rem;font-weight:600;color:#141516;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .p-sub{font-size:0.64rem;color:#b0b0b0;margin-top:1px;}
+    .p-bar-wrap{width:110px;height:5px;background:#ebebeb;border-radius:3px;overflow:hidden;flex-shrink:0;}
+    .p-bar{height:100%;border-radius:3px;}
+    .p-pct{font-size:0.67rem;color:#8a9295;width:26px;text-align:right;flex-shrink:0;font-weight:600;}
+
+    /* ── CALENDAR ── */
+    .cal-events{display:grid;grid-template-columns:1.1fr 1fr;gap:0;}
+    .cal-side{padding-right:12px;}
+    .cal-month{font-size:0.65rem;font-weight:800;letter-spacing:0.1em;color:#8a9295;text-transform:uppercase;margin-bottom:10px;}
+    .cal-head-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px;}
+    .cal-h{font-size:0.6rem;font-weight:700;color:#b0b0b0;text-align:center;padding:2px 0;}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+    .cal-day{
+      font-size:0.67rem;color:#6f6f6f;
+      text-align:center;
+      border-radius:7px;cursor:pointer;line-height:1.15;
+      width:100%;aspect-ratio:1;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:500;
+    }
+    .cal-day:hover:not(.empty){background:#f3f4f6;}
+    .cal-day.today{background:rgba(8,184,100,0.25);color:#08b864;font-weight:800;}
+    .cal-day.today-b{background:#141516;color:#fff;font-weight:800;border-radius:50%;}
+    .cal-day.dot-pink{background:rgba(205,27,128,0.18);color:#cd1b80;font-weight:800;}
+    .cal-day.dot-yellow{background:rgba(184,137,23,0.22);color:#b88917;font-weight:800;}
+    .cal-day.dot-green{background:rgba(8,184,100,0.22);color:#08b864;font-weight:800;}
+    .cal-day.empty{pointer-events:none;color:transparent;}
+
+    /* Events list */
+    .events-side{border-left:1px solid #ebebeb;padding-left:12px;}
+    .event-item{display:flex;gap:8px;margin-bottom:9px;align-items:flex-start;}
+    .event-item:last-child{margin-bottom:0;}
+    .event-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+    .event-title{font-size:0.72rem;font-weight:700;color:#141516;line-height:1.3;}
+    .event-sub{font-size:0.62rem;color:#95a2a5;margin-top:1px;}
+
+    /* ── BOTTOM ROW ── */
+    .bot-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+    /* ── CASTINGS ── */
+    .cast-row{display:flex;align-items:center;gap:9px;margin-bottom:8px;}
+    .cast-row:last-child{margin-bottom:0;}
+    .cast-av{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:800;flex-shrink:0;}
+    .cast-info{flex:1;}
+    .cast-name{font-size:0.76rem;font-weight:700;color:#141516;}
+    .cast-sub{font-size:0.63rem;color:#b0b0b0;margin-top:1px;}
+    .badge{padding:4px 11px;border-radius:20px;font-size:0.63rem;font-weight:700;flex-shrink:0;white-space:nowrap;}
+    .badge.confirmed{background:#d1fae5;color:#065f46;}
+    .badge.revision{background:#fef3c7;color:#92400e;}
+    .badge.pending{background:#fce4f0;color:#9b174e;}
+
+    /* ── MOODBOARD ── */
+    .mood-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:9px;}
+    .mood-cell{
+      border-radius:10px;padding:9px 10px;
+      font-size:0.68rem;font-weight:700;
+      min-height:46px;display:flex;align-items:flex-end;
+      line-height:1.2;
+    }
+    .mood-dir{font-size:0.72rem;font-weight:700;color:#141516;margin-top:2px;}
+    .mood-ref{font-size:0.63rem;color:#95a2a5;margin-top:2px;}
+
+    /* ── TAREAS ── */
+    .task-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #f3f4f6;border-radius:8px;transition:background .12s;}
+    .task-row:last-child{border-bottom:none;}
+    .task-row:hover{background:#f9f9f9;}
+    .task-cb{
+      width:15px;height:15px;border-radius:4px;
+      border:2px solid #d0d0d0;flex-shrink:0;margin-top:1px;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .task-cb.done{background:#08b864;border-color:#08b864;}
+    .task-cb.done::after{content:'✓';color:#fff;font-size:0.58rem;font-weight:900;}
+    .task-txt{font-size:0.74rem;color:#231f20;flex:1;line-height:1.3;}
+    .task-time{font-size:0.61rem;color:#b0b0b0;margin-top:2px;}
+
+    /* ── LAST ROW ── */
+    .last-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .team-row{display:flex;gap:18px;justify-content:center;padding:6px 0;}
+    .team-member{display:flex;flex-direction:column;align-items:center;gap:4px;}
+    .team-av{
+      width:52px;height:52px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-size:0.78rem;font-weight:800;
+      position:relative;
+    }
+    .online-dot{
+      position:absolute;bottom:1px;right:1px;
+      width:10px;height:10px;border-radius:50%;
+      border:2px solid #fff;
+    }
+    .team-role{font-size:0.6rem;color:#95a2a5;text-align:center;}
+    .activity-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #f3f4f6;}
+    .activity-item:last-child{border-bottom:none;}
+    .act-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+    .act-title{font-size:0.74rem;font-weight:600;color:#141516;line-height:1.3;}
+    .act-time{font-size:0.62rem;color:#95a2a5;margin-top:1px;}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══ TOP BAR (ancho completo) ══ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <span class="topbar-brand">RUNWAY SYNC</span>
+    <div class="topbar-right">
+      <!-- Ícono campana + popover notificaciones -->
+      <div class="notif-wrap">
+        <div class="topbar-icon" id="notifBtn" title="Notificaciones" onclick="toggleNotif(event)" style="position:relative;">
+          <svg viewBox="0 0 24 24">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#cd1b80;border-radius:50%;border:2px solid #fff;"></span>
+        </div>
+        <div class="notif-popover" id="notifPopover">
+          <div class="notif-header">
+            <span class="notif-title">Notificaciones</span>
+            <span class="notif-badge">4 próximos</span>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:#cd1b80;"></div>
+            <div class="notif-info">
+              <div class="notif-name">Casting Modelos SS26</div>
+              <div class="notif-meta">23 ABR · 10:00 AM · Estudio Norte</div>
+            </div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:#b88917;"></div>
+            <div class="notif-info">
+              <div class="notif-name">Fitting Final Colección FW26</div>
+              <div class="notif-meta">24 ABR · 2:00 PM · Atelier Principal</div>
+            </div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:#08b864;"></div>
+            <div class="notif-info">
+              <div class="notif-name">Sesión Editorial Vogue CDMX</div>
+              <div class="notif-meta">28 ABR · Todo el día · Locación TBD</div>
+            </div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:#004aad;"></div>
+            <div class="notif-info">
+              <div class="notif-name">Reunión FW2026 — Dirección Creativa</div>
+              <div class="notif-meta">2 MAY · 9:00 AM · Sala de juntas</div>
+            </div>
+          </div>
+          <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
+        </div>
+      </div>
+      <!-- Ícono usuario + popover -->
+      <div class="profile-wrap">
+        <div class="topbar-icon profile" id="profileBtn" title="Perfil" onclick="toggleProfile(event)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#231f20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+        </div>
+        <div class="profile-popover" id="profilePopover">
+          <div class="pp-avatar" style="background:<%= usuario.colorBg %>;color:<%= usuario.color %>"><%= usuario.ini %></div>
+          <div class="pp-name"><%= usuario.nombre %></div>
+          <div class="pp-role"><%= usuario.rolLabel %></div>
+          <div class="pp-divider"></div>
+          <a href="/logout" class="pp-logout">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ BODY (sidebar + content) ══ -->
+  <div class="body-row">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+      <!-- Dashboard -->
+      <a href="/dashboard" class="nav-item active">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+            <path d="M9 21V12h6v9"/>
+          </svg>
+        </span>
+        Dashboard
+      </a>
+      <!-- Calendario -->
+      <a href="/calendario" class="nav-item">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </span>
+        Calendario
+      </a>
+      <!-- Colecciones -->
+      <a href="/colecciones" class="nav-item">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/>
+          </svg>
+        </span>
+        Colecciones
+      </a>
+      <!-- Eventos -->
+      <a href="/eventos" class="nav-item">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <rect x="7" y="14" width="3" height="3" rx="0.5"/>
+          </svg>
+        </span>
+        Eventos
+      </a>
+      <!-- Proyectos -->
+      <a href="/proyectos" class="nav-item">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+        </span>
+        Proyectos
+      </a>
+      <!-- Equipo -->
+      <a href="/equipo" class="nav-item">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </span>
+        Equipo
+      </a>
+    </aside>
+
+    <!-- ── CONTENT ── -->
+    <div class="content">
+
+      <!-- WELCOME -->
+      <div class="welcome">
+        <h2 id="dashGreeting">Buenos Días <%= usuario.nombre.split(" ")[0] %></h2>
+        <p id="dashDate">Cargando...</p>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-lbl">Proyectos Activos</div>
+          <div class="stat-num">7</div>
+          <div class="stat-sub green">+ 2 este mes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Colecciones en Proceso</div>
+          <div class="stat-num">3</div>
+          <div class="stat-sub pink">FW26 &middot; SS26 &middot; Resort</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Castings Agendados</div>
+          <div class="stat-num">12</div>
+          <div class="stat-sub amber">5 esta semana</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Pr&oacute;ximos Eventos</div>
+          <div class="stat-num">4</div>
+          <div class="stat-sub purple">Siguiente: 24 abr</div>
+        </div>
+      </div>
+
+      <!-- PROYECTOS + CALENDARIO -->
+      <div class="mid-row">
+
+        <!-- Proyectos Estado General -->
+        <div class="card">
+          <div class="card-title">Proyectos &middot; Estado General</div>
+
+          <div class="project-row">
+            <div class="p-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80">SS</div>
+            <div class="p-info">
+              <div class="p-name">Editorial SS26 Vogue Milan</div>
+              <div class="p-sub">Fotograf&iacute;a &middot; 28 abr</div>
+            </div>
+            <div class="p-bar-wrap"><div class="p-bar" style="width:75%;background:#cd1b80"></div></div>
+            <div class="p-pct" style="color:#cd1b80">75%</div>
+          </div>
+
+          <div class="project-row">
+            <div class="p-avatar" style="background:rgba(8,184,100,0.18);color:#08b864">FW</div>
+            <div class="p-info">
+              <div class="p-name">Editorial SS26 Vogue Milan</div>
+              <div class="p-sub">Fotograf&iacute;a &middot; 28 abr</div>
+            </div>
+            <div class="p-bar-wrap"><div class="p-bar" style="width:40%;background:#08b864"></div></div>
+            <div class="p-pct" style="color:#08b864">40%</div>
+          </div>
+
+          <div class="project-row">
+            <div class="p-avatar" style="background:rgba(0,74,173,0.18);color:#004aad">RS</div>
+            <div class="p-info">
+              <div class="p-name">Editorial SS26 Vogue Milan</div>
+              <div class="p-sub">Fotograf&iacute;a &middot; 28 abr</div>
+            </div>
+            <div class="p-bar-wrap"><div class="p-bar" style="width:20%;background:#004aad"></div></div>
+            <div class="p-pct" style="color:#004aad">20%</div>
+          </div>
+
+          <div class="project-row">
+            <div class="p-avatar" style="background:rgba(184,137,23,0.18);color:#b88917">EV</div>
+            <div class="p-info">
+              <div class="p-name">Editorial SS26 Vogue Milan</div>
+              <div class="p-sub">Fotograf&iacute;a &middot; 28 abr</div>
+            </div>
+            <div class="p-bar-wrap"><div class="p-bar" style="width:50%;background:#b88917"></div></div>
+            <div class="p-pct" style="color:#b88917">50%</div>
+          </div>
+
+          <div class="project-row">
+            <div class="p-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80">CO</div>
+            <div class="p-info">
+              <div class="p-name">Editorial SS26 Vogue Milan</div>
+              <div class="p-sub">Fotograf&iacute;a &middot; 28 abr</div>
+            </div>
+            <div class="p-bar-wrap"><div class="p-bar" style="width:10%;background:#231f20"></div></div>
+            <div class="p-pct">10%</div>
+          </div>
+        </div>
+
+        <!-- Calendario + Eventos (dinámico via JS) -->
+        <div class="card">
+          <div class="cal-events" id="dashMiniCal">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+      </div><!-- /mid-row -->
+
+      <!-- BOTTOM ROW -->
+      <div class="bot-row">
+
+        <!-- Castings Pipeline -->
+        <div class="card">
+          <div class="card-title">Castings &middot; Pipeline</div>
+          <div class="cast-row">
+            <div class="cast-av" style="background:rgba(205,27,128,0.18);color:#cd1b80">TC</div>
+            <div class="cast-info">
+              <div class="cast-name">Tatiana Carre&ntilde;o</div>
+              <div class="cast-sub">Elite &middot; SS26 Look</div>
+            </div>
+            <span class="badge confirmed">Confirmada</span>
+          </div>
+          <div class="cast-row">
+            <div class="cast-av" style="background:rgba(0,74,173,0.18);color:#004aad">LM</div>
+            <div class="cast-info">
+              <div class="cast-name">Loreto Molano</div>
+              <div class="cast-sub">Independiente &middot; Campaign</div>
+            </div>
+            <span class="badge revision">En Revisi&oacute;n</span>
+          </div>
+          <div class="cast-row">
+            <div class="cast-av" style="background:rgba(8,184,100,0.18);color:#08b864">ST</div>
+            <div class="cast-info">
+              <div class="cast-name">Sandra Torres</div>
+              <div class="cast-sub">Next &middot; Editorial</div>
+            </div>
+            <span class="badge revision">En Revisi&oacute;n</span>
+          </div>
+          <div class="cast-row">
+            <div class="cast-av" style="background:rgba(184,137,23,0.18);color:#b88917">RM</div>
+            <div class="cast-info">
+              <div class="cast-name">Rodolfo Mendez</div>
+              <div class="cast-sub">DNA &middot; FW26</div>
+            </div>
+            <span class="badge pending">Pendiente</span>
+          </div>
+        </div>
+
+        <!-- Moodboard Activo -->
+        <div class="card">
+          <div class="card-title">Moodboard Activo &middot; FW2026</div>
+          <div class="mood-grid">
+            <div class="mood-cell" style="background:#f0c060;color:#231f20;">Paleta C&aacute;lida</div>
+            <div class="mood-cell" style="background:#f4a0a8;color:#fff;">Texturas</div>
+            <div class="mood-cell" style="background:#b088d0;color:#fff;">Siluetas</div>
+            <div class="mood-cell" style="background:#a8d0a0;color:#231f20;">Patrones</div>
+            <div class="mood-cell" style="background:#e0c8c8;color:#231f20;">Minimal</div>
+            <div class="mood-cell" style="background:#8aacb8;color:#fff;">Estructura</div>
+          </div>
+          <div class="mood-dir">Direcci&oacute;n: Neorromanticismo industrial</div>
+          <div class="mood-ref">Refs: Balenciaga S23 &middot; Prada FW22 &middot; Rick Owens</div>
+        </div>
+
+        <!-- Tareas Prioritarias -->
+        <div class="card">
+          <div class="card-title">Tareas Prioritarias</div>
+          <div class="task-row" onclick="toggleTask(this)" style="cursor:pointer;">
+            <div class="task-cb done"></div>
+            <div>
+              <div class="task-txt">Aprobar brief editorial</div>
+              <div class="task-time">Completado hoy</div>
+            </div>
+          </div>
+          <div class="task-row" onclick="toggleTask(this)" style="cursor:pointer;">
+            <div class="task-cb"></div>
+            <div>
+              <div class="task-txt">Confirmar stylist para casting</div>
+              <div class="task-time">Hoy &middot; 3:00 PM</div>
+            </div>
+          </div>
+          <div class="task-row" onclick="toggleTask(this)" style="cursor:pointer;">
+            <div class="task-cb"></div>
+            <div>
+              <div class="task-txt">Revisar propuesta presupuesto FW2026</div>
+              <div class="task-time">Ma&ntilde;ana</div>
+            </div>
+          </div>
+          <div class="task-row" onclick="toggleTask(this)" style="cursor:pointer;">
+            <div class="task-cb"></div>
+            <div>
+              <div class="task-txt">Seleccionar locaci&oacute;n editorial</div>
+              <div class="task-time">23 abr</div>
+            </div>
+          </div>
+          <div class="task-row" onclick="toggleTask(this)" style="cursor:pointer;">
+            <div class="task-cb"></div>
+            <div>
+              <div class="task-txt">Call con Vogue CDMX &ndash; pendiente direcci&oacute;n</div>
+              <div class="task-time">24 abr &middot; 11:00 AM</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /bot-row -->
+
+      <!-- ÚLTIMA FILA: Equipo + Actividad -->
+      <div class="last-row">
+
+        <!-- Equipo Creativo -->
+        <div class="card">
+          <div class="card-title">Equipo Creativo</div>
+          <div class="team-row">
+            <div class="team-member">
+              <div class="team-av" style="background:rgba(205,27,128,0.18);color:#cd1b80">
+                MR
+                <span class="online-dot" style="background:#08b864;"></span>
+              </div>
+              <div class="team-role">Dir. creativa</div>
+            </div>
+            <div class="team-member">
+              <div class="team-av" style="background:rgba(0,74,173,0.18);color:#004aad">
+                JP
+                <span class="online-dot" style="background:#08b864;"></span>
+              </div>
+              <div class="team-role">Fotografo</div>
+            </div>
+            <div class="team-member">
+              <div class="team-av" style="background:rgba(8,184,100,0.18);color:#08b864">
+                CL
+                <span class="online-dot" style="background:#ffbd59;"></span>
+              </div>
+              <div class="team-role">Stylist</div>
+            </div>
+            <div class="team-member">
+              <div class="team-av" style="background:rgba(184,137,23,0.18);color:#b88917">
+                BP
+                <span class="online-dot" style="background:#ff3131;"></span>
+              </div>
+              <div class="team-role">Productor</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actividad Reciente -->
+        <div class="card">
+          <div class="card-title">Actividad Reciente</div>
+          <div class="activity-item">
+            <div class="act-dot" style="background:#cd1b80"></div>
+            <div>
+              <div class="act-title">Vogue CDMX aprob&oacute; el concepto visual</div>
+              <div class="act-time">Hace 2 horas &middot; Editorial SS26</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="act-dot" style="background:#a8d0a0"></div>
+            <div>
+              <div class="act-title">Look Book FW26 &ndash; 3 Piezas nuevas</div>
+              <div class="act-time">Hace 5 horas &middot; Camila Hern&aacute;ndez</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="act-dot" style="background:#004aad"></div>
+            <div>
+              <div class="act-title">Casting confirmado: Tatiana Carre&ntilde;o</div>
+              <div class="act-time">Ayer &middot; SS26 Look</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="act-dot" style="background:#b88917"></div>
+            <div>
+              <div class="act-title">Presupuesto Resort enviado a revisi&oacute;n</div>
+              <div class="act-time">Ayer &middot; Finanzas</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /last-row -->
+
+    </div><!-- /content -->
+  </div><!-- /body-row -->
+
+</div><!-- /app -->
+
+<script>
+/* ══ DASHBOARD DINÁMICO ══ */
+const STORAGE_KEY = 'rws_events';
+const MONTH_NAMES_DASH = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAY_NAMES_DASH   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const TYPE_COLORS_DASH = {
+  casting:   '#cd1b80',
+  editorial: '#08b864',
+  fitting:   '#b88917',
+  important: '#cd1b80'
+};
+
+function getWeekNum(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day  = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+function loadDashEvents() {
+  try { const s = localStorage.getItem(STORAGE_KEY); if (s) return JSON.parse(s); } catch(e) {}
+  return [];
+}
+
+(function initDashboard() {
+  const now    = new Date();
+  const hour   = now.getHours();
+  const greet  = hour < 12 ? 'Buenos Días' : hour < 19 ? 'Buenas Tardes' : 'Buenas Noches';
+  const dayName   = DAY_NAMES_DASH[now.getDay()];
+  const monthName = MONTH_NAMES_DASH[now.getMonth()].toLowerCase();
+  const weekNum   = getWeekNum(now);
+
+  /* ── Actualizar bienvenida ── */
+  const greetEl = document.getElementById('dashGreeting');
+  const dateEl  = document.getElementById('dashDate');
+  if (greetEl) greetEl.textContent = greet + ' <%= usuario.nombre.split(" ")[0] %>';
+  if (dateEl)  dateEl.textContent  = `${dayName}, ${now.getDate()} de ${monthName} de ${now.getFullYear()} · Semana ${weekNum}`;
+
+  /* ── Renderizar mini-calendario ── */
+  const events = loadDashEvents();
+  const y = now.getFullYear(), m = now.getMonth();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const firstDay    = new Date(y, m, 1).getDay();
+  const firstIdx    = firstDay === 0 ? 6 : firstDay - 1; // Mon=0
+
+  // Build prefix map: date → color
+  const eventMap = {};
+  events.forEach(ev => {
+    const prefix = `${y}-${String(m+1).padStart(2,'0')}`;
+    if (ev.date && ev.date.startsWith(prefix)) {
+      const d = parseInt(ev.date.split('-')[2]);
+      if (!eventMap[d]) eventMap[d] = TYPE_COLORS_DASH[ev.type] || '#95a2a5';
+    }
+  });
+
+  // Generate grid cells
+  let cells = '';
+  for (let i = 0; i < firstIdx; i++) cells += `<div class="cal-day empty"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const isToday = d === now.getDate();
+    const color   = eventMap[d];
+    let cls = 'cal-day';
+    let style = '';
+    if (isToday) {
+      cls += ' today-b';
+    } else if (color) {
+      style = `style="color:${color};font-weight:800;background:${color}22;border-radius:6px;"`;
+    }
+    cells += `<div class="${cls}" ${style}>${d}</div>`;
+  }
+
+  // Events for this month (next 3)
+  const monthPrefix = `${y}-${String(m+1).padStart(2,'0')}`;
+  const upcoming = events
+    .filter(ev => ev.date && ev.date.startsWith(monthPrefix) && parseInt(ev.date.split('-')[2]) >= now.getDate())
+    .sort((a,b) => a.date.localeCompare(b.date))
+    .slice(0, 3);
+
+  let eventsHTML = '';
+  if (upcoming.length === 0) {
+    eventsHTML = '<div class="event-item"><div style="font-size:0.74rem;color:#8a9295">Sin eventos pr&oacute;ximos.</div></div>';
+  } else {
+    upcoming.forEach(ev => {
+      const [, , dd] = ev.date.split('-');
+      const color = TYPE_COLORS_DASH[ev.type] || '#95a2a5';
+      const monthShort = MONTH_NAMES_DASH[m].substring(0,3).toLowerCase();
+      eventsHTML += `<div class="event-item">
+        <div class="event-dot" style="background:${color}"></div>
+        <div>
+          <div class="event-title">${ev.title}</div>
+          <div class="event-sub">${parseInt(dd)} ${monthShort} &middot; ${ev.startTime || ''} &middot; ${ev.location ? ev.location.split('·')[0].trim() : ''}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  const container = document.getElementById('dashMiniCal');
+  if (container) {
+    container.innerHTML = `
+      <div class="cal-side">
+        <div class="cal-month">${MONTH_NAMES_DASH[m].toUpperCase()} ${y}</div>
+        <div class="cal-head-row">
+          <div class="cal-h">L</div><div class="cal-h">M</div><div class="cal-h">M</div>
+          <div class="cal-h">J</div><div class="cal-h">V</div><div class="cal-h">S</div><div class="cal-h">D</div>
+        </div>
+        <div class="cal-grid">${cells}</div>
+      </div>
+      <div class="events-side">${eventsHTML}</div>`;
+  }
+})();
+
+// ── NOTIF POPOVER ──
+function toggleNotif(e) {
+  e.stopPropagation();
+  document.getElementById('notifPopover').classList.toggle('open');
+  document.getElementById('profilePopover').classList.remove('open');
+}
+
+// ── PROFILE POPOVER ──
+function toggleProfile(e) {
+  e.stopPropagation();
+  document.getElementById('profilePopover').classList.toggle('open');
+  document.getElementById('notifPopover').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  const notifPop   = document.getElementById('notifPopover');
+  const profilePop = document.getElementById('profilePopover');
+  if (notifPop   && !document.getElementById('notifBtn').contains(e.target))   notifPop.classList.remove('open');
+  if (profilePop && !document.getElementById('profileBtn').contains(e.target)) profilePop.classList.remove('open');
+});
+
+// ── TAREAS INTERACTIVAS ──
+function toggleTask(row) {
+  const cb = row.querySelector('.task-cb');
+  const txt = row.querySelector('.task-txt');
+  const time = row.querySelector('.task-time');
+  const isDone = cb.classList.contains('done');
+  cb.classList.toggle('done');
+  if (!isDone) {
+    txt.style.textDecoration = 'line-through';
+    txt.style.color = '#aaa';
+    time.textContent = 'Completado';
+    time.style.color = '#08b864';
+  } else {
+    txt.style.textDecoration = '';
+    txt.style.color = '';
+    time.style.color = '';
+    // Restore original time — no se puede recuperar dinámicamente, solo se borra el estado
+    time.textContent = time.dataset.orig || time.textContent;
+  }
+  // Guardar tiempo original en dataset
+  if (!isDone && !time.dataset.orig) {
+    time.dataset.orig = time.textContent !== 'Completado' ? time.textContent : '';
+  }
+}
+</script>
+</body>
+</html>

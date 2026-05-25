@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RunwaySync - Nueva Contraseña</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;}
+    body{background:#ffffff;}
+    .page{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .bg-svg{
+      position:absolute;
+      top:0;left:0;
+      width:100%;
+      height:100%;
+      object-fit:fill;
+      z-index:1;
+    }
+    .card-overlay{
+      position:relative;
+      z-index:10;
+      background:#d9d9d9;
+      border-radius:22px;
+      width:448px;
+      padding:40px 46px 34px;
+      box-shadow:0 8px 40px rgba(0,0,0,0.12);
+    }
+    .back-link{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.82rem;
+      color:#004aad;
+      text-decoration:none;
+      margin-bottom:18px;
+    }
+    .back-link:hover{text-decoration:underline;}
+    .back-link svg{width:14px;height:14px;stroke:#004aad;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .card-title{
+      font-family:'Georgia',serif;
+      font-size:2rem;
+      font-weight:700;
+      color:#141516;
+      text-align:center;
+      margin-bottom:10px;
+      letter-spacing:0.01em;
+    }
+    .card-subtitle{
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.85rem;
+      color:#6f6f6f;
+      text-align:center;
+      margin-bottom:28px;
+      line-height:1.5;
+    }
+    .input-box{
+      background:#ffffff;
+      border-radius:14px;
+      padding:12px 18px 10px;
+      margin-bottom:14px;
+      position:relative;
+    }
+    .input-label{
+      display:block;
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.88rem;
+      font-weight:700;
+      color:#231f20;
+      margin-bottom:2px;
+    }
+    .input-row{
+      display:flex;
+      align-items:center;
+    }
+    .input-field{
+      flex:1;
+      border:none;
+      outline:none;
+      background:transparent;
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.88rem;
+      color:#95a2a5;
+    }
+    .input-field::placeholder{color:#95a2a5;}
+    .toggle-eye{
+      background:none;
+      border:none;
+      cursor:pointer;
+      padding:0;
+      display:flex;
+      align-items:center;
+    }
+    .toggle-eye svg{width:16px;height:16px;stroke:#95a2a5;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    .server-error{
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.82rem;
+      color:#ff3131;
+      text-align:center;
+      margin-top:8px;
+    }
+    .btn-main{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      height:52px;
+      background:#141516;
+      color:#ffffff;
+      font-family:'Georgia',serif;
+      font-size:1.05rem;
+      font-weight:700;
+      text-decoration:none;
+      border:none;
+      cursor:pointer;
+      border-radius:50px;
+      letter-spacing:0.02em;
+      margin:20px 0 0;
+      box-shadow:0 4px 16px rgba(0,0,0,0.22);
+      transition:background 0.2s, transform 0.15s;
+    }
+    .btn-main:hover{background:#333;transform:translateY(-1px);}
+  </style>
+</head>
+<body>
+<div class="page">
+  <img class="bg-svg" src="/svg/9.svg" alt=""/>
+  <div class="card-overlay">
+    <a href="/verificar-codigo" class="back-link">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Volver
+    </a>
+    <h2 class="card-title">Nueva Contraseña</h2>
+    <p class="card-subtitle">Crea una contraseña segura para tu cuenta.</p>
+
+    <form action="/nueva-contrasena" method="POST" id="formContrasena">
+      <div class="input-box">
+        <label class="input-label" for="password">Nueva Contraseña</label>
+        <div class="input-row">
+          <input type="password" id="password" name="password" class="input-field" placeholder="****************" required/>
+          <button type="button" class="toggle-eye" onclick="togglePass('password')">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="input-box">
+        <label class="input-label" for="confirmar">Confirmar Contraseña</label>
+        <div class="input-row">
+          <input type="password" id="confirmar" name="confirmar" class="input-field" placeholder="****************" required/>
+          <button type="button" class="toggle-eye" onclick="togglePass('confirmar')">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <% if (error) { %>
+        <p class="server-error"><%= error %></p>
+      <% } %>
+
+      <button type="submit" class="btn-main">Restablecer Contraseña</button>
+    </form>
+  </div>
+</div>
+<script>
+  function togglePass(id) {
+    const input = document.getElementById(id);
+    input.type = input.type === 'password' ? 'text' : 'password';
+  }
+</script>
+</body>
+</html>

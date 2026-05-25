@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RunwaySync - Contraseña Restablecida</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;}
+    body{background:#ffffff;}
+    .page{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .bg-svg{
+      position:absolute;
+      top:0;left:0;
+      width:100%;
+      height:100%;
+      object-fit:fill;
+      z-index:1;
+    }
+    .card-overlay{
+      position:relative;
+      z-index:10;
+      background:#d9d9d9;
+      border-radius:22px;
+      width:448px;
+      padding:40px 46px 34px;
+      box-shadow:0 8px 40px rgba(0,0,0,0.12);
+      text-align:center;
+    }
+    .check-circle{
+      width:72px;
+      height:72px;
+      background:#141516;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin:0 auto 22px;
+      animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    @keyframes popIn{
+      from{transform:scale(0);opacity:0;}
+      to{transform:scale(1);opacity:1;}
+    }
+    .check-circle svg{
+      width:34px;
+      height:34px;
+      stroke:#ffffff;
+      fill:none;
+      stroke-width:2.5;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+    .card-title{
+      font-family:'Georgia',serif;
+      font-size:2rem;
+      font-weight:700;
+      color:#141516;
+      margin-bottom:10px;
+      letter-spacing:0.01em;
+    }
+    .card-subtitle{
+      font-family:'Helvetica Neue',Arial,sans-serif;
+      font-size:0.85rem;
+      color:#6f6f6f;
+      margin-bottom:32px;
+      line-height:1.6;
+    }
+    .btn-main{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      height:52px;
+      background:#141516;
+      color:#ffffff;
+      font-family:'Georgia',serif;
+      font-size:1.05rem;
+      font-weight:700;
+      text-decoration:none;
+      border:none;
+      cursor:pointer;
+      border-radius:50px;
+      letter-spacing:0.02em;
+      box-shadow:0 4px 16px rgba(0,0,0,0.22);
+      transition:background 0.2s, transform 0.15s;
+    }
+    .btn-main:hover{background:#333;transform:translateY(-1px);}
+  </style>
+</head>
+<body>
+<div class="page">
+  <img class="bg-svg" src="/svg/9.svg" alt=""/>
+  <div class="card-overlay">
+    <div class="check-circle">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2 class="card-title">¡Contraseña Restablecida!</h2>
+    <p class="card-subtitle">Tu contraseña ha sido actualizada exitosamente.<br/>Ya puedes iniciar sesión con tu nueva contraseña.</p>
+    <a href="/login" class="btn-main">Ir al Inicio de Sesión</a>
+  </div>
+</div>
+</body>
+</html>
