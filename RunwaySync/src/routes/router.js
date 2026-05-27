@@ -256,6 +256,7 @@ router.get('/calendario', async (req, res) => {
   try {
     const u = await User.findById(req.session.userId);
     const notificaciones = await getNotificaciones();
+    const MIEMBROS = await buildMIEMBROS();
     const evDocs = await Event.find().sort({ fecha: 1 });
     const eventosJS = evDocs.map(e => ({
       id:          e._id.toString(),
@@ -272,7 +273,7 @@ router.get('/calendario', async (req, res) => {
       attendees:   (e.equipo || []).map(id => id.toString()),
       agenda:      [],
     }));
-    res.render('calendario.ejs', { usuario: getUsuario(u), eventosJS, notificaciones });
+    res.render('calendario.ejs', { usuario: getUsuario(u), eventosJS, MIEMBROS, notificaciones });
   } catch (err) {
     console.error(err); res.redirect('/dashboard');
   }

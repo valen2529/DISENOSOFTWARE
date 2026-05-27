@@ -310,13 +310,7 @@ const TYPE_CONFIG = {
   important: { bg:'#cd1b80', text:'#ffffff', bar:'#cd1b80', label:'Evento importante' }
 };
 
-const TEAM = {
-  MR: { name:'Marina',    bg:'rgba(205,27,128,0.18)', text:'#cd1b80' },
-  JP: { name:'Juan Pablo',bg:'rgba(0,74,173,0.18)',   text:'#004aad' },
-  CL: { name:'Camila',    bg:'rgba(8,184,100,0.18)',  text:'#08b864' },
-  BP: { name:'Bruno',     bg:'rgba(184,137,23,0.18)', text:'#b88917' },
-  AG: { name:'Agencia',   bg:'rgba(118,17,189,0.18)', text:'#7611bd' }
-};
+const TEAM = <%- JSON.stringify(MIEMBROS) %>;
 
 const MODEL_COLORS = {
   AA:{bg:'rgba(205,27,128,0.18)',text:'#cd1b80'},
@@ -525,12 +519,13 @@ function renderEventDetail(ev) {
 
   // Attendees
   const attendeesHTML = ev.attendees.map(a => {
-    const t = TEAM[a] || {name:a,bg:'rgba(100,100,100,0.18)',text:'#6f6f6f'};
+    const t = TEAM[a];
+    if (!t) return '';
     return `<div class="attendee-item">
-      <div class="attendee-av" style="background:${t.bg};color:${t.text}">${a}</div>
-      <div class="attendee-name">${t.name}</div>
+      <div class="attendee-av" style="background:${t.colorBg};color:${t.color}">${t.ini}</div>
+      <div class="attendee-name">${t.nombre}</div>
     </div>`;
-  }).join('');
+  }).filter(Boolean).join('');
 
   const html = `
   <div class="event-detail-page">
