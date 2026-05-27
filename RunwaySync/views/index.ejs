@@ -133,13 +133,6 @@
       border-color:rgba(255,255,255,0.6);
       background:rgba(255,255,255,0.18);
     }
-    .input-box.error{
-      border-color:#fca5a5;
-      background:rgba(255,100,100,0.1);
-    }
-    .input-box.success{
-      border-color:rgba(255,255,255,0.5);
-    }
     .input-label{
       display:block;
       font-family:'Helvetica Neue',Arial,sans-serif;
@@ -165,7 +158,7 @@
       display:none;
       font-family:'Helvetica Neue',Arial,sans-serif;
       font-size:0.72rem;
-      color:#fecaca;
+      color:rgba(255,255,255,0.8);
       margin-top:-8px;
       margin-bottom:8px;
       padding-left:4px;
@@ -277,8 +270,14 @@
     <p class="form-label-top">Bienvenido/a</p>
     <h2 class="form-title">Iniciar<br/>Sesión</h2>
 
-    <% if (typeof error !== 'undefined' && error) { %>
-      <div class="server-error"><%= error %></div>
+    <%
+      const _err = (typeof error !== 'undefined') ? error : null;
+      const _errId = _err && (_err.includes('usuario') || _err.includes('Usuario')) ? _err : null;
+      const _errPw = _err && (_err.includes('ontraseña') || _err.includes('contraseña')) ? _err : null;
+      const _errGen = _err && !_errId && !_errPw ? _err : null;
+    %>
+    <% if (_errGen) { %>
+      <div class="server-error"><%= _errGen %></div>
     <% } %>
 
     <form id="loginForm" action="/login" method="POST" novalidate style="width:100%">
@@ -294,7 +293,7 @@
           autocomplete="username"
         />
       </div>
-      <span class="field-error" id="err-id"></span>
+      <span class="field-error<% if (_errId) { %> visible<% } %>" id="err-id"><% if (_errId) { %>El ID Empresarial no es correcto.<% } %></span>
 
       <div class="input-box" id="box-pw">
         <label class="input-label" for="password">Contraseña</label>
@@ -307,7 +306,7 @@
           autocomplete="current-password"
         />
       </div>
-      <span class="field-error" id="err-pw"></span>
+      <span class="field-error<% if (_errPw) { %> visible<% } %>" id="err-pw"><% if (_errPw) { %>La contraseña no es correcta.<% } %></span>
 
       <div class="forgot-row">
         <a href="/recuperar" class="forgot-link">¿Olvidaste tu contraseña?</a>
@@ -336,34 +335,42 @@
   const btn     = document.getElementById('btnLogin');
   const toast   = document.getElementById('toast');
 
-  const ID_PATTERN = /^\d{2}\.\d{2}\.\d{3}\.\d{3}$/;
-
-  function setError(box,err,msg){box.classList.add('error');box.classList.remove('success');err.textContent=msg;err.classList.add('visible');}
-  function setSuccess(box,err){box.classList.remove('error');box.classList.add('success');err.classList.remove('visible');}
-  function clearState(box,err){box.classList.remove('error','success');err.classList.remove('visible');}
+  function showMsg(err,msg){err.textContent=msg;err.classList.add('visible');}
+  function clearMsg(err){err.textContent='';err.classList.remove('visible');}
   function showToast(msg){toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),3500);}
+
+  const ID_PATTERN=/^\d{2}\.\d{2}\.\d{3}\.\d{3}$/;
 
   function validateId(){
     const val=idInput.value.trim();
-    if(!val){setError(boxId,errId,'El ID Empresarial es obligatorio.');return false;}
-    if(!ID_PATTERN.test(val)){setError(boxId,errId,'Formato inválido. Usa: 11.00.095.532');return false;}
-    setSuccess(boxId,errId);return true;
+    if(!val){showMsg(errId,'El ID Empresarial es obligatorio.');return false;}
+    if(!ID_PATTERN.test(val)){showMsg(errId,'Formato inválido. Usa: 11.00.095.532');return false;}
+    clearMsg(errId);return true;
   }
   function validatePassword(){
     const val=pwInput.value;
-    if(!val){setError(boxPw,errPw,'La contraseña es obligatoria.');return false;}
-    if(val.length<6){setError(boxPw,errPw,'Debe tener al menos 6 caracteres.');return false;}
-    setSuccess(boxPw,errPw);return true;
+    if(!val){showMsg(errPw,'La contraseña es obligatoria.');return false;}
+    if(val.length<6){showMsg(errPw,'Debe tener al menos 6 caracteres.');return false;}
+    clearMsg(errPw);return true;
   }
 
   idInput.addEventListener('blur',validateId);
   pwInput.addEventListener('blur',validatePassword);
-  idInput.addEventListener('input',()=>{if(boxId.classList.contains('error'))clearState(boxId,errId);});
-  pwInput.addEventListener('input',()=>{if(boxPw.classList.contains('error'))clearState(boxPw,errPw);});
+  idInput.addEventListener('input',()=>clearMsg(errId));
+  pwInput.addEventListener('input',()=>clearMsg(errPw));
 
   form.addEventListener('submit',function(e){
     e.preventDefault();
-    if(!validateId()|!validatePassword()){showToast('Por favor corrige los campos en rojo.');return;}
+    const idEmpty=!idInput.value.trim();
+    const pwEmpty=!pwInput.value;
+    const idOk=validateId();
+    const pwOk=validatePassword();
+    if(!idOk&&!pwOk){
+      if(idEmpty&&pwEmpty){showToast('Los campos están vacíos.');}
+      else{showToast('El ID Empresarial y la contraseña no son válidos.');}
+      return;
+    }
+    if(!idOk||!pwOk){return;}
     btn.disabled=true;btn.classList.add('loading');
     setTimeout(()=>{btn.disabled=false;btn.classList.remove('loading');form.submit();},800);
   });
