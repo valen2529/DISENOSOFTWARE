@@ -329,7 +329,8 @@
 
       <div class="inv-field">
         <label class="inv-label">ID Empresarial</label>
-        <input id="inv-id-base" type="text" class="inv-input" placeholder="Ej: 11.00.095"/>
+        <input id="inv-id-base" type="text" class="inv-input" placeholder="Se genera al elegir el rol" readonly style="color:#95a2a5;cursor:default;"/>
+        <div style="font-size:0.68rem;color:#95a2a5;margin-top:5px;">Se asigna automáticamente según el rol</div>
       </div>
 
       <div class="inv-field" id="area-field" style="display:none;">
@@ -398,9 +399,19 @@
     }
   }
 
-  function actualizarSufijo() {
+  async function actualizarSufijo() {
     const rol = document.getElementById('inv-rol').value;
     document.getElementById('area-field').style.display = (rol === 'jefe' || rol === 'miembro') ? 'block' : 'none';
+    const idInput = document.getElementById('inv-id-base');
+    if (!rol) { idInput.value = ''; idInput.style.color = '#95a2a5'; return; }
+    idInput.value = 'Generando...';
+    idInput.style.color = '#95a2a5';
+    try {
+      const r = await fetch(`/generar-id?rol=${rol}`);
+      const d = await r.json();
+      if (d.ok) { idInput.value = d.id; idInput.style.color = '#231f20'; }
+      else { idInput.value = ''; }
+    } catch(e) { idInput.value = ''; }
   }
 
   function buildIdFinal() {

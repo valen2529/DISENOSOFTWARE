@@ -597,11 +597,6 @@ function renderMonth() {
         <div class="cal-subtitle">${MONTH_NAMES[month]} ${year} &middot; ${evtsThisMonth.length} eventos este mes</div>
       </div>
       <div class="cal-controls">
-        <div class="cal-view-toggle">
-          <button class="cal-view-btn ${state.view==='month'?'active':''}" onclick="setView('month')">Mes</button>
-          <button class="cal-view-btn ${state.view==='week'?'active':''}"  onclick="setView('week')">Semana</button>
-          <button class="cal-view-btn ${state.view==='day'?'active':''}"   onclick="setView('day')">D&iacute;a</button>
-        </div>
         <div class="cal-nav">
           <button class="cal-nav-btn" onclick="navigateMonth(-1)">&#8249;</button>
           <span class="cal-month-lbl">${MONTH_NAMES[month]} ${year}</span>

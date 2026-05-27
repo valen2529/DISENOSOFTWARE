@@ -337,9 +337,6 @@
           <p class="page-hdr-sub">Temporada 2026 &middot; <%= stats.total %> proyectos visibles</p>
         </div>
         <div class="page-actions">
-          <% if (usuario.rol === 'directora') { %>
-          <button class="btn-exportar" onclick="exportarProyectos()">Exportar</button>
-          <% } %>
           <% if (usuario.rol !== 'miembro') { %>
           <button class="btn-nuevo" onclick="abrirModalNuevo()">+ Nuevo proyecto</button>
           <% } %>

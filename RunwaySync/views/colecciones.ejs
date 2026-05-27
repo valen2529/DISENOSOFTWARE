@@ -237,7 +237,7 @@
           <div class="page-title">Colecciones</div>
           <div class="page-subtitle">Temporadas activas e históricas de diseño</div>
         </div>
-        <button class="btn-new" onclick="mostrarToast('Nueva colección próximamente')">
+        <button class="btn-new" onclick="abrirNuevaColeccion()">
           <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Nueva Colección
         </button>
@@ -276,7 +276,7 @@
       </div>
 
       <!-- Grid de colecciones -->
-      <div class="col-grid">
+      <div class="col-grid" id="colGrid">
 
         <!-- SS26 · Tierra Roja -->
         <!-- Imagen: /img/coleccion/brown.png -->
@@ -388,6 +388,78 @@
     </div><!-- /vistaDetalle -->
 
   </div><!-- /body-row -->
+
+  <!-- ══ MODAL NUEVA COLECCIÓN ══ -->
+  <div id="nc-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,21,22,0.45);z-index:1000;justify-content:center;align-items:center;" onclick="cerrarNuevaColeccion(event)">
+    <div style="background:#fff;border-radius:20px;width:480px;max-width:96vw;max-height:90vh;overflow-y:auto;padding:28px 32px;box-shadow:0 12px 48px rgba(0,0,0,0.18);" onclick="event.stopPropagation()">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-family:'Georgia',serif;font-size:1.2rem;font-weight:700;color:#141516;">Nueva Colección</div>
+          <div style="font-size:0.74rem;color:#95a2a5;margin-top:3px;">Completa los datos de la nueva colección</div>
+        </div>
+        <button onclick="cerrarNuevaColeccion()" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:#b0b0b0;line-height:1;padding:2px;">&#x2715;</button>
+      </div>
+
+      <div id="nc-error" style="display:none;background:#fff0f0;color:#e02020;border-radius:10px;padding:9px 14px;font-size:0.8rem;margin-bottom:14px;"></div>
+
+      <form id="nc-form" onsubmit="guardarNuevaColeccion(event)">
+
+        <!-- Imagen -->
+        <div style="margin-bottom:14px;">
+          <div style="font-size:0.72rem;font-weight:700;color:#6f6f6f;margin-bottom:7px;text-transform:uppercase;letter-spacing:0.06em;">Imagen de portada</div>
+          <label for="nc-img-input" style="display:block;cursor:pointer;">
+            <div style="width:100%;height:160px;border:2px dashed #e0e0e0;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:#fafafa;transition:border-color .15s;" onmouseover="this.style.borderColor='#141516'" onmouseout="this.style.borderColor='#e0e0e0'">
+              <div id="nc-img-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#b0b0b0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:0.78rem;color:#b0b0b0;font-weight:500;">Haz clic para subir imagen</span>
+                <span style="font-size:0.68rem;color:#c4c4c4;">JPG, PNG, WEBP</span>
+              </div>
+              <img id="nc-preview" style="display:none;width:100%;height:156px;object-fit:cover;border-radius:10px;" alt="preview"/>
+            </div>
+          </label>
+          <input id="nc-img-input" type="file" accept="image/*" style="display:none;"/>
+        </div>
+
+        <div style="margin-bottom:13px;">
+          <label style="display:block;font-size:0.72rem;font-weight:700;color:#6f6f6f;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.06em;">Nombre de la colección *</label>
+          <input id="nc-nombre" type="text" placeholder="Ej. Tierra Nueva" required style="width:100%;padding:9px 13px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:0.82rem;color:#231f20;outline:none;font-family:inherit;" onfocus="this.style.borderColor='#141516'" onblur="this.style.borderColor='#e0e0e0'"/>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px;">
+          <div>
+            <label style="display:block;font-size:0.72rem;font-weight:700;color:#6f6f6f;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.06em;">Temporada *</label>
+            <select id="nc-season" required style="width:100%;padding:9px 13px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:0.82rem;color:#231f20;outline:none;background:#fff;font-family:inherit;" onfocus="this.style.borderColor='#141516'" onblur="this.style.borderColor='#e0e0e0'">
+              <option value="">Seleccionar...</option>
+              <option value="SS26">SS26 · Spring / Summer</option>
+              <option value="FW26">FW26 · Fall / Winter</option>
+              <option value="Resort27">Resort 27 · Crucero</option>
+              <option value="SS27">SS27 · Spring / Summer</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.72rem;font-weight:700;color:#6f6f6f;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.06em;">Estado *</label>
+            <select id="nc-status" required style="width:100%;padding:9px 13px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:0.82rem;color:#231f20;outline:none;background:#fff;font-family:inherit;" onfocus="this.style.borderColor='#141516'" onblur="this.style.borderColor='#e0e0e0'">
+              <option value="">Seleccionar...</option>
+              <option value="Ideación">Ideación</option>
+              <option value="En diseño">En diseño</option>
+              <option value="En producción">En producción</option>
+              <option value="Aprobado">Aprobado</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <label style="display:block;font-size:0.72rem;font-weight:700;color:#6f6f6f;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.06em;">Descripción</label>
+          <textarea id="nc-desc" rows="3" placeholder="Breve descripción de la colección..." style="width:100%;padding:9px 13px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:0.82rem;color:#231f20;outline:none;resize:vertical;font-family:inherit;" onfocus="this.style.borderColor='#141516'" onblur="this.style.borderColor='#e0e0e0'"></textarea>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" onclick="cerrarNuevaColeccion()" style="padding:9px 20px;border-radius:50px;background:#f3f4f6;color:#6f6f6f;border:none;font-size:0.8rem;font-weight:600;cursor:pointer;">Cancelar</button>
+          <button type="submit" style="padding:9px 22px;border-radius:50px;background:#141516;color:#fff;border:none;font-size:0.8rem;font-weight:700;cursor:pointer;">Crear Colección</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Toast -->
   <div id="toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#141516;color:#fff;padding:10px 22px;border-radius:30px;font-size:0.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);">
@@ -632,6 +704,104 @@ document.addEventListener('click', function(e) {
   if (np && !document.getElementById('notifBtn').contains(e.target))   np.classList.remove('open');
   if (pp && !document.getElementById('profileBtn').contains(e.target)) pp.classList.remove('open');
 });
+
+// ══ NUEVA COLECCIÓN ══
+let nuevaImgUrl = null;
+
+function abrirNuevaColeccion() {
+  nuevaImgUrl = null;
+  document.getElementById('nc-preview').style.display = 'none';
+  document.getElementById('nc-preview').src = '';
+  document.getElementById('nc-img-placeholder').style.display = 'flex';
+  document.getElementById('nc-form').reset();
+  document.getElementById('nc-error').style.display = 'none';
+  document.getElementById('nc-overlay').style.display = 'flex';
+}
+
+function cerrarNuevaColeccion(e) {
+  if (!e || e.target === document.getElementById('nc-overlay')) {
+    document.getElementById('nc-overlay').style.display = 'none';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('nc-img-input').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      nuevaImgUrl = ev.target.result;
+      const preview = document.getElementById('nc-preview');
+      preview.src = nuevaImgUrl;
+      preview.style.display = 'block';
+      document.getElementById('nc-img-placeholder').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+const SEASON_CONFIG = {
+  'SS26':    { label:'SS26 · Spring / Summer', color:'#cd1b80', colorBg:'rgba(205,27,128,0.12)' },
+  'FW26':    { label:'FW26 · Fall / Winter',   color:'#004aad', colorBg:'rgba(0,74,173,0.12)'   },
+  'Resort27':{ label:'Resort 27 · Crucero',    color:'#08b864', colorBg:'rgba(8,184,100,0.12)'  },
+  'SS27':    { label:'SS27 · Spring / Summer', color:'#7611bd', colorBg:'rgba(118,17,189,0.12)' },
+};
+const STATUS_CONFIG = {
+  'En producción': { color:'#08b864', bg:'rgba(8,184,100,0.10)'  },
+  'En diseño':     { color:'#b88917', bg:'rgba(184,137,23,0.10)' },
+  'Ideación':      { color:'#7611bd', bg:'rgba(118,17,189,0.10)' },
+  'Aprobado':      { color:'#08b864', bg:'rgba(8,184,100,0.10)'  },
+};
+
+function guardarNuevaColeccion(e) {
+  e.preventDefault();
+  const nombre  = document.getElementById('nc-nombre').value.trim();
+  const season  = document.getElementById('nc-season').value;
+  const desc    = document.getElementById('nc-desc').value.trim();
+  const status  = document.getElementById('nc-status').value;
+  const errDiv  = document.getElementById('nc-error');
+
+  if (!nombre || !season || !status) {
+    errDiv.textContent = 'Por favor completa todos los campos obligatorios.';
+    errDiv.style.display = 'block';
+    return;
+  }
+
+  const sc = SEASON_CONFIG[season] || SEASON_CONFIG['SS27'];
+  const st = STATUS_CONFIG[status] || STATUS_CONFIG['Ideación'];
+  const initials = nombre.split(' ').map(w => w[0]).join('').substring(0,3).toUpperCase();
+  const imgSrc = nuevaImgUrl || '';
+
+  const card = document.createElement('div');
+  card.className = 'col-card';
+  card.innerHTML = `
+    ${imgSrc
+      ? `<img class="col-img" src="${imgSrc}" alt="${nombre}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+         <div class="col-img-placeholder" style="display:none;background:${sc.colorBg};color:${sc.color}">${initials}</div>`
+      : `<div class="col-img-placeholder" style="background:${sc.colorBg};color:${sc.color}">${initials}</div>`
+    }
+    <div class="col-body">
+      <div class="col-tag" style="background:${sc.colorBg};color:${sc.color}">${sc.label}</div>
+      <div class="col-name">${nombre}</div>
+      <div class="col-sub">${desc || 'Nueva colección'}</div>
+      <div class="col-progress-row">
+        <span class="col-progress-lbl">Avance general</span>
+        <span class="col-progress-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%;background:${sc.color};"></div></div>
+      <div class="col-footer">
+        <div class="col-swatches"></div>
+        <span class="col-prendas">0 prendas</span>
+      </div>
+      <div class="col-status" style="background:${st.bg};color:${st.color};">
+        <div class="col-status-dot" style="background:${st.color};"></div>${status}
+      </div>
+    </div>`;
+
+  document.getElementById('colGrid').appendChild(card);
+  cerrarNuevaColeccion();
+  mostrarToast('Colección "' + nombre + '" creada');
+}
 
 // ══ TOAST ══
 function mostrarToast(msg) {

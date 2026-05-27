@@ -226,6 +226,31 @@ router.post('/invitar-miembro', async (req, res) => {
   }
 });
 
+// ── GET /generar-id ──
+router.get('/generar-id', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ ok: false });
+  const { rol } = req.query;
+  try {
+    if (rol === 'directora') {
+      return res.json({ ok: true, id: '11.00.001.001' });
+    }
+    if (rol === 'jefe') {
+      const count = await User.countDocuments({ rol: 'jefe' });
+      const num = String(count + 2).padStart(3, '0');
+      return res.json({ ok: true, id: `11.00.${num}.222` });
+    }
+    if (rol === 'miembro') {
+      const count = await User.countDocuments({ rol: 'miembro' });
+      const num = String(count + 101).padStart(3, '0');
+      return res.json({ ok: true, id: `11.00.${num}.333` });
+    }
+    res.json({ ok: false, error: 'Rol no reconocido.' });
+  } catch (err) {
+    console.error(err);
+    res.json({ ok: false, error: 'Error al generar ID.' });
+  }
+});
+
 // ── GET /logout ──
 router.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));

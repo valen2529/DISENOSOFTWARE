@@ -358,9 +358,6 @@
           <p class="page-hdr-sub">Abril &ndash; Mayo 2026 &middot; <%= eventos.length %> eventos pr&oacute;ximos</p>
         </div>
         <div class="page-actions">
-          <% if (usuario.rol === 'directora') { %>
-          <button class="btn-exportar" onclick="exportar()">Exportar</button>
-          <% } %>
           <% if (usuario.rol !== 'miembro') { %>
           <button class="btn-nuevo" onclick="abrirNuevo()">+ Nuevo evento</button>
           <% } %>
