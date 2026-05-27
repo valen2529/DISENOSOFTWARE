@@ -39,10 +39,11 @@ export const showNewPassword = (req, res) => {
 };
 
 export const resetPassword = async (req, res) => {
-  const { password, confirmPassword } = req.body;
+  console.log('➡️ resetPassword desde CONTROLLER');
+  const { password, confirmar } = req.body;
 
   const result = await authService.processResetPassword(
-    req.session.resetTelefono, password, confirmPassword
+    req.session.resetTelefono, password, confirmar
   );
 
   if (!result.ok) {
