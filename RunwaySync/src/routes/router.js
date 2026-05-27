@@ -5,6 +5,7 @@ import Event      from '../models/Event.model.js';
 import Project    from '../models/Project.model.js';
 import Collection from '../models/Collection.model.js';
 import bcryptjs from 'bcryptjs';
+import { generarSiguienteId } from '../utils/idGenerator.js';
 
 const router = Router();
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
@@ -417,25 +418,12 @@ router.get('/generar-id', async (req, res) => {
   if (!req.session.userId) return res.status(401).json({ ok: false });
   const { rol } = req.query;
   try {
-    const suffix = rol === 'directora' ? '001' : rol === 'jefe' ? '222' : rol === 'miembro' ? '333' : null;
-    if (!suffix) return res.json({ ok: false, error: 'Rol no reconocido.' });
+    const rolesValidos = ['directora', 'jefe', 'miembro'];
+    if (!rolesValidos.includes(rol)) return res.json({ ok: false, error: 'Rol no reconocido.' });
 
-    // Find all existing IDs with this role's suffix to determine next number
     const allUsers = await User.find({}, 'id_empresarial');
-    const usedNums = new Set(
-      allUsers
-        .map(u => u.id_empresarial)
-        .filter(id => id && id.endsWith('.' + suffix))
-        .map(id => parseInt(id.split('.')[2], 10))
-        .filter(n => !isNaN(n))
-    );
-
-    // Start from 1 for directora, 2 for jefe, 101 for miembro
-    let start = rol === 'miembro' ? 101 : 1;
-    let num = start;
-    while (usedNums.has(num)) num++;
-
-    const id = `11.00.${String(num).padStart(3, '0')}.${suffix}`;
+    const idsExistentes = allUsers.map(u => u.id_empresarial).filter(Boolean);
+    const id = generarSiguienteId(rol, idsExistentes);
     res.json({ ok: true, id });
   } catch (err) {
     console.error(err);
