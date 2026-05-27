@@ -289,102 +289,6 @@
   </div><!-- /body-row -->
 </div><!-- /app -->
 
-<!-- ══ MODAL NUEVO EVENTO ══ -->
-<div class="modal-backdrop" id="modalBackdrop">
-  <div class="modal-card">
-    <div class="modal-header">
-      <span class="modal-title">Nuevo Evento</span>
-      <button class="modal-close-btn" onclick="closeNuevoEvento()">&#x2715;</button>
-    </div>
-    <form id="formNuevoEvento" onsubmit="handleNuevoEvento(event)">
-
-      <div class="form-group">
-        <label class="form-label">Nombre del evento</label>
-        <input type="text" id="ev-nombre" class="form-input" placeholder="Ej. Casting Final SS26" required/>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Fecha</label>
-          <input type="date" id="ev-fecha" class="form-input" required/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Hora</label>
-          <div class="time-row">
-            <input type="time" id="ev-inicio" class="form-input" value="10:00"/>
-            <span class="time-sep">—</span>
-            <input type="time" id="ev-fin" class="form-input" value="18:00"/>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Asignar color</label>
-        <div class="color-options" id="colorOptions">
-          <div class="color-opt selected" data-type="casting" onclick="selectColor(this)">
-            <span class="color-opt-dot" style="background:#cd1b80"></span>Casting
-          </div>
-          <div class="color-opt" data-type="editorial" onclick="selectColor(this)">
-            <span class="color-opt-dot" style="background:#08b864"></span>Editorial
-          </div>
-          <div class="color-opt" data-type="fitting" onclick="selectColor(this)">
-            <span class="color-opt-dot" style="background:#b88917"></span>Fitting
-          </div>
-          <div class="color-opt" data-type="important" onclick="selectColor(this)">
-            <span class="color-opt-dot" style="background:#cd1b80"></span>Evento importante
-          </div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Locaci&oacute;n</label>
-        <input type="text" id="ev-locacion" class="form-input" placeholder="Estudio Norte · Av. Insurgentes, CDMX"/>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Modelos en casting</label>
-        <input type="text" id="ev-modelos" class="form-input" placeholder="Ej. Tatiana Carreño, Lucas Medrano (separar con comas)"/>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Notas del evento</label>
-        <textarea id="ev-notas" class="form-textarea" placeholder="Instrucciones, requerimientos, detalles importantes..."></textarea>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Asistentes del evento</label>
-        <div class="att-grid">
-          <label class="att-check">
-            <input type="checkbox" value="MR" name="asistentes" checked/>
-            <div class="att-av-sm" style="background:rgba(205,27,128,0.18);color:#cd1b80">MR</div>
-            <span class="att-lbl-sm">Marina</span>
-          </label>
-          <label class="att-check">
-            <input type="checkbox" value="JP" name="asistentes"/>
-            <div class="att-av-sm" style="background:rgba(0,74,173,0.18);color:#004aad">JP</div>
-            <span class="att-lbl-sm">Juan Pablo</span>
-          </label>
-          <label class="att-check">
-            <input type="checkbox" value="CL" name="asistentes"/>
-            <div class="att-av-sm" style="background:rgba(8,184,100,0.18);color:#08b864">CL</div>
-            <span class="att-lbl-sm">Camila</span>
-          </label>
-          <label class="att-check">
-            <input type="checkbox" value="BP" name="asistentes"/>
-            <div class="att-av-sm" style="background:rgba(184,137,23,0.18);color:#b88917">BP</div>
-            <span class="att-lbl-sm">Bruno</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="form-buttons">
-        <button type="submit" class="btn-submit-form">Agregar a calendario</button>
-        <button type="button" class="btn-cancel-form" onclick="closeNuevoEvento()">Cancelar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 <!-- ══ MODAL MUY PRONTO ══ -->
 <div class="modal-overlay" id="muyProntoModal" onclick="cerrarModal(event)">
   <div class="modal-box">
@@ -431,10 +335,9 @@ const DEFAULT_EVENTS = <%- JSON.stringify(eventosJS) %>;
 const today = new Date();
 let state = {
   year:  today.getFullYear(),
-  month: today.getMonth(),  // 0-indexed
+  month: today.getMonth(),
   view:  'month',
   selectedEvent: null,
-  selectedColorType: 'casting'
 };
 
 let events = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
@@ -532,7 +435,7 @@ function renderMonth() {
       pillsHTML += `<div class="more-pill">+${evts.length-maxShow} más</div>`;
     }
 
-    return `<div class="${cls}" onclick="handleCellClick('${ds}')">${dayNumHTML}${pillsHTML}</div>`;
+    return `<div class="${cls}">${dayNumHTML}${pillsHTML}</div>`;
   }).join('');
 
   const html = `
@@ -548,7 +451,6 @@ function renderMonth() {
           <span class="cal-month-lbl">${MONTH_NAMES[month]} ${year}</span>
           <button class="cal-nav-btn" onclick="navigateMonth(1)">&#8250;</button>
         </div>
-        <button class="btn-nuevo-evento" onclick="openNuevoEvento()">+ Nuevo evento</button>
       </div>
     </div>
 
@@ -693,8 +595,8 @@ function renderEventDetail(ev) {
           <div class="ev-side-title">Asistentes al evento</div>
           <div class="attendees-row">${attendeesHTML || '<p style="font-size:0.76rem;color:#8a9295">Sin asistentes.</p>'}</div>
           <div class="ev-action-row" style="margin-top:18px">
-            <button class="btn-edit-ev" onclick="openNuevoEvento()">Editar evento</button>
-            <button class="btn-cancel-ev" onclick="backToCalendar()">Cancelar</button>
+            <button class="btn-cancel-ev" onclick="backToCalendar()">← Volver al calendario</button>
+            <a href="/eventos" class="btn-edit-ev" style="text-decoration:none;display:inline-flex;align-items:center;">Ir a Eventos</a>
           </div>
         </div>
       </div>
@@ -720,83 +622,9 @@ function backToCalendar() {
   render();
 }
 
-function handleCellClick(ds) {
-  // Click on empty cell opens new event modal with pre-filled date
-  openNuevoEvento(ds);
-}
-
 function setView(v) {
   state.view = v;
   render();
-}
-
-/* ══════════════════════════════════════════
-   MODAL NUEVO EVENTO
-══════════════════════════════════════════ */
-function openNuevoEvento(preDate) {
-  const modal = document.getElementById('modalBackdrop');
-  // Set default date
-  const dateInput = document.getElementById('ev-fecha');
-  if (preDate) {
-    dateInput.value = preDate;
-  } else {
-    dateInput.value = dateStr(state.year, state.month, today.getDate());
-  }
-  // Reset form
-  document.getElementById('formNuevoEvento').reset();
-  dateInput.value = preDate || dateStr(state.year, state.month, today.getDate());
-  // Reset color selection
-  state.selectedColorType = 'casting';
-  document.querySelectorAll('.color-opt').forEach(o => o.classList.remove('selected'));
-  document.querySelector('.color-opt[data-type="casting"]').classList.add('selected');
-  modal.classList.add('open');
-}
-
-function closeNuevoEvento() {
-  document.getElementById('modalBackdrop').classList.remove('open');
-}
-
-function selectColor(el) {
-  document.querySelectorAll('.color-opt').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-  state.selectedColorType = el.dataset.type;
-}
-
-async function handleNuevoEvento(e) {
-  e.preventDefault();
-  const nombre   = document.getElementById('ev-nombre').value.trim();
-  const fecha    = document.getElementById('ev-fecha').value;
-  const inicio   = document.getElementById('ev-inicio').value;
-  const fin      = document.getElementById('ev-fin').value;
-  const locacion = document.getElementById('ev-locacion').value.trim();
-  const notas    = document.getElementById('ev-notas').value.trim();
-
-  if (!nombre || !fecha) return;
-
-  const tipo = state.selectedColorType === 'important' ? 'casting' : state.selectedColorType;
-
-  try {
-    const res  = await fetch('/api/eventos', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        titulo:      nombre,
-        tipo,
-        fecha,
-        horaInicio:  inicio,
-        horaFin:     fin,
-        lugar:       locacion,
-        descripcion: notas,
-        estado:      'por_confirmar',
-      }),
-    });
-    const data = await res.json();
-    if (!data.ok) { console.error(data.error); return; }
-    closeNuevoEvento();
-    setTimeout(() => window.location.reload(), 300);
-  } catch (err) {
-    console.error(err);
-  }
 }
 
 /* ══════════════════════════════════════════
@@ -830,7 +658,6 @@ function cerrarModal(e) {
 }
 document.addEventListener('keydown', e => {
   if (e.key==='Escape') {
-    closeNuevoEvento();
     cerrarModal({target:document.getElementById('muyProntoModal')});
   }
 });

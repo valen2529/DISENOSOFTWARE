@@ -555,21 +555,43 @@
       </div>
       <div class="form-row">
         <div class="fg">
+          <label class="fl">Hora inicio</label>
+          <input class="fi" type="time" id="nHoraInicio" value="10:00">
+        </div>
+        <div class="fg">
+          <label class="fl">Hora fin</label>
+          <input class="fi" type="time" id="nHoraFin" value="14:00">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg">
           <label class="fl">Lugar</label>
           <input class="fi" type="text" id="nLugar" placeholder="Ej. Estudio Norte">
         </div>
         <div class="fg">
-          <label class="fl">Horario</label>
-          <input class="fi" type="text" id="nHora" placeholder="10:00 AM – 2:00 PM">
+          <label class="fl">Colección</label>
+          <select class="fi" id="nColeccion">
+            <option value="">Sin colección</option>
+            <option value="SS26">SS26 · Spring / Summer</option>
+            <option value="FW26">FW26 · Fall / Winter</option>
+            <option value="Resort27">Resort 27 · Crucero</option>
+            <option value="SS27">SS27 · Spring / Summer</option>
+          </select>
         </div>
       </div>
-      <div class="fg">
-        <label class="fl">Estado</label>
-        <select class="fi" id="nEstado">
-          <option value="confirmado">Confirmado</option>
-          <option value="pendiente">Locación pendiente</option>
-          <option value="por_confirmar">Por confirmar</option>
-        </select>
+      <div class="form-row">
+        <div class="fg">
+          <label class="fl">Estado</label>
+          <select class="fi" id="nEstado">
+            <option value="confirmado">Confirmado</option>
+            <option value="pendiente">Locación pendiente</option>
+            <option value="por_confirmar">Por confirmar</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Tags <span style="font-weight:400;color:#b0b0b0">(separar con comas)</span></label>
+          <input class="fi" type="text" id="nTags" placeholder="Casting, SS26, Vogue">
+        </div>
       </div>
       <div class="fg">
         <label class="fl">Descripción</label>
@@ -741,25 +763,36 @@
 
   // ── Nuevo ──
   function abrirNuevo() {
-    if (document.getElementById('nNombre')) document.getElementById('nNombre').value = '';
+    ['nNombre','nFecha','nLugar','nDesc','nTags'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    const hi = document.getElementById('nHoraInicio'); if (hi) hi.value = '10:00';
+    const hf = document.getElementById('nHoraFin');    if (hf) hf.value = '14:00';
+    const col = document.getElementById('nColeccion'); if (col) col.value = '';
+    const est = document.getElementById('nEstado');    if (est) est.value = 'programado';
+    document.querySelectorAll('input[name="equipo"]:checked').forEach(c => c.checked = false);
     openModal('nuevoModal');
   }
   function crearEvento(e) {
     e.preventDefault();
-    const titulo = document.getElementById('nNombre').value.trim();
-    const fecha  = document.getElementById('nFecha').value;
-    const lugar  = document.getElementById('nLugar').value.trim();
-    const hora   = document.getElementById('nHora').value.trim();
-    const estado = document.getElementById('nEstado').value;
-    const desc   = document.getElementById('nDesc').value.trim();
-    const tipoEl = document.getElementById('nTipo');
-    const tipo   = tipoEl ? tipoEl.value : 'fitting';
-    const equipoIds = [...document.querySelectorAll('input[name="equipo"]:checked')].map(i => i.value);
-    const [hi, hf] = hora.includes('–') ? hora.split('–').map(s => s.trim()) : [hora, ''];
+    const titulo     = document.getElementById('nNombre').value.trim();
+    const fecha      = document.getElementById('nFecha').value;
+    const lugar      = document.getElementById('nLugar').value.trim();
+    const horaInicio = document.getElementById('nHoraInicio').value;
+    const horaFin    = document.getElementById('nHoraFin').value;
+    const coleccion  = document.getElementById('nColeccion').value;
+    const tagsRaw    = document.getElementById('nTags').value.trim();
+    const tags       = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const estado     = document.getElementById('nEstado').value;
+    const desc       = document.getElementById('nDesc').value.trim();
+    const tipoEl     = document.getElementById('nTipo');
+    const tipo       = tipoEl ? tipoEl.value : 'fitting';
+    const equipoIds  = [...document.querySelectorAll('input[name="equipo"]:checked')].map(i => i.value);
+    if (!titulo || !fecha) { showToast('Nombre y fecha son obligatorios', '✗'); return; }
     fetch('/api/eventos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ titulo, tipo, fecha, horaInicio: hi, horaFin: hf, lugar, descripcion: desc, estado, equipo: equipoIds }),
+      body: JSON.stringify({ titulo, tipo, fecha, horaInicio, horaFin, lugar, descripcion: desc, estado, equipo: equipoIds, coleccion, tags }),
     }).then(r => r.json()).then(d => {
       if (d.ok) { showToast('Evento creado correctamente', '✓'); setTimeout(() => location.reload(), 800); }
       else { showToast('Error: ' + (d.error || 'No se pudo crear'), '✗'); }
