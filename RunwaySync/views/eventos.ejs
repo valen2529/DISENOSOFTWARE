@@ -355,7 +355,7 @@
       <div class="page-hdr">
         <div>
           <h2>Eventos</h2>
-          <p class="page-hdr-sub">Abril &ndash; Mayo 2026 &middot; <%= eventos.length %> eventos pr&oacute;ximos</p>
+          <p class="page-hdr-sub"><%= eventos.length %> evento<%= eventos.length !== 1 ? 's' : '' %> en total</p>
         </div>
         <div class="page-actions">
           <% if (usuario.rol !== 'miembro') { %>
@@ -489,9 +489,9 @@
             </div>
           </div>
 
-          <!-- Próximos — Mayo -->
+          <!-- Últimos eventos -->
           <div class="panel-card">
-            <div class="panel-title">Pr&oacute;ximos &mdash; Mayo</div>
+            <div class="panel-title">&Uacute;ltimos eventos</div>
             <% PROXIMOS_MAYO.forEach(p => { %>
             <div class="prox-item">
               <span class="prox-dot" style="background:<%= p.color %>"></span>

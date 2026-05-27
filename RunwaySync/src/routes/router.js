@@ -227,14 +227,14 @@ router.get('/dashboard', async (req, res) => {
     const [proyActivos, totalCol, totalEvPrx, totalCastings] = await Promise.all([
       Project.countDocuments({ estado: { $in: ['activo','revision'] } }),
       Collection.countDocuments(),
-      Event.countDocuments({ fecha: { $gte: now } }),
-      Event.countDocuments({ tipo: 'casting', fecha: { $gte: now } }),
+      Event.countDocuments(),
+      Event.countDocuments({ tipo: 'casting' }),
     ]);
 
     const proyDocList = await Project.find().sort({ updatedAt: -1 }).limit(5);
     const proyectos   = proyDocList.map(p => mapProyectoDoc(p, u.rol));
 
-    const evDocs  = await Event.find({ fecha: { $gte: now } }).sort({ fecha: 1 }).limit(30);
+    const evDocs  = await Event.find({}).sort({ fecha: -1 }).limit(50);
     const eventosJS = evDocs.map(e => ({
       date:      new Date(e.fecha).toISOString().split('T')[0],
       type:      e.tipo,
@@ -303,8 +303,7 @@ router.get('/eventos', async (req, res) => {
     const notificaciones = await getNotificaciones();
     const MIEMBROS = await buildMIEMBROS();
 
-    const now = new Date(); now.setHours(0,0,0,0);
-    const evDocs = await Event.find({ fecha: { $gte: now } }).sort({ fecha: 1 });
+    const evDocs = await Event.find({}).sort({ fecha: -1 });
     const eventos = evDocs.map(e => mapEventoDoc(e, rol));
 
     const resumen = {
@@ -316,7 +315,7 @@ router.get('/eventos', async (req, res) => {
 
     const PROXIMOS_MAYO = eventos.slice(0, 3).map(e => ({
       nombre: e.nombre,
-      fecha:  `${parseInt(e.dia)} ${MES_CORTO[new Date(e.dateStr + 'T00:00:00').getMonth()]}`,
+      fecha:  `${parseInt(e.dia)} ${MES_CORTO[new Date(e.dateStr + 'T12:00:00').getMonth()]}`,
       lugar:  e.lugar,
       color:  e.color,
     }));
