@@ -172,11 +172,10 @@
           <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#cd1b80;border-radius:50%;border:2px solid #fff;"></span>
         </div>
         <div class="notif-popover" id="notifPopover">
-          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge">4 próximos</span></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#cd1b80;"></div><div><div class="notif-name">Casting Modelos SS26</div><div class="notif-meta">23 ABR · 10:00 AM · Estudio Norte</div></div></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#b88917;"></div><div><div class="notif-name">Fitting Final Colección FW26</div><div class="notif-meta">24 ABR · 2:00 PM · Atelier Principal</div></div></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#08b864;"></div><div><div class="notif-name">Sesión Editorial Vogue CDMX</div><div class="notif-meta">28 ABR · Todo el día · Locación TBD</div></div></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#004aad;"></div><div><div class="notif-name">Reunión FW2026 — Dir. Creativa</div><div class="notif-meta">2 MAY · 9:00 AM · Sala de juntas</div></div></div>
+          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge"><%= notificaciones.length %> próximos</span></div>
+          <% notificaciones.forEach(n => { %>
+          <div class="notif-item"><div class="notif-dot" style="background:<%= n.color %>;"></div><div><div class="notif-name"><%= n.nombre %></div><div class="notif-meta"><%= n.meta %></div></div></div>
+          <% }) %>
           <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
         </div>
       </div>
@@ -244,33 +243,40 @@
       </div>
 
       <!-- Stats -->
+      <%
+        const _totalPrendas = colecciones.reduce((s, c) => s + c.prendas.length, 0);
+        const _avgProgress  = colecciones.length
+          ? Math.round(colecciones.reduce((s, c) => s + c.progress, 0) / colecciones.length)
+          : 0;
+        const _enProd = colecciones.filter(c => c.status === 'En producción' || c.status === 'En diseño').length;
+      %>
       <div class="stats-row">
         <div class="stat-card">
           <div class="stat-dot" style="background:#cd1b80"></div>
           <div>
-            <div class="stat-val">3</div>
+            <div class="stat-val"><%= colecciones.length %></div>
             <div class="stat-lbl">Colecciones Activas</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-dot" style="background:#08b864"></div>
           <div>
-            <div class="stat-val">45%</div>
+            <div class="stat-val"><%= _avgProgress %>%</div>
             <div class="stat-lbl">Avance General</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-dot" style="background:#004aad"></div>
           <div>
-            <div class="stat-val">14</div>
+            <div class="stat-val"><%= _totalPrendas %></div>
             <div class="stat-lbl">Prendas en Proceso</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-dot" style="background:#b88917"></div>
           <div>
-            <div class="stat-val">2</div>
-            <div class="stat-lbl">En Revisión</div>
+            <div class="stat-val"><%= _enProd %></div>
+            <div class="stat-lbl">En Producción / Diseño</div>
           </div>
         </div>
       </div>
@@ -278,95 +284,38 @@
       <!-- Grid de colecciones -->
       <div class="col-grid" id="colGrid">
 
-        <!-- SS26 · Tierra Roja -->
-        <!-- Imagen: /img/coleccion/brown.png -->
-        <div class="col-card" onclick="abrirColeccion('ss26')">
-          <img class="col-img" src="/img/coleccion/brown.png" alt="Tierra Roja SS26"
+        <% colecciones.forEach(c => { %>
+        <div class="col-card" onclick="abrirColeccion('<%= c.id %>')">
+          <% if (c.img) { %>
+          <img class="col-img" src="<%= c.img %>" alt="<%= c.name %>"
                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-          <div class="col-img-placeholder" style="display:none;background:rgba(205,27,128,0.10);color:#cd1b80">SS26</div>
+          <div class="col-img-placeholder" style="display:none;background:<%= c.colorBg %>;color:<%= c.color %>"><%= c.name.split(' ').map(w=>w[0]).join('').substring(0,3).toUpperCase() %></div>
+          <% } else { %>
+          <div class="col-img-placeholder" style="background:<%= c.colorBg %>;color:<%= c.color %>"><%= c.name.split(' ').map(w=>w[0]).join('').substring(0,3).toUpperCase() %></div>
+          <% } %>
           <div class="col-body">
-            <div class="col-tag" style="background:rgba(205,27,128,0.12);color:#cd1b80">SS26 · Spring / Summer</div>
-            <div class="col-name">Tierra Roja</div>
-            <div class="col-sub">Colección principal · Fotografía · Producción</div>
+            <div class="col-tag" style="background:<%= c.colorBg %>;color:<%= c.color %>"><%= c.season %></div>
+            <div class="col-name"><%= c.name %></div>
+            <div class="col-sub"><%= c.desc.substring(0,70) %><%= c.desc.length > 70 ? '…' : '' %></div>
             <div class="col-progress-row">
               <span class="col-progress-lbl">Avance general</span>
-              <span class="col-progress-pct">75%</span>
+              <span class="col-progress-pct"><%= c.progress %>%</span>
             </div>
-            <div class="progress-bar"><div class="progress-fill" style="width:75%;background:#cd1b80;"></div></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:<%= c.progress %>%;background:<%= c.color %>;"></div></div>
             <div class="col-footer">
               <div class="col-swatches">
-                <div class="swatch" style="background:#8B2E00;" title="Tierra"></div>
-                <div class="swatch" style="background:#C4642B;" title="Cobre"></div>
-                <div class="swatch" style="background:#E8A87C;" title="Arena"></div>
-                <div class="swatch" style="background:#231f20;" title="Negro"></div>
+                <% c.swatches.forEach(s => { %>
+                <div class="swatch" style="background:<%= s %>;"></div>
+                <% }) %>
               </div>
-              <span class="col-prendas">6 prendas</span>
+              <span class="col-prendas"><%= c.prendas.length %> prendas</span>
             </div>
-            <div class="col-status" style="background:rgba(8,184,100,0.10);color:#08b864;">
-              <div class="col-status-dot" style="background:#08b864;"></div>En producción
+            <div class="col-status" style="background:<%= c.statusBg %>;color:<%= c.statusColor %>;">
+              <div class="col-status-dot" style="background:<%= c.statusColor %>;"></div><%= c.status %>
             </div>
           </div>
         </div>
-
-        <!-- FW26 · Neorromanticismo -->
-        <!-- Imagen: /img/coleccion/lavender.png -->
-        <div class="col-card" onclick="abrirColeccion('fw26')">
-          <img class="col-img" src="/img/coleccion/lavender.png" alt="Neorromanticismo FW26"
-               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-          <div class="col-img-placeholder" style="display:none;background:rgba(0,74,173,0.10);color:#004aad">FW26</div>
-          <div class="col-body">
-            <div class="col-tag" style="background:rgba(0,74,173,0.12);color:#004aad">FW26 · Fall / Winter</div>
-            <div class="col-name">Neorromanticismo</div>
-            <div class="col-sub">Campaña digital · Fotografía · Diseño</div>
-            <div class="col-progress-row">
-              <span class="col-progress-lbl">Avance general</span>
-              <span class="col-progress-pct">40%</span>
-            </div>
-            <div class="progress-bar"><div class="progress-fill" style="width:40%;background:#004aad;"></div></div>
-            <div class="col-footer">
-              <div class="col-swatches">
-                <div class="swatch" style="background:#6B4E8A;" title="Lavanda"></div>
-                <div class="swatch" style="background:#C9B8E2;" title="Lila"></div>
-                <div class="swatch" style="background:#2C1A3A;" title="Ciruela"></div>
-                <div class="swatch" style="background:#F5F0FF;" title="Blanco"></div>
-              </div>
-              <span class="col-prendas">5 prendas</span>
-            </div>
-            <div class="col-status" style="background:rgba(184,137,23,0.10);color:#b88917;">
-              <div class="col-status-dot" style="background:#b88917;"></div>En diseño
-            </div>
-          </div>
-        </div>
-
-        <!-- Resort27 · Brisa -->
-        <!-- Imagen: /img/coleccion/green.png -->
-        <div class="col-card" onclick="abrirColeccion('resort27')">
-          <img class="col-img" src="/img/coleccion/green.png" alt="Brisa Resort 2027"
-               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-          <div class="col-img-placeholder" style="display:none;background:rgba(8,184,100,0.10);color:#08b864">R27</div>
-          <div class="col-body">
-            <div class="col-tag" style="background:rgba(8,184,100,0.12);color:#08b864">Resort 27 · Crucero</div>
-            <div class="col-name">Brisa</div>
-            <div class="col-sub">Dirección de arte · Moodboard</div>
-            <div class="col-progress-row">
-              <span class="col-progress-lbl">Avance general</span>
-              <span class="col-progress-pct">20%</span>
-            </div>
-            <div class="progress-bar"><div class="progress-fill" style="width:20%;background:#08b864;"></div></div>
-            <div class="col-footer">
-              <div class="col-swatches">
-                <div class="swatch" style="background:#4CAF6E;" title="Verde"></div>
-                <div class="swatch" style="background:#A8D8B9;" title="Menta"></div>
-                <div class="swatch" style="background:#F5F2E8;" title="Crema"></div>
-                <div class="swatch" style="background:#1B4D3E;" title="Bosque"></div>
-              </div>
-              <span class="col-prendas">3 prendas</span>
-            </div>
-            <div class="col-status" style="background:rgba(118,17,189,0.10);color:#7611bd;">
-              <div class="col-status-dot" style="background:#7611bd;"></div>Ideación
-            </div>
-          </div>
-        </div>
+        <% }) %>
 
       </div>
     </div><!-- /vistaLista -->
@@ -467,61 +416,7 @@
 
 <script>
 // ══ DATA ══
-const COLECCIONES = {
-  ss26: {
-    id: 'ss26',
-    season: 'SS26 · Spring / Summer',
-    name: 'Tierra Roja',
-    desc: 'Inspirada en los paisajes áridos y la riqueza cromática de los territorios mexicanos del norte. Texturas naturales, siluetas estructuradas y una paleta cálida que evoca la tierra arcillosa y el atardecer.',
-    img: '/img/coleccion/brown.png',
-    progress: 75,
-    color: '#cd1b80',
-    colorBg: 'rgba(205,27,128,0.12)',
-    status: 'En producción',
-    statusColor: '#08b864',
-    statusBg: 'rgba(8,184,100,0.10)',
-    tags: ['SS26', 'Editorial', 'Vogue', 'Fotografía'],
-    swatches: ['#8B2E00','#C4642B','#E8A87C','#231f20'],
-    prendas: [
-      { id:'p1', nombre:'Vestido Oaxaca',  categoria:'Vestidos',  img:'/img/coleccion/dress.png',    desc:'Vestido midi de línea A en tela de lino con bordado artesanal en el escote. Confeccionado con artesanos de Oaxaca. Disponible en 3 tallas.', material:'Lino 100%', color:'Tierra / Cobre', talla:'XS–L',  estado:'Producción', swatches:['#C4642B','#8B2E00','#231f20'] },
-      { id:'p2', nombre:'Blazer Tierra',   categoria:'Sacos',     img:'/img/coleccion/blazer.png',   desc:'Blazer oversize con estructura de hombros marcados. Forro en seda natural y botonería en carey. Pieza ancla de la colección.', material:'Lana / Seda', color:'Cobre oscuro', talla:'XS–XL', estado:'Aprobado', swatches:['#8B2E00','#5A1E00'] },
-      { id:'p3', nombre:'Pantalón Cobre',  categoria:'Pantalones', img:'/img/coleccion/pantalon.png', desc:'Pantalón de corte recto con pinzas frontales. Tiro alto y largo a tobillo. Tejido en gabardina stretch premium.', material:'Gabardina', color:'Cobre / Arena', talla:'24–32', estado:'Ajuste', swatches:['#C4642B','#E8A87C'] },
-      { id:'p4', nombre:'Vestido Tabaco',  categoria:'Vestidos',  img:'/img/coleccion/arena.png',    desc:'Vestido largo de escote cruzado en crepe de seda. Falda con vuelo en corte sesgado. Cierre invisible en costado.', material:'Crepe de seda', color:'Arena / Tabaco', talla:'XS–L', estado:'Producción', swatches:['#E8A87C','#D4A574','#A67C52'] },
-    ],
-  },
-  fw26: {
-    id: 'fw26',
-    season: 'FW26 · Fall / Winter',
-    name: 'Neorromanticismo',
-    desc: 'Una exploración del romanticismo contemporáneo a través de volúmenes dramáticos, encajes delicados y una paleta de lavandas profundas y ciruelas. La colección dialoga entre la fragilidad y la fuerza femenina.',
-    img: '/img/coleccion/lavender.png',
-    progress: 40,
-    color: '#004aad',
-    colorBg: 'rgba(0,74,173,0.12)',
-    status: 'En diseño',
-    statusColor: '#b88917',
-    statusBg: 'rgba(184,137,23,0.10)',
-    tags: ['FW26', 'Campaña Digital', 'Lookbook'],
-    swatches: ['#6B4E8A','#C9B8E2','#2C1A3A','#F5F0FF'],
-    prendas: [],
-  },
-  resort27: {
-    id: 'resort27',
-    season: 'Resort 27 · Crucero',
-    name: 'Brisa',
-    desc: 'Una colección ligera y luminosa que captura la esencia del verano mediterráneo. Tejidos naturales transpirables, estampados botánicos y siluetas fluidas que se mueven con el viento.',
-    img: '/img/coleccion/green.png',
-    progress: 20,
-    color: '#08b864',
-    colorBg: 'rgba(8,184,100,0.12)',
-    status: 'Ideación',
-    statusColor: '#7611bd',
-    statusBg: 'rgba(118,17,189,0.10)',
-    tags: ['Resort 27', 'Dirección de Arte', 'Moodboard'],
-    swatches: ['#4CAF6E','#A8D8B9','#F5F2E8','#1B4D3E'],
-    prendas: [],
-  },
-};
+const COLECCIONES = <%- JSON.stringify(coleccionesMap) %>;
 
 let coleccionActual = null;
 let prendaActual    = null;
@@ -740,20 +635,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-const SEASON_CONFIG = {
-  'SS26':    { label:'SS26 · Spring / Summer', color:'#cd1b80', colorBg:'rgba(205,27,128,0.12)' },
-  'FW26':    { label:'FW26 · Fall / Winter',   color:'#004aad', colorBg:'rgba(0,74,173,0.12)'   },
-  'Resort27':{ label:'Resort 27 · Crucero',    color:'#08b864', colorBg:'rgba(8,184,100,0.12)'  },
-  'SS27':    { label:'SS27 · Spring / Summer', color:'#7611bd', colorBg:'rgba(118,17,189,0.12)' },
-};
-const STATUS_CONFIG = {
-  'En producción': { color:'#08b864', bg:'rgba(8,184,100,0.10)'  },
-  'En diseño':     { color:'#b88917', bg:'rgba(184,137,23,0.10)' },
-  'Ideación':      { color:'#7611bd', bg:'rgba(118,17,189,0.10)' },
-  'Aprobado':      { color:'#08b864', bg:'rgba(8,184,100,0.10)'  },
-};
-
-function guardarNuevaColeccion(e) {
+async function guardarNuevaColeccion(e) {
   e.preventDefault();
   const nombre  = document.getElementById('nc-nombre').value.trim();
   const season  = document.getElementById('nc-season').value;
@@ -767,40 +649,25 @@ function guardarNuevaColeccion(e) {
     return;
   }
 
-  const sc = SEASON_CONFIG[season] || SEASON_CONFIG['SS27'];
-  const st = STATUS_CONFIG[status] || STATUS_CONFIG['Ideación'];
-  const initials = nombre.split(' ').map(w => w[0]).join('').substring(0,3).toUpperCase();
-  const imgSrc = nuevaImgUrl || '';
-
-  const card = document.createElement('div');
-  card.className = 'col-card';
-  card.innerHTML = `
-    ${imgSrc
-      ? `<img class="col-img" src="${imgSrc}" alt="${nombre}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-         <div class="col-img-placeholder" style="display:none;background:${sc.colorBg};color:${sc.color}">${initials}</div>`
-      : `<div class="col-img-placeholder" style="background:${sc.colorBg};color:${sc.color}">${initials}</div>`
+  try {
+    const res  = await fetch('/api/colecciones', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, temporada: season, descripcion: desc, estado: status }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      errDiv.textContent = data.error || 'Error al crear la colección.';
+      errDiv.style.display = 'block';
+      return;
     }
-    <div class="col-body">
-      <div class="col-tag" style="background:${sc.colorBg};color:${sc.color}">${sc.label}</div>
-      <div class="col-name">${nombre}</div>
-      <div class="col-sub">${desc || 'Nueva colección'}</div>
-      <div class="col-progress-row">
-        <span class="col-progress-lbl">Avance general</span>
-        <span class="col-progress-pct">0%</span>
-      </div>
-      <div class="progress-bar"><div class="progress-fill" style="width:0%;background:${sc.color};"></div></div>
-      <div class="col-footer">
-        <div class="col-swatches"></div>
-        <span class="col-prendas">0 prendas</span>
-      </div>
-      <div class="col-status" style="background:${st.bg};color:${st.color};">
-        <div class="col-status-dot" style="background:${st.color};"></div>${status}
-      </div>
-    </div>`;
-
-  document.getElementById('colGrid').appendChild(card);
-  cerrarNuevaColeccion();
-  mostrarToast('Colección "' + nombre + '" creada');
+    cerrarNuevaColeccion();
+    mostrarToast('Colección "' + nombre + '" creada');
+    setTimeout(() => window.location.reload(), 800);
+  } catch (err) {
+    errDiv.textContent = 'Error de conexión.';
+    errDiv.style.display = 'block';
+  }
 }
 
 // ══ TOAST ══

@@ -227,11 +227,10 @@
           <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#cd1b80;border-radius:50%;border:2px solid #fff;"></span>
         </div>
         <div class="notif-popover" id="notifPopover">
-          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge">4 próximos</span></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#cd1b80;"></div><div><div class="notif-name">Casting Modelos SS26</div><div class="notif-meta">23 ABR · 10:00 AM · Estudio Norte</div></div></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#b88917;"></div><div><div class="notif-name">Fitting Final Colección FW26</div><div class="notif-meta">24 ABR · 2:00 PM · Atelier Principal</div></div></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#08b864;"></div><div><div class="notif-name">Sesión Editorial Vogue CDMX</div><div class="notif-meta">28 ABR · Todo el día · Locación TBD</div></div></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#004aad;"></div><div><div class="notif-name">Reunión FW2026 — Dir. Creativa</div><div class="notif-meta">2 MAY · 9:00 AM · Sala de juntas</div></div></div>
+          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge"><%= notificaciones.length %> próximos</span></div>
+          <% notificaciones.forEach(n => { %>
+          <div class="notif-item"><div class="notif-dot" style="background:<%= n.color %>;"></div><div><div class="notif-name"><%= n.nombre %></div><div class="notif-meta"><%= n.meta %></div></div></div>
+          <% }) %>
           <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
         </div>
       </div>
@@ -400,8 +399,6 @@
 /* ══════════════════════════════════════════
    DATA & CONFIGURATION
 ══════════════════════════════════════════ */
-const STORAGE_KEY = 'rws_events';
-
 const TYPE_CONFIG = {
   casting:   { bg:'#fce4f0', text:'#cd1b80', bar:'#cd1b80', label:'Casting' },
   editorial: { bg:'#d4f0e2', text:'#08b864', bar:'#08b864', label:'Editorial' },
@@ -426,43 +423,7 @@ const MODEL_COLORS = {
   BV:{bg:'rgba(0,74,173,0.18)',  text:'#004aad'}
 };
 
-const DEFAULT_EVENTS = [
-  { id:'e1', title:'Fitting FW26',     type:'fitting',   date:'2026-05-06', startTime:'10:00', endTime:'14:00', location:'Atelier Central · Av. Álvaro Obregón 210, CDMX', description:'Fitting de prendas para la colección Fall-Winter 2026', collection:'FW26', models:[], notes:'Traer muestras de tela confirmadas. Revisar ajustes de talle.', attendees:['MR','CL'], agenda:[] },
-  { id:'e2', title:'Casting SS26',     type:'casting',   date:'2026-05-12', startTime:'10:00', endTime:'18:00', location:'Estudio Norte · Av. Insurgentes 1234, CDMX', description:'Primer casting de modelos para la colección Spring-Summer 2026', collection:'SS26',
-    models:[
-      {initials:'TC',name:'Tatiana Carreño',agency:'Elite',time:'10:00 AM',status:'confirmed'},
-      {initials:'LM',name:'Loreto Molano', agency:'Independiente',time:'11:30 AM',status:'review'},
-      {initials:'ST',name:'Sandra Torres', agency:'Next',  time:'2:00 PM', status:'review'},
-      {initials:'RM',name:'Rodolfo Mendez',agency:'DNA',   time:'4:00 PM', status:'pending'}
-    ],
-    notes:'Preparar fichas de modelos. Confirmar disponibilidad de estudio.', attendees:['MR','JP','CL'],
-    agenda:[
-      {time:'9:00', title:'Casting SS26 — Apertura',      sub:'10:00 AM · Estudio Norte', type:'casting'},
-      {time:'12:00',title:'Pausa / Almuerzo equipo',      sub:'12:30 – 1:30 PM',          type:'fitting'},
-      {time:'14:00',title:'Casting continúa — ronda 2',  sub:'2:00 – 6:00 PM',            type:'casting'}
-    ]
-  },
-  { id:'e3', title:'Revisión Look Book',  type:'fitting',   date:'2026-05-15', startTime:'11:00', endTime:'14:00', location:'Oficina RunwaySync', description:'Revisión y aprobación del Look Book SS26', collection:'SS26', models:[], notes:'Preparar selección de imágenes. Confirmar con dirección creativa.', attendees:['MR','JP'], agenda:[] },
-  { id:'e4', title:'Casting Final SS26',  type:'casting',   date:'2026-05-21', startTime:'10:00', endTime:'18:00', location:'Estudio Norte · Av. Insurgentes 1234, CDMX', description:'Selección final de modelos para colección primavera-verano', collection:'SS26',
-    models:[
-      {initials:'AA',name:'Anya Aveiro',   agency:'Elite',time:'10:00 AM',status:'confirmed'},
-      {initials:'LM',name:'Lucas Medrano', agency:'Ind.', time:'11:30 AM',status:'review'},
-      {initials:'ST',name:'Sofia Torres',  agency:'Next', time:'2:00 PM', status:'review'},
-      {initials:'RM',name:'Ravi Mukherjee',agency:'DNA',  time:'4:00 PM', status:'pending'}
-    ],
-    notes:'Preparar polaroids y medidas actualizadas. Solicitar book digital con 48h de anticipación. Confirmar catering para equipo.',
-    attendees:['MR','CL','BP','AG'],
-    agenda:[
-      {time:'9:00', title:'Casting Final SS26 — Inicio',  sub:'10:00 AM · Estudio Norte', type:'casting'},
-      {time:'12:00',title:'Pausa / Almuerzo equipo',      sub:'12:30 – 1:30 PM',          type:'fitting'},
-      {time:'14:00',title:'Casting continúa — ronda 2',  sub:'2:00 – 6:00 PM',            type:'casting'}
-    ]
-  },
-  { id:'e5', title:'Call Vogue MX',       type:'editorial', date:'2026-05-21', startTime:'15:00', endTime:'16:00', location:'Videollamada', description:'Llamada de coordinación con equipo editorial de Vogue México', collection:'SS26', models:[], notes:'Preparar propuesta de portada. Confirmar fechas de producción.', attendees:['MR'], agenda:[] },
-  { id:'e6', title:'Fitting Final',       type:'fitting',   date:'2026-05-22', startTime:'10:00', endTime:'16:00', location:'Atelier Central', description:'Fitting final de prendas para sesión editorial', collection:'SS26', models:[], notes:'Confirmar todos los ajustes. Lista definitiva de prendas.', attendees:['MR','CL','JP'], agenda:[] },
-  { id:'e7', title:'Sesión Editorial',    type:'important', date:'2026-05-26', startTime:'08:00', endTime:'20:00', location:'Locación TBD', description:'Sesión editorial principal para Vogue CDMX SS26', collection:'SS26', models:[], notes:'Confirmar locación 48h antes. Llamada de producción el día anterior.', attendees:['MR','JP','CL','BP'], agenda:[] },
-  { id:'e8', title:'Sesión todo el día', type:'editorial',  date:'2026-05-26', startTime:'08:00', endTime:'20:00', location:'Estudio Sur', description:'Sesión fotográfica de día completo para Look Book FW26', collection:'FW26', models:[], notes:'Preparar todos los looks. Confirmar equipo técnico.', attendees:['MR','JP'], agenda:[] }
-];
+const DEFAULT_EVENTS = <%- JSON.stringify(eventosJS) %>;
 
 /* ══════════════════════════════════════════
    STATE
@@ -476,22 +437,7 @@ let state = {
   selectedColorType: 'casting'
 };
 
-/* ══════════════════════════════════════════
-   STORAGE
-══════════════════════════════════════════ */
-function loadEvents() {
-  try {
-    const s = localStorage.getItem(STORAGE_KEY);
-    if (s) return JSON.parse(s);
-  } catch(e) {}
-  const def = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(def));
-  return def;
-}
-function saveEvents(evts) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(evts));
-}
-let events = loadEvents();
+let events = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
 
 /* ══════════════════════════════════════════
    HELPERS
@@ -816,43 +762,41 @@ function selectColor(el) {
   state.selectedColorType = el.dataset.type;
 }
 
-function handleNuevoEvento(e) {
+async function handleNuevoEvento(e) {
   e.preventDefault();
   const nombre   = document.getElementById('ev-nombre').value.trim();
   const fecha    = document.getElementById('ev-fecha').value;
   const inicio   = document.getElementById('ev-inicio').value;
   const fin      = document.getElementById('ev-fin').value;
   const locacion = document.getElementById('ev-locacion').value.trim();
-  const modelos  = document.getElementById('ev-modelos').value.trim();
   const notas    = document.getElementById('ev-notas').value.trim();
-  const asistentes = [...document.querySelectorAll('input[name="asistentes"]:checked')].map(i=>i.value);
 
   if (!nombre || !fecha) return;
 
-  const newEvent = {
-    id:          'usr_' + Date.now(),
-    title:       nombre,
-    type:        state.selectedColorType,
-    date:        fecha,
-    startTime:   inicio,
-    endTime:     fin,
-    location:    locacion,
-    description: '',
-    collection:  '',
-    models:      modelos ? modelos.split(',').map(m=>({initials:m.trim().substring(0,2).toUpperCase(),name:m.trim(),agency:'',time:'',status:'pending'})) : [],
-    notes:       notas,
-    attendees:   asistentes,
-    agenda:      []
-  };
+  const tipo = state.selectedColorType === 'important' ? 'casting' : state.selectedColorType;
 
-  events.push(newEvent);
-  saveEvents(events);
-  closeNuevoEvento();
-  // Navigate to the month of the new event
-  const [y, m] = fecha.split('-').map(Number);
-  state.year  = y;
-  state.month = m - 1;
-  render();
+  try {
+    const res  = await fetch('/api/eventos', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        titulo:      nombre,
+        tipo,
+        fecha,
+        horaInicio:  inicio,
+        horaFin:     fin,
+        lugar:       locacion,
+        descripcion: notas,
+        estado:      'por_confirmar',
+      }),
+    });
+    const data = await res.json();
+    if (!data.ok) { console.error(data.error); return; }
+    closeNuevoEvento();
+    setTimeout(() => window.location.reload(), 300);
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 /* ══════════════════════════════════════════

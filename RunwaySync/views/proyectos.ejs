@@ -252,11 +252,11 @@
           <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#cd1b80;border-radius:50%;border:2px solid #fff;"></span>
         </div>
         <div class="notif-popover" id="notifPopover">
-          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge">4 próximos</span></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#cd1b80;"></div><div><div class="notif-name">Casting Modelos SS26</div><div class="notif-meta">23 ABR · 10:00 AM · Estudio Norte</div></div></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#b88917;"></div><div><div class="notif-name">Fitting Final Colección FW26</div><div class="notif-meta">24 ABR · 2:00 PM · Atelier Principal</div></div></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#08b864;"></div><div><div class="notif-name">Sesión Editorial Vogue CDMX</div><div class="notif-meta">28 ABR · Todo el día · Locación TBD</div></div></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#004aad;"></div><div><div class="notif-name">Reunión FW2026 — Dir. Creativa</div><div class="notif-meta">2 MAY · 9:00 AM · Sala de juntas</div></div></div>
+          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge"><%= notificaciones.length %> próximos</span></div>
+          <% notificaciones.forEach(n => { %>
+          <div class="notif-item"><div class="notif-dot" style="background:<%= n.color %>;"></div><div><div class="notif-name"><%= n.nombre %></div><div class="notif-meta"><%= n.meta %></div></div></div>
+          <% }) %>
+          <% if (!notificaciones.length) { %><div style="font-size:0.78rem;color:#888;padding:6px 0;">Sin eventos próximos</div><% } %>
           <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
         </div>
       </div>
@@ -400,7 +400,7 @@
                 completado: 'Completado'
               }[p.status] || p.status;
             %>
-            <tr data-status="<%= p.status %>" data-id="<%= p.id %>" onclick="verDetalle(<%= p.id %>)">
+            <tr data-status="<%= p.status %>" data-id="<%= p.id %>" onclick="verDetalle('<%= p.id %>')">
               <!-- PROYECTO -->
               <td>
                 <div class="proy-cell">
@@ -430,7 +430,7 @@
                   <% p.team.forEach(mid => { %>
                   <% const m = MIEMBROS[mid]; %>
                   <% if (m) { %>
-                  <div class="eq-av" style="background:<%= m.colorBg %>;color:<%= m.color %>" title="<%= m.nombre %> · <%= m.rol %>"><%= mid %></div>
+                  <div class="eq-av" style="background:<%= m.colorBg %>;color:<%= m.color %>" title="<%= m.nombre %> · <%= m.rol %>"><%= m.ini %></div>
                   <% } %>
                   <% }) %>
                 </div>
@@ -440,12 +440,12 @@
               <td onclick="event.stopPropagation()">
                 <div class="acc">
                   <% if (p.canEdit) { %>
-                  <button class="btn-ic edit" title="Editar" onclick="abrirModalEditar(<%= p.id %>)">
+                  <button class="btn-ic edit" title="Editar" onclick="abrirModalEditar('<%= p.id %>')">
                     <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   </button>
                   <% } %>
                   <% if (p.canDelete) { %>
-                  <button class="btn-ic del" title="Eliminar" onclick="abrirModalEliminar(<%= p.id %>)">
+                  <button class="btn-ic del" title="Eliminar" onclick="abrirModalEliminar('<%= p.id %>')">
                     <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                   </button>
                   <% } %>
@@ -751,8 +751,22 @@
   }
   function crearProyecto(e) {
     e.preventDefault();
+    const nombre   = document.getElementById('nNombre').value.trim();
+    const tipo     = document.getElementById('nTipo')     ? document.getElementById('nTipo').value.trim() : '';
+    const colEl    = document.getElementById('nColeccion');
+    const coleccion= colEl ? colEl.value : 'FW26';
+    const fecha    = document.getElementById('nFecha').value;
+    const estado   = document.getElementById('nEstado').value;
+    const equipoIds= [...document.querySelectorAll('input[name="equipo"]:checked')].map(i => i.value);
+    fetch('/api/proyectos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, sub: tipo, coleccion, fechaEntrega: fecha, estado, equipo: equipoIds }),
+    }).then(r => r.json()).then(d => {
+      if (d.ok) { showToast('Proyecto creado correctamente', '✓'); setTimeout(() => location.reload(), 800); }
+      else { showToast('Error: ' + (d.error || 'No se pudo crear'), '✗'); }
+    }).catch(() => showToast('Error de conexión', '✗'));
     closeModal('nuevoModal');
-    showToast('Proyecto creado correctamente', '✓');
   }
 
   // ── Ver detalle ──
@@ -766,13 +780,13 @@
     document.getElementById('dm-fecha').textContent  = p.delivery + (p.overdue ? ' ⚠️' : '');
     document.getElementById('dm-pct').textContent    = p.progress + '%';
 
-    const statusLabels = { activo:'Activo', revision:'En revisión', planeacion:'Planeación', completado:'Completado' };
+    const statusLabels  = { activo:'Activo', revision:'En revisión', planeacion:'Planeación', completado:'Completado' };
     const statusClasses = { activo:'badge-activo', revision:'badge-revision', planeacion:'badge-planeacion', completado:'badge-completado' };
     document.getElementById('dm-estado').innerHTML =
       `<span class="badge ${statusClasses[p.status] || ''}">${statusLabels[p.status] || p.status}</span>`;
 
     const bar = document.getElementById('dm-bar');
-    bar.style.width = p.progress + '%';
+    bar.style.width      = p.progress + '%';
     bar.style.background = p.color;
 
     const teamEl = document.getElementById('dm-team');
@@ -780,7 +794,7 @@
       const m = miembrosData[mid];
       if (!m) return '';
       return `<div class="dt-member">
-        <div class="dt-av" style="background:${m.colorBg};color:${m.color}">${mid}</div>
+        <div class="dt-av" style="background:${m.colorBg};color:${m.color}">${m.ini}</div>
         <div><div class="dt-name">${m.nombre}</div><div class="dt-role">${m.rol}</div></div>
       </div>`;
     }).join('');
@@ -791,12 +805,8 @@
       footer.innerHTML = `<button class="btn-cancel" onclick="closeModal('detalleModal')">Cerrar</button>`;
     } else {
       let btns = `<button type="button" class="btn-cancel" onclick="closeModal('detalleModal')">Cerrar</button>`;
-      if (p.canEdit) {
-        btns += `<button type="button" class="btn-submit" onclick="closeModal('detalleModal');abrirModalEditar(${p.id})">Editar</button>`;
-      }
-      if (p.canDelete) {
-        btns += `<button type="button" class="btn-danger" onclick="closeModal('detalleModal');abrirModalEliminar(${p.id})">Eliminar</button>`;
-      }
+      if (p.canEdit)   btns += `<button type="button" class="btn-submit" onclick="closeModal('detalleModal');abrirModalEditar('${p.id}')">Editar</button>`;
+      if (p.canDelete) btns += `<button type="button" class="btn-danger" onclick="closeModal('detalleModal');abrirModalEliminar('${p.id}')">Eliminar</button>`;
       footer.innerHTML = btns;
     }
 
@@ -807,18 +817,32 @@
   function abrirModalEditar(id) {
     const p = proyectosData.find(x => x.id === id);
     if (!p) return;
-    document.getElementById('edit-sub').textContent = p.name;
-    document.getElementById('eNombre').value  = p.name;
-    document.getElementById('eColeccion').value = p.collection;
-    document.getElementById('eEstado').value  = p.status;
-    document.getElementById('eFecha').value   = p.deliveryDate;
-    document.getElementById('eProgreso').value = p.progress;
+    document.getElementById('edit-sub').textContent  = p.name;
+    document.getElementById('eNombre').value         = p.name;
+    document.getElementById('eColeccion').value      = p.collection;
+    document.getElementById('eEstado').value         = p.status;
+    document.getElementById('eFecha').value          = p.deliveryDate;
+    document.getElementById('eProgreso').value       = p.progress;
+    eliminarId = id;
     openModal('editarModal');
   }
   function guardarEdicion(e) {
     e.preventDefault();
+    const id       = eliminarId;
+    const nombre   = document.getElementById('eNombre').value.trim();
+    const coleccion= document.getElementById('eColeccion').value;
+    const estado   = document.getElementById('eEstado').value;
+    const fecha    = document.getElementById('eFecha').value;
+    const progreso = document.getElementById('eProgreso').value;
+    fetch(`/api/proyectos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, coleccion, estado, fechaEntrega: fecha, progreso }),
+    }).then(r => r.json()).then(d => {
+      if (d.ok) { showToast('Cambios guardados correctamente', '✓'); setTimeout(() => location.reload(), 800); }
+      else { showToast('Error: ' + (d.error || 'No se pudo guardar'), '✗'); }
+    }).catch(() => showToast('Error de conexión', '✗'));
     closeModal('editarModal');
-    showToast('Cambios guardados correctamente', '✓');
   }
 
   // ── Eliminar ──
@@ -830,12 +854,13 @@
     openModal('eliminarModal');
   }
   function confirmarEliminar() {
-    const p = proyectosData.find(x => x.id === eliminarId);
     closeModal('eliminarModal');
-    if (p) {
-      const row = document.querySelector(`tr[data-id="${eliminarId}"]`);
-      if (row) row.style.display = 'none';
-      showToast('Proyecto eliminado', '🗑');
+    if (eliminarId) {
+      fetch(`/api/proyectos/${eliminarId}`, { method: 'DELETE' })
+        .then(r => r.json()).then(d => {
+          if (d.ok) { showToast('Proyecto eliminado', '🗑'); setTimeout(() => location.reload(), 800); }
+          else { showToast('Error: ' + (d.error || 'No se pudo eliminar'), '✗'); }
+        }).catch(() => showToast('Error de conexión', '✗'));
     }
     eliminarId = null;
   }

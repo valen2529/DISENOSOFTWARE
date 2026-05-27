@@ -274,11 +274,11 @@
           <span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#cd1b80;border-radius:50%;border:2px solid #fff;"></span>
         </div>
         <div class="notif-popover" id="notifPopover">
-          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge">4 próximos</span></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#cd1b80;"></div><div><div class="notif-name">Casting Modelos SS26</div><div class="notif-meta">23 ABR · 10:00 AM · Estudio Norte</div></div></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#b88917;"></div><div><div class="notif-name">Fitting Final Colección FW26</div><div class="notif-meta">24 ABR · 2:00 PM · Atelier Principal</div></div></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#08b864;"></div><div><div class="notif-name">Sesión Editorial Vogue CDMX</div><div class="notif-meta">28 ABR · Todo el día · Locación TBD</div></div></div>
-          <div class="notif-item"><div class="notif-dot" style="background:#004aad;"></div><div><div class="notif-name">Reunión FW2026 — Dir. Creativa</div><div class="notif-meta">2 MAY · 9:00 AM · Sala de juntas</div></div></div>
+          <div class="notif-header"><span class="notif-title">Notificaciones</span><span class="notif-badge"><%= notificaciones.length %> próximos</span></div>
+          <% notificaciones.forEach(n => { %>
+          <div class="notif-item"><div class="notif-dot" style="background:<%= n.color %>;"></div><div><div class="notif-name"><%= n.nombre %></div><div class="notif-meta"><%= n.meta %></div></div></div>
+          <% }) %>
+          <% if (!notificaciones.length) { %><div style="font-size:0.78rem;color:#888;padding:6px 0;">Sin eventos próximos</div><% } %>
           <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
         </div>
       </div>
@@ -399,7 +399,7 @@
           <% eventos.forEach(e => { %>
           <div class="ev-card" data-tipo="<%= e.tipo %>" data-id="<%= e.id %>"
                style="border-left-color:<%= e.color %>;"
-               onclick="verDetalle(<%= e.id %>)">
+               onclick="verDetalle('<%= e.id %>')">
 
             <!-- Date -->
             <div class="ev-date">
@@ -415,7 +415,7 @@
                   <span class="ev-badge <%= e.status %>"><%= BADGE_LABELS[e.status] || e.status %></span>
                   <div class="eq-stack">
                     <% e.team.forEach(mid => { const m = MIEMBROS[mid]; if(m){ %>
-                    <div class="eq-av" style="background:<%= m.colorBg %>;color:<%= m.color %>" title="<%= m.nombre %>"><%= mid %></div>
+                    <div class="eq-av" style="background:<%= m.colorBg %>;color:<%= m.color %>" title="<%= m.nombre %>"><%= m.ini %></div>
                     <% }}) %>
                   </div>
                 </div>
@@ -445,12 +445,12 @@
                 <% if (e.canEdit || e.canDelete) { %>
                 <div class="ev-actions">
                   <% if (e.canEdit) { %>
-                  <button class="btn-ic edit" title="Editar" onclick="event.stopPropagation();abrirEditar(<%= e.id %>)">
+                  <button class="btn-ic edit" title="Editar" onclick="event.stopPropagation();abrirEditar('<%= e.id %>')">
                     <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   </button>
                   <% } %>
                   <% if (e.canDelete) { %>
-                  <button class="btn-ic del" title="Eliminar" onclick="event.stopPropagation();abrirEliminar(<%= e.id %>)">
+                  <button class="btn-ic del" title="Eliminar" onclick="event.stopPropagation();abrirEliminar('<%= e.id %>')">
                     <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                   </button>
                   <% } %>
@@ -744,7 +744,28 @@
     if (document.getElementById('nNombre')) document.getElementById('nNombre').value = '';
     openModal('nuevoModal');
   }
-  function crearEvento(e) { e.preventDefault(); closeModal('nuevoModal'); showToast('Evento creado correctamente', '✓'); }
+  function crearEvento(e) {
+    e.preventDefault();
+    const titulo = document.getElementById('nNombre').value.trim();
+    const fecha  = document.getElementById('nFecha').value;
+    const lugar  = document.getElementById('nLugar').value.trim();
+    const hora   = document.getElementById('nHora').value.trim();
+    const estado = document.getElementById('nEstado').value;
+    const desc   = document.getElementById('nDesc').value.trim();
+    const tipoEl = document.getElementById('nTipo');
+    const tipo   = tipoEl ? tipoEl.value : 'fitting';
+    const equipoIds = [...document.querySelectorAll('input[name="equipo"]:checked')].map(i => i.value);
+    const [hi, hf] = hora.includes('–') ? hora.split('–').map(s => s.trim()) : [hora, ''];
+    fetch('/api/eventos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ titulo, tipo, fecha, horaInicio: hi, horaFin: hf, lugar, descripcion: desc, estado, equipo: equipoIds }),
+    }).then(r => r.json()).then(d => {
+      if (d.ok) { showToast('Evento creado correctamente', '✓'); setTimeout(() => location.reload(), 800); }
+      else { showToast('Error: ' + (d.error || 'No se pudo crear'), '✗'); }
+    }).catch(() => showToast('Error de conexión', '✗'));
+    closeModal('nuevoModal');
+  }
 
   // ── Detalle ──
   function verDetalle(id) {
@@ -766,13 +787,13 @@
 
     document.getElementById('dm-team').innerHTML = ev.team.map(mid => {
       const m = miembrosData[mid];
-      return m ? `<div class="dt-member"><div class="dt-av" style="background:${m.colorBg};color:${m.color}">${mid}</div><div><div class="dt-name">${m.nombre}</div><div class="dt-role">${m.rol}</div></div></div>` : '';
+      return m ? `<div class="dt-member"><div class="dt-av" style="background:${m.colorBg};color:${m.color}">${m.ini}</div><div><div class="dt-name">${m.nombre}</div><div class="dt-role">${m.rol}</div></div></div>` : '';
     }).join('');
 
     const footer = document.getElementById('dm-footer');
     let html = `<button class="btn-cancel" onclick="closeModal('detalleModal')">Cerrar</button>`;
-    if (ev.canEdit)   html += `<button class="btn-submit" onclick="closeModal('detalleModal');abrirEditar(${ev.id})">Editar</button>`;
-    if (ev.canDelete) html += `<button class="btn-danger" onclick="closeModal('detalleModal');abrirEliminar(${ev.id})">Eliminar</button>`;
+    if (ev.canEdit)   html += `<button class="btn-submit" onclick="closeModal('detalleModal');abrirEditar('${ev.id}')">Editar</button>`;
+    if (ev.canDelete) html += `<button class="btn-danger" onclick="closeModal('detalleModal');abrirEliminar('${ev.id}')">Eliminar</button>`;
     footer.innerHTML = html;
 
     openModal('detalleModal');
@@ -789,9 +810,29 @@
     document.getElementById('eFecha').value  = ev.dateStr;
     document.getElementById('eEstado').value = ev.status;
     document.getElementById('eDesc').value   = ev.descripcion;
+    eliminarId = id;
     openModal('editarModal');
   }
-  function guardarEdicion(e) { e.preventDefault(); closeModal('editarModal'); showToast('Cambios guardados', '✓'); }
+  function guardarEdicion(e) {
+    e.preventDefault();
+    const id     = eliminarId;
+    const nombre = document.getElementById('eNombre').value.trim();
+    const lugar  = document.getElementById('eLugar').value.trim();
+    const hora   = document.getElementById('eHora').value.trim();
+    const fecha  = document.getElementById('eFecha').value;
+    const estado = document.getElementById('eEstado').value;
+    const desc   = document.getElementById('eDesc').value.trim();
+    const [hi, hf] = hora.includes('–') ? hora.split('–').map(s => s.trim()) : [hora, ''];
+    fetch(`/api/eventos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ titulo: nombre, lugar, horaInicio: hi, horaFin: hf, fecha, estado, descripcion: desc }),
+    }).then(r => r.json()).then(d => {
+      if (d.ok) { showToast('Cambios guardados', '✓'); setTimeout(() => location.reload(), 800); }
+      else { showToast('Error: ' + (d.error || 'No se pudo guardar'), '✗'); }
+    }).catch(() => showToast('Error de conexión', '✗'));
+    closeModal('editarModal');
+  }
 
   // ── Eliminar ──
   function abrirEliminar(id) {
@@ -803,9 +844,11 @@
   }
   function confirmarEliminar() {
     if (eliminarId) {
-      const card = document.querySelector(`.ev-card[data-id="${eliminarId}"]`);
-      if (card) card.style.display = 'none';
-      showToast('Evento eliminado', '🗑');
+      fetch(`/api/eventos/${eliminarId}`, { method: 'DELETE' })
+        .then(r => r.json()).then(d => {
+          if (d.ok) { showToast('Evento eliminado', '🗑'); setTimeout(() => location.reload(), 800); }
+          else { showToast('Error: ' + (d.error || 'No se pudo eliminar'), '✗'); }
+        }).catch(() => showToast('Error de conexión', '✗'));
     }
     eliminarId = null;
     closeModal('eliminarModal');

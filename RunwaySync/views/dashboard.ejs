@@ -297,36 +297,17 @@
         <div class="notif-popover" id="notifPopover">
           <div class="notif-header">
             <span class="notif-title">Notificaciones</span>
-            <span class="notif-badge">4 próximos</span>
+            <span class="notif-badge"><%= notificaciones.length %> próximos</span>
           </div>
+          <% notificaciones.forEach(n => { %>
           <div class="notif-item">
-            <div class="notif-dot" style="background:#cd1b80;"></div>
+            <div class="notif-dot" style="background:<%= n.color %>;"></div>
             <div class="notif-info">
-              <div class="notif-name">Casting Modelos SS26</div>
-              <div class="notif-meta">23 ABR · 10:00 AM · Estudio Norte</div>
+              <div class="notif-name"><%= n.nombre %></div>
+              <div class="notif-meta"><%= n.meta %></div>
             </div>
           </div>
-          <div class="notif-item">
-            <div class="notif-dot" style="background:#b88917;"></div>
-            <div class="notif-info">
-              <div class="notif-name">Fitting Final Colección FW26</div>
-              <div class="notif-meta">24 ABR · 2:00 PM · Atelier Principal</div>
-            </div>
-          </div>
-          <div class="notif-item">
-            <div class="notif-dot" style="background:#08b864;"></div>
-            <div class="notif-info">
-              <div class="notif-name">Sesión Editorial Vogue CDMX</div>
-              <div class="notif-meta">28 ABR · Todo el día · Locación TBD</div>
-            </div>
-          </div>
-          <div class="notif-item">
-            <div class="notif-dot" style="background:#004aad;"></div>
-            <div class="notif-info">
-              <div class="notif-name">Reunión FW2026 — Dirección Creativa</div>
-              <div class="notif-meta">2 MAY · 9:00 AM · Sala de juntas</div>
-            </div>
-          </div>
+          <% }) %>
           <a href="/eventos" style="display:block;text-align:center;font-size:0.78rem;color:#cd1b80;font-weight:600;margin-top:10px;text-decoration:none;">Ver todos los eventos →</a>
         </div>
       </div>
@@ -438,23 +419,23 @@
       <div class="stats-row">
         <div class="stat-card">
           <div class="stat-lbl">Proyectos Activos</div>
-          <div class="stat-num">7</div>
-          <div class="stat-sub green">+ 2 este mes</div>
+          <div class="stat-num"><%= stats.proyectos %></div>
+          <div class="stat-sub green">Activos y en revisión</div>
         </div>
         <div class="stat-card">
           <div class="stat-lbl">Colecciones en Proceso</div>
-          <div class="stat-num">3</div>
-          <div class="stat-sub pink">FW26 &middot; SS26 &middot; Resort</div>
+          <div class="stat-num"><%= stats.colecciones %></div>
+          <div class="stat-sub pink">Temporadas activas</div>
         </div>
         <div class="stat-card">
           <div class="stat-lbl">Castings Agendados</div>
-          <div class="stat-num">12</div>
-          <div class="stat-sub amber">5 esta semana</div>
+          <div class="stat-num"><%= stats.castings %></div>
+          <div class="stat-sub amber">Próximos castings</div>
         </div>
         <div class="stat-card">
           <div class="stat-lbl">Pr&oacute;ximos Eventos</div>
-          <div class="stat-num">4</div>
-          <div class="stat-sub purple">Siguiente: 24 abr</div>
+          <div class="stat-num"><%= stats.eventos %></div>
+          <div class="stat-sub purple">Próximos agendados</div>
         </div>
       </div>
 
@@ -464,56 +445,20 @@
         <!-- Proyectos Estado General -->
         <div class="card">
           <div class="card-title">Proyectos &middot; Estado General</div>
-
+          <% proyectos.forEach(p => { %>
           <div class="project-row">
-            <div class="p-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80">SS</div>
+            <div class="p-avatar" style="background:<%= p.colorBg %>;color:<%= p.color %>"><%= p.initials %></div>
             <div class="p-info">
-              <div class="p-name">Editorial SS26 Vogue Milan</div>
-              <div class="p-sub">Fotograf&iacute;a &middot; 28 abr</div>
+              <div class="p-name"><%= p.name %></div>
+              <div class="p-sub"><%= p.sub %><% if (p.delivery) { %> &middot; <%= p.delivery %><% } %></div>
             </div>
-            <div class="p-bar-wrap"><div class="p-bar" style="width:75%;background:#cd1b80"></div></div>
-            <div class="p-pct" style="color:#cd1b80">75%</div>
+            <div class="p-bar-wrap"><div class="p-bar" style="width:<%= p.progress %>%;background:<%= p.color %>"></div></div>
+            <div class="p-pct" style="color:<%= p.color %>"><%= p.progress %>%</div>
           </div>
-
-          <div class="project-row">
-            <div class="p-avatar" style="background:rgba(8,184,100,0.18);color:#08b864">FW</div>
-            <div class="p-info">
-              <div class="p-name">Editorial SS26 Vogue Milan</div>
-              <div class="p-sub">Fotograf&iacute;a &middot; 28 abr</div>
-            </div>
-            <div class="p-bar-wrap"><div class="p-bar" style="width:40%;background:#08b864"></div></div>
-            <div class="p-pct" style="color:#08b864">40%</div>
-          </div>
-
-          <div class="project-row">
-            <div class="p-avatar" style="background:rgba(0,74,173,0.18);color:#004aad">RS</div>
-            <div class="p-info">
-              <div class="p-name">Editorial SS26 Vogue Milan</div>
-              <div class="p-sub">Fotograf&iacute;a &middot; 28 abr</div>
-            </div>
-            <div class="p-bar-wrap"><div class="p-bar" style="width:20%;background:#004aad"></div></div>
-            <div class="p-pct" style="color:#004aad">20%</div>
-          </div>
-
-          <div class="project-row">
-            <div class="p-avatar" style="background:rgba(184,137,23,0.18);color:#b88917">EV</div>
-            <div class="p-info">
-              <div class="p-name">Editorial SS26 Vogue Milan</div>
-              <div class="p-sub">Fotograf&iacute;a &middot; 28 abr</div>
-            </div>
-            <div class="p-bar-wrap"><div class="p-bar" style="width:50%;background:#b88917"></div></div>
-            <div class="p-pct" style="color:#b88917">50%</div>
-          </div>
-
-          <div class="project-row">
-            <div class="p-avatar" style="background:rgba(205,27,128,0.18);color:#cd1b80">CO</div>
-            <div class="p-info">
-              <div class="p-name">Editorial SS26 Vogue Milan</div>
-              <div class="p-sub">Fotograf&iacute;a &middot; 28 abr</div>
-            </div>
-            <div class="p-bar-wrap"><div class="p-bar" style="width:10%;background:#231f20"></div></div>
-            <div class="p-pct">10%</div>
-          </div>
+          <% }) %>
+          <% if (!proyectos.length) { %>
+          <div style="font-size:0.78rem;color:#8a9295;text-align:center;padding:14px 0;">Sin proyectos activos.</div>
+          <% } %>
         </div>
 
         <!-- Calendario + Eventos (dinámico via JS) -->
@@ -702,13 +647,14 @@
 
 <script>
 /* ══ DASHBOARD DINÁMICO ══ */
-const STORAGE_KEY = 'rws_events';
+const DASH_EVENTS = <%- JSON.stringify(eventosJS) %>;
 const MONTH_NAMES_DASH = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DAY_NAMES_DASH   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const TYPE_COLORS_DASH = {
   casting:   '#cd1b80',
   editorial: '#08b864',
   fitting:   '#b88917',
+  reunion:   '#004aad',
   important: '#cd1b80'
 };
 
@@ -718,11 +664,6 @@ function getWeekNum(d) {
   date.setUTCDate(date.getUTCDate() + 4 - day);
   const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
   return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-}
-
-function loadDashEvents() {
-  try { const s = localStorage.getItem(STORAGE_KEY); if (s) return JSON.parse(s); } catch(e) {}
-  return [];
 }
 
 (function initDashboard() {
@@ -740,7 +681,7 @@ function loadDashEvents() {
   if (dateEl)  dateEl.textContent  = `${dayName}, ${now.getDate()} de ${monthName} de ${now.getFullYear()} · Semana ${weekNum}`;
 
   /* ── Renderizar mini-calendario ── */
-  const events = loadDashEvents();
+  const events = DASH_EVENTS;
   const y = now.getFullYear(), m = now.getMonth();
   const daysInMonth = new Date(y, m+1, 0).getDate();
   const firstDay    = new Date(y, m, 1).getDay();
