@@ -4,6 +4,10 @@ export const findUserByEmail = (email) => {
   return User.findOne({ email });
 };
 
+export const findUserByTelefono = (telefono) => {
+  return User.findOne({ telefono });
+};
+
 export const saveResetCode = (user, code, expires) => {
   user.resetCode = code;
   user.resetCodeExpires = expires;

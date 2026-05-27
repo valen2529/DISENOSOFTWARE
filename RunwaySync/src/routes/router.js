@@ -311,8 +311,10 @@ router.get('/nueva-contrasena', (req, res) => {
   res.render('nueva-contrasena.ejs', { error: null });
 });
 
+
 // ── POST /nueva-contrasena ──
 router.post('/nueva-contrasena', async (req, res) => {
+  console.log('➡️ resetPassword desde ROUTER');
   if (!req.session.resetVerificado) return res.redirect('/recuperar');
   const { password, confirmar } = req.body;
   if (password !== confirmar) return res.render('nueva-contrasena.ejs', { error: 'Las contraseñas no coinciden.' });
@@ -321,11 +323,16 @@ router.post('/nueva-contrasena', async (req, res) => {
     const hash = await bcryptjs.hash(password, 10);
     await User.updateOne({ telefono: req.session.resetTelefono }, { password: hash });
     req.session.resetPin = req.session.resetTelefono = req.session.resetExpira = req.session.resetVerificado = null;
-    res.redirect('/');
+    res.redirect('/confirmacion');
   } catch (err) {
     console.error(err);
     res.render('nueva-contrasena.ejs', { error: 'Error al actualizar la contraseña.' });
   }
+});
+
+// ── GET /confirmacion ──
+router.get('/confirmacion', (req, res) => {
+  res.render('confirmacion.ejs');
 });
 
 export default router;
