@@ -417,18 +417,26 @@ router.get('/generar-id', async (req, res) => {
   if (!req.session.userId) return res.status(401).json({ ok: false });
   const { rol } = req.query;
   try {
-    if (rol === 'directora') return res.json({ ok: true, id: '11.00.001.001' });
-    if (rol === 'jefe') {
-      const count = await User.countDocuments({ rol: 'jefe' });
-      const num   = String(count + 2).padStart(3, '0');
-      return res.json({ ok: true, id: `11.00.${num}.222` });
-    }
-    if (rol === 'miembro') {
-      const count = await User.countDocuments({ rol: 'miembro' });
-      const num   = String(count + 101).padStart(3, '0');
-      return res.json({ ok: true, id: `11.00.${num}.333` });
-    }
-    res.json({ ok: false, error: 'Rol no reconocido.' });
+    const suffix = rol === 'directora' ? '001' : rol === 'jefe' ? '222' : rol === 'miembro' ? '333' : null;
+    if (!suffix) return res.json({ ok: false, error: 'Rol no reconocido.' });
+
+    // Find all existing IDs with this role's suffix to determine next number
+    const allUsers = await User.find({}, 'id_empresarial');
+    const usedNums = new Set(
+      allUsers
+        .map(u => u.id_empresarial)
+        .filter(id => id && id.endsWith('.' + suffix))
+        .map(id => parseInt(id.split('.')[2], 10))
+        .filter(n => !isNaN(n))
+    );
+
+    // Start from 1 for directora, 2 for jefe, 101 for miembro
+    let start = rol === 'miembro' ? 101 : 1;
+    let num = start;
+    while (usedNums.has(num)) num++;
+
+    const id = `11.00.${String(num).padStart(3, '0')}.${suffix}`;
+    res.json({ ok: true, id });
   } catch (err) {
     console.error(err);
     res.json({ ok: false, error: 'Error al generar ID.' });
